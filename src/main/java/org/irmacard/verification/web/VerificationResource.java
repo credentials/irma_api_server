@@ -35,11 +35,10 @@ package org.irmacard.verification.web;
 
 import org.irmacard.credentials.idemix.proofs.ProofD;
 import org.irmacard.credentials.idemix.util.Crypto;
-import org.irmacard.credentials.info.DescriptionStore;
 import org.irmacard.credentials.info.InfoException;
-import org.irmacard.credentials.info.VerificationDescription;
 import org.irmacard.verification.common.DisclosureProofRequest;
 import org.irmacard.verification.common.DisclosureProofResult;
+import org.irmacard.verification.common.ServiceProviderRequest;
 import org.irmacard.verification.common.util.GsonUtil;
 import org.irmacard.verification.web.exceptions.InputInvalidException;
 
@@ -72,16 +71,18 @@ public class VerificationResource {
     @Path("/create")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String create(DisclosureProofRequest request) {
+    public String create(ServiceProviderRequest spRequest) {
+        DisclosureProofRequest request = spRequest.getRequest();
+
         if (!request.isSimple())
             throw new InputInvalidException("Non-simple requests are not yet supported by this server");
 
         request.setNonce(DisclosureProofRequest.generateNonce());
         if (request.getContext() == null || request.getContext().equals(BigInteger.ZERO))
-            request.setContext(Crypto.sha256Hash(request.toString().getBytes()));
+            request.setContext(Crypto.sha256Hash(request.toString(false).getBytes()));
 
         String token = generateSessionToken();
-        VerificationSession session = new VerificationSession(token, request);
+        VerificationSession session = new VerificationSession(token, spRequest);
         sessions.addSession(session);
 
         System.out.println("Received session, token: " + token);
@@ -116,7 +117,6 @@ public class VerificationResource {
 
     @GET
     @Path("/{sessiontoken}/getproof")
-    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public DisclosureProofResult getproof(@PathParam("sessiontoken") String sessiontoken) throws InfoException {
         VerificationSession session = getSession(sessiontoken);
@@ -129,6 +129,7 @@ public class VerificationResource {
             sessions.remove(session);
         }
 
+        result.setServiceProviderData(session.getServiceProviderRequest().getServiceProviderData());
         return result;
     }
 

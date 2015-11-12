@@ -36,20 +36,17 @@ package org.irmacard.verification.web;
 import org.irmacard.credentials.idemix.proofs.ProofD;
 import org.irmacard.verification.common.DisclosureProofRequest;
 import org.irmacard.verification.common.DisclosureProofResult;
-
-import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.Map;
+import org.irmacard.verification.common.ServiceProviderRequest;
 
 public class VerificationSession {
     private String sessionToken;
-    private DisclosureProofRequest request;
+    private ServiceProviderRequest spRequest;
     private DisclosureProofResult result;
     private ProofD proof;
 
-    public VerificationSession(String sessionToken, DisclosureProofRequest request) {
+    public VerificationSession(String sessionToken, ServiceProviderRequest spRequest) {
         this.sessionToken = sessionToken;
-        this.request = request;
+        this.spRequest = spRequest;
     }
 
     public String getSessionToken() {
@@ -57,11 +54,15 @@ public class VerificationSession {
     }
 
     public DisclosureProofRequest getRequest() {
-        return request;
+        return spRequest.getRequest();
     }
 
-    public void setRequest(DisclosureProofRequest request) {
-        this.request = request;
+    public ServiceProviderRequest getServiceProviderRequest() {
+        return spRequest;
+    }
+
+    public void setServiceProviderRequest(ServiceProviderRequest spRequest) {
+        this.spRequest = spRequest;
     }
 
     public ProofD getProof() {
