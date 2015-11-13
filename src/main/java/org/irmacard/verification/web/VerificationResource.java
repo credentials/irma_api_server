@@ -125,7 +125,7 @@ public class VerificationResource {
     @GET
     @Path("/{sessiontoken}/getunsignedproof")
     @Produces(MediaType.APPLICATION_JSON)
-    public DisclosureProofResult getproof(@PathParam("sessiontoken") String sessiontoken) throws InfoException {
+    public DisclosureProofResult getproof(@PathParam("sessiontoken") String sessiontoken) {
         VerificationSession session = getSession(sessiontoken);
         DisclosureProofResult result = session.getResult();
 
@@ -143,8 +143,7 @@ public class VerificationResource {
     @GET
     @Path("/{sessiontoken}/getproof")
     @Produces(MediaType.TEXT_PLAIN)
-    public String gettoken(@PathParam("sessiontoken") String sessiontoken)
-    throws InfoException, KeyManagementException {
+    public String gettoken(@PathParam("sessiontoken") String sessiontoken) throws KeyManagementException {
         VerificationSession session = getSession(sessiontoken);
         DisclosureProofResult result = getproof(sessiontoken);
 
