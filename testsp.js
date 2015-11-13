@@ -55,7 +55,7 @@ function poll(token) {
 }
 
 var options = {
-	uri: server + 'create',
+	uri: server,
 	method: 'POST',
 	json: sprequest
 };

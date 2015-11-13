@@ -72,7 +72,7 @@ public class VerificationResource {
     }
 
     @POST
-    @Path("/create")
+    @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String create(ServiceProviderRequest spRequest) {
