@@ -1,1 +1,3 @@
-Link irma_configuration in this directory
+Two things should be present here:
+- the irma_configuration folder or a symlink to it
+- an RSA secret key in DER format, called 'sk.der'
