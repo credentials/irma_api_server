@@ -15,6 +15,8 @@ dependencies {
     compile 'org.glassfish.jersey.containers:jersey-container-servlet:2.19'
     compile 'org.glassfish.jersey.media:jersey-media-json-jackson:2.19'
 
+    compile 'io.jsonwebtoken:jjwt:0.6.0'
+
     compile 'com.google.code.gson:gson:2.2.2'
 
     compile 'commons-codec:commons-codec:1.10'

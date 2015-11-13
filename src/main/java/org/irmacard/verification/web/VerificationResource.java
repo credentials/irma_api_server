@@ -33,6 +33,7 @@
 
 package org.irmacard.verification.web;
 
+import io.jsonwebtoken.Jwts;
 import org.irmacard.credentials.idemix.proofs.ProofD;
 import org.irmacard.credentials.idemix.util.Crypto;
 import org.irmacard.credentials.info.InfoException;
@@ -50,7 +51,9 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
 import java.math.BigInteger;
+import java.security.KeyManagementException;
 import java.security.SecureRandom;
+import java.util.Calendar;
 
 
 @Path("v1")
@@ -61,6 +64,7 @@ public class VerificationResource {
     private VerificationSessions sessions;
 
     private static final int SESSION_TOKEN_LENGTH = 33;
+    private static final int DEFAULT_TOKEN_VALIDITY = 60 * 60; // 1 hour
 
     @Inject
     public VerificationResource() {
@@ -76,6 +80,9 @@ public class VerificationResource {
 
         if (!request.isSimple())
             throw new InputInvalidException("Non-simple requests are not yet supported by this server");
+
+        if (spRequest.getValidity() == 0)
+            spRequest.setValidity(DEFAULT_TOKEN_VALIDITY);
 
         request.setNonce(DisclosureProofRequest.generateNonce());
         if (request.getContext() == null || request.getContext().equals(BigInteger.ZERO))
@@ -116,7 +123,7 @@ public class VerificationResource {
     }
 
     @GET
-    @Path("/{sessiontoken}/getproof")
+    @Path("/{sessiontoken}/getunsignedproof")
     @Produces(MediaType.APPLICATION_JSON)
     public DisclosureProofResult getproof(@PathParam("sessiontoken") String sessiontoken) throws InfoException {
         VerificationSession session = getSession(sessiontoken);
@@ -131,6 +138,27 @@ public class VerificationResource {
 
         result.setServiceProviderData(session.getServiceProviderRequest().getServiceProviderData());
         return result;
+    }
+
+    @GET
+    @Path("/{sessiontoken}/getproof")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String gettoken(@PathParam("sessiontoken") String sessiontoken)
+    throws InfoException, KeyManagementException {
+        VerificationSession session = getSession(sessiontoken);
+        DisclosureProofResult result = getproof(sessiontoken);
+
+        Calendar now = Calendar.getInstance();
+        Calendar expiry = Calendar.getInstance();
+        expiry.add(Calendar.SECOND, session.getServiceProviderRequest().getValidity());
+
+        return Jwts.builder()
+                .setClaims(result.getAsMap())
+                .setIssuedAt(now.getTime())
+                .setExpiration(expiry.getTime())
+                .setSubject("disclosure_result")
+                .signWith(TokenKeyManager.getAlgorithm(), TokenKeyManager.getKey())
+                .compact();
     }
 
     @DELETE

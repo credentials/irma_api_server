@@ -7,3 +7,5 @@ bin
 .idea/
 *.iml
 node_modules/
+*.der
+*.pem
