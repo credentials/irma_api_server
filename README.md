@@ -1,14 +1,14 @@
+# IRMA verification server
+
+This is a server that sits between IRMA tokens such as the [card emulator app](https://github.com/credentials/irma_android_cardemu) on the one hand, and service providers on the other hand. Upon the request of a service provider, it requests attributes from the token and verifies their validity. If succesful, the service provider receives the attributes.
+
+The API that this server offers is described [here](https://credentials.github.io/proposals/irma-without-apdus).
+
 # Running the server
 
-The gradle build file should take care of most of the dependencies. However, `irma_verification_common` is not yet available in the central IRMA repository, so you'll have to manually download and install it. To run the server in development mode simply call:
+The gradle build file should take care the dependencies. To run the server in development mode simply call:
 
     gradle jettyRun
-
-it is set up in such a way that it will automatically reload recompile class files. If your IDE already uses gradle to compile them this should work out of the box. Otherwise, simply call
-
-    gradle javaCompile
-
-and your app will be reloaded. Note that this is a lot faster than simply restarting the Jetty container.
 
 # Generating RSA keys
 
