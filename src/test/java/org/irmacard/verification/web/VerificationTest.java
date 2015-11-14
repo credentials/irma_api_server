@@ -153,6 +153,48 @@ public class VerificationTest extends JerseyTest {
 	}
 
 	@Test
+	@SuppressWarnings("unused")
+	public void brokenProofTest() throws InfoException, KeyManagementException {
+		String session = createSession();
+		DisclosureProofRequest request = target("/v1/" + session).request(MediaType.APPLICATION_JSON)
+				.get(DisclosureProofRequest.class);
+
+		int status = target("/v1/" + session + "/proof").request(MediaType.APPLICATION_JSON)
+				.post(Entity.entity("{\"foo\": 1}", MediaType.APPLICATION_JSON)).getStatus();
+		assert(status == 204);
+
+		// Fetch the JSON web token containing the attributes
+		String jwt = target("/v1/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);
+
+		// Verify the token itself, and that the credential was valid
+		PublicKey pk = TokenKeyManager.getPublicKey();
+		Claims body = Jwts.parser().setSigningKey(pk).parseClaimsJws(jwt).getBody();
+
+		assert body.get("status").toString().equals("INVALID");
+	}
+
+	@Test
+	@SuppressWarnings("unused")
+	public void brokenJsonTest() throws InfoException, KeyManagementException {
+		String session = createSession();
+		DisclosureProofRequest request = target("/v1/" + session).request(MediaType.APPLICATION_JSON)
+				.get(DisclosureProofRequest.class);
+
+		int status = target("/v1/" + session + "/proof").request(MediaType.APPLICATION_JSON)
+				.post(Entity.entity("{\"foo\": 1", MediaType.APPLICATION_JSON)).getStatus();
+		assert(status == 204);
+
+		// Fetch the JSON web token containing the attributes
+		String jwt = target("/v1/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);
+
+		// Verify the token itself, and that the credential was valid
+		PublicKey pk = TokenKeyManager.getPublicKey();
+		Claims body = Jwts.parser().setSigningKey(pk).parseClaimsJws(jwt).getBody();
+
+		assert body.get("status").toString().equals("INVALID");
+	}
+
+	@Test
 	public void invalidProofTest()
 	throws InfoException, KeyManagementException, NoSuchFieldException, IllegalAccessException {
 		IdemixCredential cred = getAgeLowerCredential();

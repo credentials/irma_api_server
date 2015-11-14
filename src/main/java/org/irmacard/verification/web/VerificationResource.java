@@ -114,7 +114,14 @@ public class VerificationResource {
         VerificationSession session = getSession(sessiontoken);
         session.setProof(proof);
 
-        DisclosureProofResult result = session.getRequest().verify(proof);
+        DisclosureProofResult result;
+        try {
+            result = session.getRequest().verify(proof);
+            session.setResult(result);
+        } catch (NullPointerException e) {
+            result = new DisclosureProofResult();
+            result.setStatus(DisclosureProofResult.Status.INVALID);
+        }
         session.setResult(result);
 
         System.out.println("Received proof, token: " + sessiontoken);
