@@ -39,9 +39,11 @@ import java.net.URL;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 
 public class TokenKeyManager {
 	private static PrivateKey key;
+	private static PublicKey publicKey;
 
 	public static PrivateKey getKey() throws KeyManagementException {
 		if (key == null) {
@@ -61,14 +63,32 @@ public class TokenKeyManager {
 		return key;
 	}
 
+	public static PublicKey getPublicKey() throws KeyManagementException {
+		if (publicKey == null) {
+			try {
+				byte[] bytes = getResource("pk.der");
+				if (bytes == null || bytes.length == 0)
+					throw new KeyManagementException("Could not read public key");
+
+				X509EncodedKeySpec spec = new X509EncodedKeySpec(bytes);
+
+				publicKey = KeyFactory.getInstance("RSA").generatePublic(spec);
+			} catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
+				throw new KeyManagementException(e);
+			}
+		}
+
+		return publicKey;
+	}
+
 	public static SignatureAlgorithm getAlgorithm() {
 		return SignatureAlgorithm.RS256;
 	}
 
 	private static byte[] getResource(String filename) throws IOException {
-		URL url = TokenKeyManager.class.getClassLoader().getResource("/" + filename);
+		URL url = TokenKeyManager.class.getClassLoader().getResource(filename);
 		if (url == null)
-			throw new IOException("Could not load private key");
+			throw new IOException("Could not load file " + filename);
 
 		return convertSteamToByteArray(url.openStream(), 2048);
 	}
