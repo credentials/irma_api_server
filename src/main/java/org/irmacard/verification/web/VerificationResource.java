@@ -34,6 +34,7 @@
 package org.irmacard.verification.web;
 
 import io.jsonwebtoken.Jwts;
+import org.bouncycastle.util.encoders.Base64;
 import org.irmacard.credentials.idemix.proofs.ProofD;
 import org.irmacard.credentials.idemix.util.Crypto;
 import org.irmacard.credentials.info.InfoException;
@@ -43,7 +44,6 @@ import org.irmacard.verification.common.ServiceProviderRequest;
 import org.irmacard.verification.common.util.GsonUtil;
 import org.irmacard.verification.web.exceptions.InputInvalidException;
 
-import org.apache.commons.codec.binary.Base64;
 import org.irmacard.verification.web.exceptions.SessionUnknownException;
 
 import javax.inject.Inject;
@@ -194,7 +194,7 @@ public class VerificationResource {
     private String generateSessionToken() {
         byte[] token = new byte[SESSION_TOKEN_LENGTH];
         rnd.nextBytes(token);
-        String strtoken = Base64.encodeBase64String(token);
+        String strtoken = new String(Base64.encode(token));
         return strtoken.replace("+", "").replace("/", "");
     }
 }
