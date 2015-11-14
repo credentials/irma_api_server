@@ -28,7 +28,7 @@ openssl rsa -in sk.pem -pubout -outform DER -out pk.der
 rm sk.pem
 ```
 
-You can use the public key `pk.pem` or `pk.der` to check the validity of the JSON web tokens. (The `irma_verification_server` has no need of these two keys so they can safely be deleted from this directory.)
+You can use the public key `pk.pem` or `pk.der` to check the validity of the JSON web tokens. (The `irma_verification_server` has no need of these two keys so they can safely be deleted from this directory - except when running the unit tests; then `pk.der` is needed to check the validity of the JSON web tokens.)
 
 # Testing
 
