@@ -40,6 +40,7 @@ import org.irmacard.credentials.idemix.util.Crypto;
 import org.irmacard.credentials.info.InfoException;
 import org.irmacard.verification.common.DisclosureProofRequest;
 import org.irmacard.verification.common.DisclosureProofResult;
+import org.irmacard.verification.common.DisclosureQr;
 import org.irmacard.verification.common.ServiceProviderRequest;
 import org.irmacard.verification.common.util.GsonUtil;
 import org.irmacard.verification.web.exceptions.InputInvalidException;
@@ -74,7 +75,7 @@ public class VerificationResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String create(ServiceProviderRequest spRequest) {
+    public DisclosureQr create(ServiceProviderRequest spRequest) {
         DisclosureProofRequest request = spRequest.getRequest();
 
         if (!request.isSimple())
@@ -94,7 +95,7 @@ public class VerificationResource {
         System.out.println("Received session, token: " + token);
         System.out.println(request.toString());
 
-        return token;
+        return new DisclosureQr("1.0", token);
     }
 
     @GET

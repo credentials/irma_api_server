@@ -62,15 +62,16 @@ var options = {
 
 request(options, function (error, response, body) {
 	if (!error && response.statusCode == 200) {
-		var url = server + body;
+		var qrcontent = body;
+		var session = body.u;
+		qrcontent.u = server + qrcontent.u;
 
-		var qrcontent = JSON.stringify({"v":"1.0", "u": url});
 		console.log(qrcontent);
-		qrcode.generate(qrcontent);
+		qrcode.generate(JSON.stringify(qrcontent));
 
 		var check = function() {
 			if (result == null) {
-				poll(body);
+				poll(session);
 				setTimeout(check, 1000);
 			}
 		};
