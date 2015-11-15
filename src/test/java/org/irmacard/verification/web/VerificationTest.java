@@ -42,6 +42,7 @@ import org.irmacard.credentials.idemix.proofs.ProofD;
 import org.irmacard.credentials.info.DescriptionStore;
 import org.irmacard.credentials.info.InfoException;
 import org.irmacard.verification.common.DisclosureProofRequest;
+import org.irmacard.verification.common.DisclosureQr;
 import org.irmacard.verification.common.ServiceProviderRequest;
 import org.irmacard.verification.common.util.GsonUtil;
 import org.junit.BeforeClass;
@@ -91,8 +92,10 @@ public class VerificationTest extends JerseyTest {
 				.getVerificationDescriptionByName("NYTimes", "ageLowerOver12"));
 		ServiceProviderRequest spRequest = new ServiceProviderRequest("testrequest", request, 60);
 
-		String sessiontoken = target("/v1/").request(MediaType.APPLICATION_JSON)
-				.post(Entity.entity(spRequest, MediaType.APPLICATION_JSON), String.class);
+		DisclosureQr qr = target("/v1/").request(MediaType.APPLICATION_JSON)
+				.post(Entity.entity(spRequest, MediaType.APPLICATION_JSON), DisclosureQr.class);
+
+		String sessiontoken = qr.getUrl();
 
 		assert(sessiontoken.length() > 20);
 		return sessiontoken;
