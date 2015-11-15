@@ -42,6 +42,7 @@ import org.irmacard.credentials.idemix.proofs.ProofD;
 import org.irmacard.credentials.info.DescriptionStore;
 import org.irmacard.credentials.info.InfoException;
 import org.irmacard.verification.common.DisclosureProofRequest;
+import org.irmacard.verification.common.DisclosureProofResult.Status;
 import org.irmacard.verification.common.DisclosureQr;
 import org.irmacard.verification.common.ServiceProviderRequest;
 import org.irmacard.verification.common.util.GsonUtil;
@@ -101,7 +102,7 @@ public class VerificationTest extends JerseyTest {
 		return sessiontoken;
 	}
 
-	public String doSession(List<Integer> disclosed)
+	public void doSession(List<Integer> disclosed, Status expectedResult)
 	throws InfoException, KeyManagementException {
 		IdemixCredential cred = getAgeLowerCredential();
 		String session = createSession();
@@ -110,9 +111,9 @@ public class VerificationTest extends JerseyTest {
 
 		// Create the proof and post it
 		ProofD proof = cred.createDisclosureProof(disclosed, request.getContext(), request.getNonce());
-		int status = target("/v1/" + session + "/proof").request(MediaType.APPLICATION_JSON)
-				.post(Entity.entity(proof, MediaType.APPLICATION_JSON)).getStatus();
-		assert(status == 204);
+		Status status = target("/v1/" + session + "/proof").request(MediaType.APPLICATION_JSON)
+				.post(Entity.entity(proof, MediaType.APPLICATION_JSON), Status.class);
+		assert(status == expectedResult);
 
 		// Fetch the JSON web token containing the attributes
 		String jwt = target("/v1/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);
@@ -120,22 +121,23 @@ public class VerificationTest extends JerseyTest {
 		// Verify the token itself, and that the credential was valid
 		PublicKey pk = TokenKeyManager.getPublicKey();
 		Claims body = Jwts.parser().setSigningKey(pk).parseClaimsJws(jwt).getBody();
-		return body.get("status").toString();
+
+		assert body.get("status").toString().equals(expectedResult.name());
 	}
 
 	@Test
 	public void validSessionTest() throws InfoException, KeyManagementException {
-		assert doSession(Arrays.asList(1, 2)).equals("VALID");
+		doSession(Arrays.asList(1, 2), Status.VALID);
 	}
 
 	@Test
 	public void missingAttributesTest() throws InfoException, KeyManagementException {
-		assert doSession(Collections.singletonList(1)).equals("MISSING_ATTRIBUTES");
+		doSession(Collections.singletonList(1), Status.MISSING_ATTRIBUTES);
 	}
 
 	@Test
 	public void missingMetadataTest() throws InfoException, KeyManagementException {
-		assert doSession(Arrays.asList(2, 3)).equals("INVALID");
+		doSession(Arrays.asList(2, 3), Status.INVALID);
 	}
 
 	@Test
@@ -162,9 +164,9 @@ public class VerificationTest extends JerseyTest {
 		DisclosureProofRequest request = target("/v1/" + session).request(MediaType.APPLICATION_JSON)
 				.get(DisclosureProofRequest.class);
 
-		int status = target("/v1/" + session + "/proof").request(MediaType.APPLICATION_JSON)
-				.post(Entity.entity("{\"foo\": 1}", MediaType.APPLICATION_JSON)).getStatus();
-		assert(status == 204);
+		Status status = target("/v1/" + session + "/proof").request(MediaType.APPLICATION_JSON)
+				.post(Entity.entity("{\"foo\": 1}", MediaType.APPLICATION_JSON), Status.class);
+		assert(status == Status.INVALID);
 
 		// Fetch the JSON web token containing the attributes
 		String jwt = target("/v1/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);
@@ -183,9 +185,9 @@ public class VerificationTest extends JerseyTest {
 		DisclosureProofRequest request = target("/v1/" + session).request(MediaType.APPLICATION_JSON)
 				.get(DisclosureProofRequest.class);
 
-		int status = target("/v1/" + session + "/proof").request(MediaType.APPLICATION_JSON)
-				.post(Entity.entity("{\"foo\": 1", MediaType.APPLICATION_JSON)).getStatus();
-		assert(status == 204);
+		Status status = target("/v1/" + session + "/proof").request(MediaType.APPLICATION_JSON)
+				.post(Entity.entity("{\"foo\": 1", MediaType.APPLICATION_JSON), Status.class);
+		assert(status == Status.INVALID);
 
 		// Fetch the JSON web token containing the attributes
 		String jwt = target("/v1/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);
@@ -214,9 +216,9 @@ public class VerificationTest extends JerseyTest {
 		f.setAccessible(true);
 		f.set(proof, BigInteger.TEN);
 
-		int status = target("/v1/" + session + "/proof").request(MediaType.APPLICATION_JSON)
-				.post(Entity.entity(proof, MediaType.APPLICATION_JSON)).getStatus();
-		assert(status == 204);
+		Status status = target("/v1/" + session + "/proof").request(MediaType.APPLICATION_JSON)
+				.post(Entity.entity(proof, MediaType.APPLICATION_JSON), Status.class);
+		assert(status == Status.INVALID);
 
 		// Fetch the JSON web token containing the attributes
 		String jwt = target("/v1/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);

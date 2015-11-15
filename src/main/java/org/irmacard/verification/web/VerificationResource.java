@@ -111,7 +111,9 @@ public class VerificationResource {
     @POST
     @Path("/{sessiontoken}/proof")
     @Consumes(MediaType.APPLICATION_JSON)
-    public void proof(ProofD proof, @PathParam("sessiontoken") String sessiontoken) throws InfoException {
+    @Produces(MediaType.APPLICATION_JSON)
+    public DisclosureProofResult.Status proof(ProofD proof, @PathParam("sessiontoken") String sessiontoken)
+    throws InfoException {
         VerificationSession session = getSession(sessiontoken);
         session.setProof(proof);
 
@@ -127,6 +129,8 @@ public class VerificationResource {
 
         System.out.println("Received proof, token: " + sessiontoken);
         System.out.println(GsonUtil.getGson().toJson(result));
+
+        return result.getStatus();
     }
 
     @GET
