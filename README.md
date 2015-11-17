@@ -10,7 +10,7 @@ The gradle build file should take care the dependencies. To run the server in de
 
     gradle jettyRun
 
-# Generating RSA keys
+## Generating RSA keys
 
 The server returns JSON web tokens signed using RSA, so you should generate an RSA public-private keypair before running the server. The private key of this pair must be put in `src/main/resources`. Using `openssl`, you can generate such a pair as follows.
 
@@ -29,6 +29,12 @@ rm sk.pem
 ```
 
 You can use the public key `pk.pem` or `pk.der` to check the validity of the JSON web tokens. (The `irma_verification_server` has no need of these two keys so they can safely be deleted from this directory - except when running the unit tests; then `pk.der` is needed to check the validity of the JSON web tokens.)
+
+## irma_configuration
+
+Download or link the `irma_configuration` project to `src/main/resources/`.
+
+See the credentials/irma_configuration project for the specifics. Remember that you can check out a different branch to get a different set of credentials and corresponding keys. In particular, the demo branch contains keys for all the issuers as well, thus making it very easy to test and develop applications.
 
 # Testing
 
