@@ -55,25 +55,17 @@ public class VerificationApplication extends ResourceConfig {
         // register session state
         register(new VerificationSessionsBinder());
 
-        // Setup Core location for IRMA
-        URI CORE_LOCATION;
-        // TODO this try catch system is not very elegant, make a function to
-        // test if the stores are initialized
         try {
+            // Setup Core location for IRMA
+            URI CORE_LOCATION = VerificationApplication.class.getClassLoader()
+                    .getResource("/irma_configuration/").toURI();
+            DescriptionStore.setCoreLocation(CORE_LOCATION);
             DescriptionStore.getInstance();
+            IdemixKeyStore.setCoreLocation(CORE_LOCATION);
             IdemixKeyStore.getInstance();
-        } catch (InfoException e) {
-            // Not initialized, try now
-            try {
-                CORE_LOCATION = VerificationApplication.class.getClassLoader().getResource("/irma_configuration/").toURI();
-                DescriptionStore.setCoreLocation(CORE_LOCATION);
-                DescriptionStore.getInstance();
-                IdemixKeyStore.setCoreLocation(CORE_LOCATION);
-                IdemixKeyStore.getInstance();
-            } catch (URISyntaxException|InfoException e2) {
-                e2.printStackTrace();
-                throw new RuntimeException(e2);
-            }
+        } catch (URISyntaxException|InfoException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 }
