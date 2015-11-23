@@ -35,7 +35,7 @@ package org.irmacard.verification.web;
 
 import io.jsonwebtoken.Jwts;
 import org.bouncycastle.util.encoders.Base64;
-import org.irmacard.credentials.idemix.proofs.ProofD;
+import org.irmacard.credentials.idemix.proofs.ProofCollection;
 import org.irmacard.credentials.idemix.util.Crypto;
 import org.irmacard.credentials.info.InfoException;
 import org.irmacard.verification.common.DisclosureProofRequest;
@@ -78,9 +78,6 @@ public class VerificationResource {
     public DisclosureQr create(ServiceProviderRequest spRequest) {
         DisclosureProofRequest request = spRequest.getRequest();
 
-        if (!request.isSimple())
-            throw new InputInvalidException("Non-simple requests are not yet supported by this server");
-
         if (spRequest.getValidity() == 0)
             spRequest.setValidity(DEFAULT_TOKEN_VALIDITY);
 
@@ -107,27 +104,27 @@ public class VerificationResource {
         return getSession(sessiontoken).getRequest();
     }
 
-
     @POST
-    @Path("/{sessiontoken}/proof")
+    @Path("/{sessiontoken}/proofs")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public DisclosureProofResult.Status proof(ProofD proof, @PathParam("sessiontoken") String sessiontoken)
-    throws InfoException {
+    public DisclosureProofResult.Status proofs(ProofCollection proofs, @PathParam("sessiontoken") String sessiontoken)
+            throws InfoException {
         VerificationSession session = getSession(sessiontoken);
-        session.setProof(proof);
+
+        proofs.populatePublicKeyArray();
 
         DisclosureProofResult result;
         try {
-            result = session.getRequest().verify(proof);
-            session.setResult(result);
+            result = session.getRequest().verify(proofs);
         } catch (NullPointerException e) {
+            e.printStackTrace();
             result = new DisclosureProofResult();
             result.setStatus(DisclosureProofResult.Status.INVALID);
         }
         session.setResult(result);
 
-        System.out.println("Received proof, token: " + sessiontoken);
+        System.out.println("Received proofs, token: " + sessiontoken);
         System.out.println(GsonUtil.getGson().toJson(result));
 
         return result.getStatus();

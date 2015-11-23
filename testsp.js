@@ -9,11 +9,11 @@ var sprequest = {
 	"request": {
 		"content": [
 			{
-				"label": "over12",
-				"attributes": ["MijnOverheid.ageLower.over12"]
+				"label": "Address",
+				"attributes": ["IRMAWiki.member.email", "Surfnet.root.userID", "MijnOverheid.address.street"]
 			},
 			{
-				"label": "over16",
+				"label": "Over 18",
 				"attributes": ["MijnOverheid.ageLower.over16"]
 			}
 		]
