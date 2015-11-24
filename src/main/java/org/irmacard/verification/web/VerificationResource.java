@@ -112,12 +112,12 @@ public class VerificationResource {
             throws InfoException {
         VerificationSession session = getSession(sessiontoken);
 
-        proofs.populatePublicKeyArray();
-
         DisclosureProofResult result;
         try {
+            proofs.populatePublicKeyArray();
             result = session.getRequest().verify(proofs);
-        } catch (NullPointerException e) {
+        } catch (Exception e) {
+            // Everything in the verification has to be exactly right; if not, we don't accept the proofs as valid
             e.printStackTrace();
             result = new DisclosureProofResult();
             result.setStatus(DisclosureProofResult.Status.INVALID);
