@@ -55,17 +55,19 @@ public class VerificationApplication extends ResourceConfig {
         // register session state
         register(new VerificationSessionsBinder());
 
-        try {
-            // Setup Core location for IRMA
-            URI CORE_LOCATION = VerificationApplication.class.getClassLoader()
-                    .getResource("/irma_configuration/").toURI();
-            DescriptionStore.setCoreLocation(CORE_LOCATION);
-            DescriptionStore.getInstance();
-            IdemixKeyStore.setCoreLocation(CORE_LOCATION);
-            IdemixKeyStore.getInstance();
-        } catch (URISyntaxException|InfoException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
+        if (!DescriptionStore.isLocationSet() || !IdemixKeyStore.isLocationSet()) {
+            try {
+                // Setup Core location for IRMA
+                URI CORE_LOCATION = VerificationApplication.class.getClassLoader()
+                        .getResource("/irma_configuration/").toURI();
+                DescriptionStore.setCoreLocation(CORE_LOCATION);
+                DescriptionStore.getInstance();
+                IdemixKeyStore.setCoreLocation(CORE_LOCATION);
+                IdemixKeyStore.getInstance();
+            } catch (URISyntaxException | InfoException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
         }
     }
 }

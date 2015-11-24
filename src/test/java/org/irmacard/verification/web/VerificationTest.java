@@ -38,6 +38,8 @@ import org.glassfish.jersey.test.TestProperties;
 import org.glassfish.jersey.test.jetty.JettyTestContainerFactory;
 import org.irmacard.credentials.idemix.IdemixCredential;
 import org.irmacard.credentials.idemix.info.IdemixKeyStore;
+import org.irmacard.credentials.idemix.proofs.ProofCollection;
+import org.irmacard.credentials.idemix.proofs.ProofCollectionBuilder;
 import org.irmacard.credentials.idemix.proofs.ProofD;
 import org.irmacard.credentials.info.DescriptionStore;
 import org.irmacard.credentials.info.InfoException;
@@ -110,9 +112,11 @@ public class VerificationTest extends JerseyTest {
 				.get(DisclosureProofRequest.class);
 
 		// Create the proof and post it
-		ProofD proof = cred.createDisclosureProof(disclosed, request.getContext(), request.getNonce());
-		Status status = target("/v1/" + session + "/proof").request(MediaType.APPLICATION_JSON)
-				.post(Entity.entity(proof, MediaType.APPLICATION_JSON), Status.class);
+		ProofCollection proofs = new ProofCollectionBuilder(request.getContext(), request.getNonce())
+				.addProofD(cred, disclosed)
+				.build();
+		Status status = target("/v1/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
+				.post(Entity.entity(proofs, MediaType.APPLICATION_JSON), Status.class);
 		assert(status == expectedResult);
 
 		// Fetch the JSON web token containing the attributes
@@ -164,7 +168,7 @@ public class VerificationTest extends JerseyTest {
 		DisclosureProofRequest request = target("/v1/" + session).request(MediaType.APPLICATION_JSON)
 				.get(DisclosureProofRequest.class);
 
-		Status status = target("/v1/" + session + "/proof").request(MediaType.APPLICATION_JSON)
+		Status status = target("/v1/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
 				.post(Entity.entity("{\"foo\": 1}", MediaType.APPLICATION_JSON), Status.class);
 		assert(status == Status.INVALID);
 
@@ -185,7 +189,7 @@ public class VerificationTest extends JerseyTest {
 		DisclosureProofRequest request = target("/v1/" + session).request(MediaType.APPLICATION_JSON)
 				.get(DisclosureProofRequest.class);
 
-		Status status = target("/v1/" + session + "/proof").request(MediaType.APPLICATION_JSON)
+		Status status = target("/v1/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
 				.post(Entity.entity("{\"foo\": 1", MediaType.APPLICATION_JSON), Status.class);
 		assert(status == Status.INVALID);
 
@@ -209,15 +213,17 @@ public class VerificationTest extends JerseyTest {
 
 		// Create the proof
 		List<Integer> disclosed = Arrays.asList(2, 3);
-		ProofD proof = cred.createDisclosureProof(disclosed, request.getContext(), request.getNonce());
+		ProofCollection proofs = new ProofCollectionBuilder(request.getContext(), request.getNonce())
+				.addProofD(cred, disclosed)
+				.build();
 
 		// Dirty hackz0rs to invalidate the proof
-		Field f = proof.getClass().getDeclaredField("A");
+		Field f = ProofD.class.getDeclaredField("A");
 		f.setAccessible(true);
-		f.set(proof, BigInteger.TEN);
+		f.set(proofs.getProofD(0), BigInteger.TEN);
 
-		Status status = target("/v1/" + session + "/proof").request(MediaType.APPLICATION_JSON)
-				.post(Entity.entity(proof, MediaType.APPLICATION_JSON), Status.class);
+		Status status = target("/v1/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
+				.post(Entity.entity(proofs, MediaType.APPLICATION_JSON), Status.class);
 		assert(status == Status.INVALID);
 
 		// Fetch the JSON web token containing the attributes
