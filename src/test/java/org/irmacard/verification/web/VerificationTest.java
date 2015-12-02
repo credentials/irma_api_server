@@ -38,8 +38,8 @@ import org.glassfish.jersey.test.TestProperties;
 import org.glassfish.jersey.test.jetty.JettyTestContainerFactory;
 import org.irmacard.credentials.idemix.IdemixCredential;
 import org.irmacard.credentials.idemix.info.IdemixKeyStore;
-import org.irmacard.credentials.idemix.proofs.ProofCollection;
-import org.irmacard.credentials.idemix.proofs.ProofCollectionBuilder;
+import org.irmacard.credentials.idemix.proofs.ProofList;
+import org.irmacard.credentials.idemix.proofs.ProofListBuilder;
 import org.irmacard.credentials.idemix.proofs.ProofD;
 import org.irmacard.credentials.info.DescriptionStore;
 import org.irmacard.credentials.info.InfoException;
@@ -113,7 +113,7 @@ public class VerificationTest extends JerseyTest {
 				.get(DisclosureProofRequest.class);
 
 		// Create the proof and post it
-		ProofCollection proofs = new ProofCollectionBuilder(request.getContext(), request.getNonce())
+		ProofList proofs = new ProofListBuilder(request.getContext(), request.getNonce())
 				.addProofD(cred, disclosed)
 				.build();
 		Status status = target("/v1/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
@@ -214,14 +214,14 @@ public class VerificationTest extends JerseyTest {
 
 		// Create the proof
 		List<Integer> disclosed = Arrays.asList(2, 3);
-		ProofCollection proofs = new ProofCollectionBuilder(request.getContext(), request.getNonce())
+		ProofList proofs = new ProofListBuilder(request.getContext(), request.getNonce())
 				.addProofD(cred, disclosed)
 				.build();
 
 		// Dirty hackz0rs to invalidate the proof
 		Field f = ProofD.class.getDeclaredField("A");
 		f.setAccessible(true);
-		f.set(proofs.getProofD(0), BigInteger.TEN);
+		f.set(proofs.get(0), BigInteger.TEN);
 
 		Status status = target("/v1/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
 				.post(Entity.entity(proofs, MediaType.APPLICATION_JSON), Status.class);
@@ -255,7 +255,7 @@ public class VerificationTest extends JerseyTest {
 		request = target("/v1/" + session).request(MediaType.APPLICATION_JSON).get(DisclosureProofRequest.class);
 
 		// Create the proof and post it;
-		ProofCollection proofs = new ProofCollectionBuilder(request.getContext(), request.getNonce())
+		ProofList proofs = new ProofListBuilder(request.getContext(), request.getNonce())
 				.addProofD(cred1, Arrays.asList(1, 2))
 				.addProofD(cred2, Arrays.asList(1, 3))
 				.build();

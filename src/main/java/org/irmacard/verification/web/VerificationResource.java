@@ -35,7 +35,7 @@ package org.irmacard.verification.web;
 
 import io.jsonwebtoken.Jwts;
 import org.bouncycastle.util.encoders.Base64;
-import org.irmacard.credentials.idemix.proofs.ProofCollection;
+import org.irmacard.credentials.idemix.proofs.ProofList;
 import org.irmacard.credentials.idemix.util.Crypto;
 import org.irmacard.credentials.info.InfoException;
 import org.irmacard.verification.common.DisclosureProofRequest;
@@ -108,7 +108,7 @@ public class VerificationResource {
     @Path("/{sessiontoken}/proofs")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public DisclosureProofResult.Status proofs(ProofCollection proofs, @PathParam("sessiontoken") String sessiontoken)
+    public DisclosureProofResult.Status proofs(ProofList proofs, @PathParam("sessiontoken") String sessiontoken)
             throws InfoException {
         VerificationSession session = getSession(sessiontoken);
 

@@ -9,13 +9,25 @@ var sprequest = {
 	"request": {
 		"content": [
 			{
-				"label": "Address",
-				"attributes": ["IRMAWiki.member.email", "Surfnet.root.userID", "MijnOverheid.address.street"]
+				"label": "Email",
+				"attributes": ["IRMAWiki.member.email", "Surfnet.root.userID"]
+			},
+			{
+				"label": "Name",
+				"attributes": ["MijnOverheid.fullName.firstname", "IRMAWiki.member.realname"]
 			},
 			{
 				"label": "Over 18",
-				"attributes": ["MijnOverheid.ageLower.over16"]
-			}
+				"attributes": ["MijnOverheid.ageLower.over18", "MijnOverheid.ageLower.over9000"]
+			},
+			//{
+			//	"label": "Foo",
+			//	"attributes": ["MijnOverheid.foobar.baz"]
+			//},
+			//{
+			//	"label": "Bar",
+			//	"attributes": ["MijnOverheid.barfoo.baz"]
+			//},
 		]
 	}
 };
@@ -48,8 +60,9 @@ function poll(token) {
 					throw "Invalid subject";
 			}
 		} catch(err) {
-			console.log("Token invalid: " + err.toString());
-			console.log(body);
+			result = 1;
+			console.log("\nDid not receive a valid token (error: \"" + err.toString() + "\")");
+			console.log("Data: " + String(body));
 		}
 	});
 }

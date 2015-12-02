@@ -33,11 +33,7 @@
 
 package org.irmacard.verification.web;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
-import org.irmacard.verification.common.util.AttributeDisjuctionSerializer;
-import org.irmacard.verification.common.AttributeDisjunction;
 import org.irmacard.verification.common.util.GsonUtil;
 
 import java.io.IOException;
