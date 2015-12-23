@@ -43,6 +43,12 @@ public class VerificationSession {
     private ServiceProviderRequest spRequest;
     private DisclosureProofResult result;
     private ProofD proof;
+    private Status status = Status.INITIALIZED;
+    private StatusSocket statusSocket;
+
+    public enum Status {
+        INITIALIZED, CONNECTED, DONE
+    };
 
     public VerificationSession(String sessionToken, ServiceProviderRequest spRequest) {
         this.sessionToken = sessionToken;
@@ -73,11 +79,30 @@ public class VerificationSession {
         this.proof = proof;
     }
 
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatusSocket(StatusSocket socket) {
+        this.statusSocket = socket;
+    }
+
+    public void setStatusConnected() {
+        status = Status.CONNECTED;
+        statusSocket.sendConnected();
+    }
+
+    public void setStatusDone() {
+        status = Status.DONE;
+        statusSocket.sendDone();
+    }
+
     public DisclosureProofResult getResult() {
         return result;
     }
 
     public void setResult(DisclosureProofResult result) {
         this.result = result;
+        setStatusDone();
     }
 }

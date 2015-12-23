@@ -53,7 +53,7 @@ public class VerificationApplication extends ResourceConfig {
         register(VerificationResource.class);
 
         // register session state
-        register(new VerificationSessionsBinder());
+        // register(new VerificationSessionsBinder());
 
         if (!DescriptionStore.isLocationSet() || !IdemixKeyStore.isLocationSet()) {
             try {

@@ -99,8 +99,18 @@ public class VerificationResource {
     @Produces(MediaType.APPLICATION_JSON)
     public DisclosureProofRequest get(@PathParam("sessiontoken") String sessiontoken) {
         System.out.println("Received get, token: " + sessiontoken);
+        VerificationSession session = getSession(sessiontoken);
+        session.setStatusConnected();
 
-        return getSession(sessiontoken).getRequest();
+        return session.getRequest();
+    }
+
+    @GET
+    @Path("/{sessiontoken}/status")
+    @Produces(MediaType.APPLICATION_JSON)
+    public VerificationSession.Status getStatus(
+            @PathParam("sessiontoken") String sessiontoken) {
+        return getSession(sessiontoken).getStatus();
     }
 
     @POST
@@ -147,10 +157,14 @@ public class VerificationResource {
         return result;
     }
 
+    // TODO: This seems to also return (signed) data even if the proof does not
+    // verify, maybe we want to refuse this method if that is the case, need to
+    // change workflow to allow this.
     @GET
     @Path("/{sessiontoken}/getproof")
     @Produces(MediaType.TEXT_PLAIN)
     public String gettoken(@PathParam("sessiontoken") String sessiontoken) throws KeyManagementException {
+        System.out.println("Retrieving signed proof");
         VerificationSession session = getSession(sessiontoken);
         DisclosureProofResult result = getproof(sessiontoken);
 
