@@ -36,6 +36,15 @@ package org.irmacard.verification.web;
 import java.util.HashMap;
 
 public class VerificationSessions {
+    private static VerificationSessions vs = null;
+
+    public static VerificationSessions getInstance() {
+        if (vs == null) {
+            vs = new VerificationSessions();
+        }
+        return vs;
+    }
+
     private HashMap<String, VerificationSession> sessions;
 
     public VerificationSessions() {

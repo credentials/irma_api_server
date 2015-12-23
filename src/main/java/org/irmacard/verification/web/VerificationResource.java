@@ -61,8 +61,7 @@ import java.util.Calendar;
 public class VerificationResource {
     private SecureRandom rnd;
 
-    @Inject
-    private VerificationSessions sessions;
+    private VerificationSessions sessions = VerificationSessions.getInstance();
 
     private static final int SESSION_TOKEN_LENGTH = 33;
     private static final int DEFAULT_TOKEN_VALIDITY = 60 * 60; // 1 hour
