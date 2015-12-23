@@ -34,6 +34,7 @@
 package org.irmacard.verification.web;
 
 import java.util.HashMap;
+import java.util.Map.Entry;
 
 public class VerificationSessions {
     private static VerificationSessions vs = null;
@@ -61,5 +62,15 @@ public class VerificationSessions {
 
     public void remove(VerificationSession session) {
         sessions.remove(session.getSessionToken());
+    }
+
+    public void print() {
+        System.out.println("Active verification sessions:");
+        for (Entry<String, VerificationSession> pairs : sessions.entrySet()) {
+            String key = pairs.getKey();
+            VerificationSession session = pairs.getValue();
+
+            System.out.println(key + ": " + session);
+        }
     }
 }
