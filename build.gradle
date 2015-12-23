@@ -1,6 +1,17 @@
 apply plugin: 'war'
-apply plugin: 'jetty'
+apply plugin: 'org.akhikhl.gretty'
 apply plugin: 'eclipse-wtp'
+
+buildscript {
+    repositories {
+        mavenLocal()
+        jcenter()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.akhikhl.gretty:gretty:1.2.4'
+    }
+}
 
 repositories {
     mavenLocal()
@@ -13,6 +24,7 @@ repositories {
 dependencies {
     compile 'org.glassfish.jersey.core:jersey-server:2.19'
     compile 'org.glassfish.jersey.containers:jersey-container-servlet:2.19'
+    compile 'org.eclipse.jetty.websocket:javax-websocket-server-impl:9.2.14.v20151106'
 
     compile 'io.jsonwebtoken:jjwt:0.6.0'
 
@@ -26,7 +38,9 @@ dependencies {
     testCompile 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-jetty:2.19'
 }
 
-jettyRun {
-    reload = "automatic"
-    scanIntervalSeconds = 1
+gretty {
+    contextConfigFile = file('src/test/resources/jetty-env.xml')
+    scanInterval = 10
+    inplaceMode = "soft"
+    loggingLevel="DEBUG"
 }

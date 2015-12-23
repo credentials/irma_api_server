@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configure class="org.eclipse.jetty.webapp.WebAppContext">
+    <!-- Disable scanning of jars, this can mess stuff up bigtime, but
+         it makes booting a whole lot faster, see:
+         https://wiki.eclipse.org/Jetty/Howto/Avoid_slow_deployment -->
+    <Call name="setAttribute">
+        <Arg>org.eclipse.jetty.server.webapp.WebInfIncludeJarPattern</Arg>
+        <Arg>.*/spring-security[^/]*\.jar$|.*/spring-web[^/]*\.jar$|.*/classes/.*</Arg>
+    </Call>
+</Configure>
