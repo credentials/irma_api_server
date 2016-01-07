@@ -42,7 +42,7 @@ import javax.websocket.Session;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 
-@ServerEndpoint("/api/v1/status/{sessionToken}")
+@ServerEndpoint("/api/v2/status/{sessionToken}")
 public class StatusSocket {
 
     private Session session;

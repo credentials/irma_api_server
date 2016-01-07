@@ -57,7 +57,7 @@ import java.security.SecureRandom;
 import java.util.Calendar;
 
 
-@Path("v1")
+@Path("v2")
 public class VerificationResource {
     private SecureRandom rnd;
 
@@ -91,7 +91,7 @@ public class VerificationResource {
         System.out.println("Received session, token: " + token);
         System.out.println(request.toString());
 
-        return new DisclosureQr("1.0", token);
+        return new DisclosureQr("2.0", token);
     }
 
     @GET
