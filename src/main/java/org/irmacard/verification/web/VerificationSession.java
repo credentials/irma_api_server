@@ -89,12 +89,16 @@ public class VerificationSession {
 
     public void setStatusConnected() {
         status = Status.CONNECTED;
-        statusSocket.sendConnected();
+
+        if (statusSocket != null)
+            statusSocket.sendConnected();
     }
 
     public void setStatusDone() {
         status = Status.DONE;
-        statusSocket.sendDone();
+
+        if (statusSocket != null)
+            statusSocket.sendDone();
     }
 
     public DisclosureProofResult getResult() {
