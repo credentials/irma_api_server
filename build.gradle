@@ -41,6 +41,5 @@ dependencies {
 gretty {
     contextConfigFile = file('src/test/resources/jetty-env.xml')
     scanInterval = 10
-    inplaceMode = "soft"
-    loggingLevel="DEBUG"
+    inplaceMode = "hard"
 }
