@@ -59,17 +59,12 @@ import java.util.Calendar;
 
 @Path("verification")
 public class VerificationResource {
-    private SecureRandom rnd;
+    private Sessions<VerificationSession> sessions = Sessions.getVerificationSessions();
 
-    private VerificationSessions sessions = VerificationSessions.getInstance();
-
-    private static final int SESSION_TOKEN_LENGTH = 33;
     private static final int DEFAULT_TOKEN_VALIDITY = 60 * 60; // 1 hour
 
     @Inject
-    public VerificationResource() {
-        rnd = new SecureRandom();
-    }
+    public VerificationResource() {}
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
@@ -84,7 +79,7 @@ public class VerificationResource {
         if (request.getContext() == null || request.getContext().equals(BigInteger.ZERO))
             request.setContext(Crypto.sha256Hash(request.toString(false).getBytes()));
 
-        String token = generateSessionToken();
+        String token = Sessions.generateSessionToken();
         VerificationSession session = new VerificationSession(token, spRequest);
         sessions.addSession(session);
 
@@ -99,7 +94,7 @@ public class VerificationResource {
     @Produces(MediaType.APPLICATION_JSON)
     public DisclosureProofRequest get(@PathParam("sessiontoken") String sessiontoken) {
         System.out.println("Received get, token: " + sessiontoken);
-        VerificationSession session = getSession(sessiontoken);
+        VerificationSession session = sessions.getNonNullSession(sessiontoken);
         session.setStatusConnected();
 
         return session.getRequest();
@@ -110,7 +105,7 @@ public class VerificationResource {
     @Produces(MediaType.APPLICATION_JSON)
     public VerificationSession.Status getStatus(
             @PathParam("sessiontoken") String sessiontoken) {
-        return getSession(sessiontoken).getStatus();
+        return sessions.getNonNullSession(sessiontoken).getStatus();
     }
 
     @POST
@@ -119,7 +114,7 @@ public class VerificationResource {
     @Produces(MediaType.APPLICATION_JSON)
     public DisclosureProofResult.Status proofs(ProofList proofs, @PathParam("sessiontoken") String sessiontoken)
             throws InfoException {
-        VerificationSession session = getSession(sessiontoken);
+        VerificationSession session = sessions.getNonNullSession(sessiontoken);
 
         DisclosureProofResult result;
         try {
@@ -143,7 +138,7 @@ public class VerificationResource {
     @Path("/{sessiontoken}/getunsignedproof")
     @Produces(MediaType.APPLICATION_JSON)
     public DisclosureProofResult getproof(@PathParam("sessiontoken") String sessiontoken) {
-        VerificationSession session = getSession(sessiontoken);
+        VerificationSession session = sessions.getNonNullSession(sessiontoken);
         DisclosureProofResult result = session.getResult();
 
         if (result == null) {
@@ -165,7 +160,7 @@ public class VerificationResource {
     @Produces(MediaType.TEXT_PLAIN)
     public String gettoken(@PathParam("sessiontoken") String sessiontoken) throws KeyManagementException {
         System.out.println("Retrieving signed proof");
-        VerificationSession session = getSession(sessiontoken);
+        VerificationSession session = sessions.getNonNullSession(sessiontoken);
         DisclosureProofResult result = getproof(sessiontoken);
 
         Calendar now = Calendar.getInstance();
@@ -184,39 +179,9 @@ public class VerificationResource {
     @DELETE
     @Path("/{sessiontoken}")
     public void delete(@PathParam("sessiontoken") String sessiontoken) {
-        VerificationSession session = getSession(sessiontoken);
+        VerificationSession session = sessions.getNonNullSession(sessiontoken);
 
         System.out.println("Received delete, token: " + sessiontoken);
         sessions.remove(session);
-    }
-
-    /**
-     * Either returns a valid, non-null session associated to the specified token, or throws an exception.
-     * @throws InputInvalidException if the token is null or ""
-     * @throws SessionUnknownException if there is no session corresponding to the token
-     */
-    private VerificationSession getSession(String token) throws InputInvalidException, SessionUnknownException {
-        if (token == null || token.equals(""))
-            throw new InputInvalidException("Supply a valid session token");
-
-        VerificationSession session = sessions.getSession(token);
-        if (session == null)
-            throw new SessionUnknownException();
-
-        return session;
-    }
-
-    /**
-     * A random session token. Returns a base64 encoded string representing the
-     * session token. The characters '+' and '/' are removed from this
-     * representation.
-     *
-     * @return the random session token
-     */
-    private String generateSessionToken() {
-        byte[] token = new byte[SESSION_TOKEN_LENGTH];
-        rnd.nextBytes(token);
-        String strtoken = new String(Base64.encode(token));
-        return strtoken.replace("+", "").replace("/", "");
     }
 }

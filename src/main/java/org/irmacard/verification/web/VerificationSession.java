@@ -38,7 +38,7 @@ import org.irmacard.verification.common.DisclosureProofRequest;
 import org.irmacard.verification.common.DisclosureProofResult;
 import org.irmacard.verification.common.ServiceProviderRequest;
 
-public class VerificationSession {
+public class VerificationSession implements IrmaSession {
     private String sessionToken;
     private ServiceProviderRequest spRequest;
     private DisclosureProofResult result;
@@ -55,6 +55,7 @@ public class VerificationSession {
         this.spRequest = spRequest;
     }
 
+    @Override
     public String getSessionToken() {
         return sessionToken;
     }

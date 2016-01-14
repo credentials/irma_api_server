@@ -47,7 +47,7 @@ public class StatusSocket {
 
     private Session session;
     private RemoteEndpoint.Async remote;
-    private VerificationSessions sessions = VerificationSessions.getInstance();
+    private Sessions<VerificationSession> sessions = Sessions.getVerificationSessions();
 
     @OnClose
     public void onWebSocketClose(CloseReason closeReason) {
