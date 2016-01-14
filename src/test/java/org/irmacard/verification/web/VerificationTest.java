@@ -88,7 +88,7 @@ public class VerificationTest extends JerseyTest {
 	protected Application configure() {
 		enable(TestProperties.LOG_TRAFFIC);
 		enable(TestProperties.DUMP_ENTITY);
-		return new VerificationApplication();
+		return new ApiApplication();
 	}
 
 	public String createSession() throws InfoException {
@@ -96,7 +96,7 @@ public class VerificationTest extends JerseyTest {
 				.getVerificationDescriptionByName("NYTimes", "ageLowerOver12"));
 		ServiceProviderRequest spRequest = new ServiceProviderRequest("testrequest", request, 60);
 
-		DisclosureQr qr = target("/v1/").request(MediaType.APPLICATION_JSON)
+		DisclosureQr qr = target("/verification/").request(MediaType.APPLICATION_JSON)
 				.post(Entity.entity(spRequest, MediaType.APPLICATION_JSON), DisclosureQr.class);
 
 		String sessiontoken = qr.getUrl();
@@ -109,19 +109,19 @@ public class VerificationTest extends JerseyTest {
 	throws InfoException, KeyManagementException {
 		IdemixCredential cred = getAgeLowerCredential();
 		String session = createSession();
-		DisclosureProofRequest request = target("/v1/" + session).request(MediaType.APPLICATION_JSON)
+		DisclosureProofRequest request = target("/verification/" + session).request(MediaType.APPLICATION_JSON)
 				.get(DisclosureProofRequest.class);
 
 		// Create the proof and post it
 		ProofList proofs = new ProofListBuilder(request.getContext(), request.getNonce())
 				.addProofD(cred, disclosed)
 				.build();
-		Status status = target("/v1/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
+		Status status = target("/verification/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
 				.post(Entity.entity(proofs, MediaType.APPLICATION_JSON), Status.class);
 		assert(status == expectedResult);
 
 		// Fetch the JSON web token containing the attributes
-		String jwt = target("/v1/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);
+		String jwt = target("/verification/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);
 
 		// Verify the token itself, and that the credential was valid
 		PublicKey pk = TokenKeyManager.getPublicKey();
@@ -149,11 +149,11 @@ public class VerificationTest extends JerseyTest {
 	@SuppressWarnings("unused")
 	public void missingProofTest() throws InfoException, KeyManagementException {
 		String session = createSession();
-		DisclosureProofRequest request = target("/v1/" + session).request(MediaType.APPLICATION_JSON)
+		DisclosureProofRequest request = target("/verification/" + session).request(MediaType.APPLICATION_JSON)
 				.get(DisclosureProofRequest.class);
 
 		// Fetch the JSON web token
-		String jwt = target("/v1/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);
+		String jwt = target("/verification/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);
 
 		// Verify the token itself, and that the credential was valid
 		PublicKey pk = TokenKeyManager.getPublicKey();
@@ -166,15 +166,15 @@ public class VerificationTest extends JerseyTest {
 	@SuppressWarnings("unused")
 	public void brokenProofTest() throws InfoException, KeyManagementException {
 		String session = createSession();
-		DisclosureProofRequest request = target("/v1/" + session).request(MediaType.APPLICATION_JSON)
+		DisclosureProofRequest request = target("/verification/" + session).request(MediaType.APPLICATION_JSON)
 				.get(DisclosureProofRequest.class);
 
-		Status status = target("/v1/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
+		Status status = target("/verification/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
 				.post(Entity.entity("{\"foo\": 1}", MediaType.APPLICATION_JSON), Status.class);
 		assert(status == Status.INVALID);
 
 		// Fetch the JSON web token containing the attributes
-		String jwt = target("/v1/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);
+		String jwt = target("/verification/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);
 
 		// Verify the token itself, and that the credential was valid
 		PublicKey pk = TokenKeyManager.getPublicKey();
@@ -187,15 +187,15 @@ public class VerificationTest extends JerseyTest {
 	@SuppressWarnings("unused")
 	public void brokenJsonTest() throws InfoException, KeyManagementException {
 		String session = createSession();
-		DisclosureProofRequest request = target("/v1/" + session).request(MediaType.APPLICATION_JSON)
+		DisclosureProofRequest request = target("/verification/" + session).request(MediaType.APPLICATION_JSON)
 				.get(DisclosureProofRequest.class);
 
-		Status status = target("/v1/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
+		Status status = target("/verification/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
 				.post(Entity.entity("{\"foo\": 1", MediaType.APPLICATION_JSON), Status.class);
 		assert(status == Status.INVALID);
 
 		// Fetch the JSON web token containing the attributes
-		String jwt = target("/v1/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);
+		String jwt = target("/verification/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);
 
 		// Verify the token itself, and that the credential was valid
 		PublicKey pk = TokenKeyManager.getPublicKey();
@@ -209,7 +209,7 @@ public class VerificationTest extends JerseyTest {
 	throws InfoException, KeyManagementException, NoSuchFieldException, IllegalAccessException {
 		IdemixCredential cred = getAgeLowerCredential();
 		String session = createSession();
-		DisclosureProofRequest request = target("/v1/" + session).request(MediaType.APPLICATION_JSON)
+		DisclosureProofRequest request = target("/verification/" + session).request(MediaType.APPLICATION_JSON)
 				.get(DisclosureProofRequest.class);
 
 		// Create the proof
@@ -223,12 +223,12 @@ public class VerificationTest extends JerseyTest {
 		f.setAccessible(true);
 		f.set(proofs.get(0), BigInteger.TEN);
 
-		Status status = target("/v1/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
+		Status status = target("/verification/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
 				.post(Entity.entity(proofs, MediaType.APPLICATION_JSON), Status.class);
 		assert(status == Status.INVALID);
 
 		// Fetch the JSON web token containing the attributes
-		String jwt = target("/v1/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);
+		String jwt = target("/verification/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);
 
 		// Verify the token itself, and that the credential was valid
 		PublicKey pk = TokenKeyManager.getPublicKey();
@@ -247,24 +247,24 @@ public class VerificationTest extends JerseyTest {
 		request.getContent().add(new AttributeDisjunction("name", "MijnOverheid.fullName.firstname"));
 		ServiceProviderRequest spRequest = new ServiceProviderRequest("testrequest", request, 60);
 
-		DisclosureQr qr = target("/v1/").request(MediaType.APPLICATION_JSON)
+		DisclosureQr qr = target("/verification/").request(MediaType.APPLICATION_JSON)
 				.post(Entity.entity(spRequest, MediaType.APPLICATION_JSON), DisclosureQr.class);
 
 		String session = qr.getUrl();
 
-		request = target("/v1/" + session).request(MediaType.APPLICATION_JSON).get(DisclosureProofRequest.class);
+		request = target("/verification/" + session).request(MediaType.APPLICATION_JSON).get(DisclosureProofRequest.class);
 
 		// Create the proof and post it;
 		ProofList proofs = new ProofListBuilder(request.getContext(), request.getNonce())
 				.addProofD(cred1, Arrays.asList(1, 2))
 				.addProofD(cred2, Arrays.asList(1, 3))
 				.build();
-		Status status = target("/v1/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
+		Status status = target("/verification/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
 				.post(Entity.entity(proofs, MediaType.APPLICATION_JSON), Status.class);
 		assert(status == Status.VALID);
 
 		// Fetch the JSON web token containing the attributes
-		String jwt = target("/v1/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);
+		String jwt = target("/verification/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);
 
 		// Verify the token itself, and that the credential was valid
 		PublicKey pk = TokenKeyManager.getPublicKey();

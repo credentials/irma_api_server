@@ -7,12 +7,12 @@
         <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
         <init-param>
             <param-name>javax.ws.rs.Application</param-name>
-            <param-value>org.irmacard.verification.web.VerificationApplication</param-value>
+            <param-value>org.irmacard.verification.web.ApiApplication</param-value>
         </init-param>
         <load-on-startup>1</load-on-startup>
     </servlet>
     <servlet-mapping>
         <servlet-name>irma_verification_server</servlet-name>
-        <url-pattern>/api/*</url-pattern>
+        <url-pattern>/api/v2/*</url-pattern>
     </servlet-mapping>
 </web-app>

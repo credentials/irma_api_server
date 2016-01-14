@@ -44,8 +44,8 @@ import org.irmacard.credentials.info.DescriptionStore;
 import org.irmacard.credentials.info.InfoException;
 
 @ApplicationPath("/")
-public class VerificationApplication extends ResourceConfig {
-    public VerificationApplication() {
+public class ApiApplication extends ResourceConfig {
+    public ApiApplication() {
         // register Gson
         register(GsonJerseyProvider.class);
 
@@ -58,7 +58,7 @@ public class VerificationApplication extends ResourceConfig {
         if (!DescriptionStore.isLocationSet() || !IdemixKeyStore.isLocationSet()) {
             try {
                 // Setup Core location for IRMA
-                URI CORE_LOCATION = VerificationApplication.class.getClassLoader()
+                URI CORE_LOCATION = ApiApplication.class.getClassLoader()
                         .getResource("/irma_configuration/").toURI();
                 DescriptionStore.setCoreLocation(CORE_LOCATION);
                 DescriptionStore.getInstance();

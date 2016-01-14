@@ -32,7 +32,7 @@ var sprequest = {
 	}
 };
 
-var server = process.argv[2] + "/irma_verification_server/api/v2/";
+var server = process.argv[2] + "/irma_verification_server/api/v2/verification/";
 var publickey = fs.readFileSync('src/main/resources/pk.pem');
 var result = null;
 

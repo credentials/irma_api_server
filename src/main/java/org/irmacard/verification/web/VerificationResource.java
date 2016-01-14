@@ -57,7 +57,7 @@ import java.security.SecureRandom;
 import java.util.Calendar;
 
 
-@Path("v2")
+@Path("verification")
 public class VerificationResource {
     private SecureRandom rnd;
 
