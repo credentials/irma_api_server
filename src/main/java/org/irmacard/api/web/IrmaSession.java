@@ -1,4 +1,4 @@
-package org.irmacard.verification.web;
+package org.irmacard.api.web;
 
 public interface IrmaSession {
 	String getSessionToken();

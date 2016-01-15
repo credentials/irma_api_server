@@ -31,12 +31,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.irmacard.verification.web;
+package org.irmacard.api.web;
 
 import org.irmacard.credentials.idemix.proofs.ProofD;
-import org.irmacard.verification.common.DisclosureProofRequest;
-import org.irmacard.verification.common.DisclosureProofResult;
-import org.irmacard.verification.common.ServiceProviderRequest;
+import org.irmacard.api.common.DisclosureProofRequest;
+import org.irmacard.api.common.DisclosureProofResult;
+import org.irmacard.api.common.ServiceProviderRequest;
 
 public class VerificationSession implements IrmaSession {
     private String sessionToken;

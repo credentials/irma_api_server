@@ -1,4 +1,4 @@
-# IRMA verification server
+# IRMA API server
 
 This is a server that sits between IRMA tokens such as the [card emulator app](https://github.com/credentials/irma_android_cardemu) on the one hand, and service providers on the other hand. Upon the request of a service provider, it requests attributes from the token and verifies their validity. If succesful, the service provider receives the attributes.
 

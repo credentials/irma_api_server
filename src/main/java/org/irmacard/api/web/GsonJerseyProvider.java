@@ -31,10 +31,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.irmacard.verification.web;
+package org.irmacard.api.web;
 
 import com.google.gson.JsonSyntaxException;
-import org.irmacard.verification.common.util.GsonUtil;
+import org.irmacard.api.common.util.GsonUtil;
 
 import java.io.IOException;
 import java.io.InputStream;

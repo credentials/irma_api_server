@@ -3,16 +3,16 @@
      see implementation details http://jersey.java.net/nonav/documentation/latest/jax-rs.html -->
 <web-app version="3.0" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <servlet>
-        <servlet-name>irma_verification_server</servlet-name>
+        <servlet-name>irma_api_server</servlet-name>
         <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
         <init-param>
             <param-name>javax.ws.rs.Application</param-name>
-            <param-value>org.irmacard.verification.web.ApiApplication</param-value>
+            <param-value>org.irmacard.api.web.ApiApplication</param-value>
         </init-param>
         <load-on-startup>1</load-on-startup>
     </servlet>
     <servlet-mapping>
-        <servlet-name>irma_verification_server</servlet-name>
+        <servlet-name>irma_api_server</servlet-name>
         <url-pattern>/api/v2/*</url-pattern>
     </servlet-mapping>
 </web-app>

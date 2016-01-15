@@ -1,5 +1,5 @@
 /*
- * SessionUnknownException.java
+ * InputInvalidException.java
  *
  * Copyright (c) 2015, Sietse Ringers, Radboud University
  * All rights reserved.
@@ -31,24 +31,33 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.irmacard.verification.web.exceptions;
+package org.irmacard.api.web.exceptions;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
 /**
- * Exception to indicate that the indicated session is unknown or expired
+ * Exception to indicate that the supplied input (for example as a result of a
+ * POST request, is not as expected).
+ *
  */
 @SuppressWarnings("serial")
-public class SessionUnknownException extends WebApplicationException {
-
-    private final static String MESSAGE = "Supplied sessionToken not found or expired";
+public class InputInvalidException extends WebApplicationException {
+    /**
+     * Create a HTTP 400 Bad Request message indicating that something was wrong
+     * with the input.
+     */
+    public InputInvalidException() {
+        super(Response.status(Response.Status.BAD_REQUEST).build());
+    }
 
     /**
-     * Create a HTTP 401 Unauthorized message indicating that the supplied
-     * session was not found or was expired
+     * Create a HTTP 400 Bad Request message.
+     *
+     * @param message
+     *            the String describing what is wrong with the supplied input
      */
-    public SessionUnknownException() {
-        super(Response.status(Response.Status.BAD_REQUEST).entity(MESSAGE).type("test/plain").build());
+    public InputInvalidException(String message) {
+        super(Response.status(Response.Status.BAD_REQUEST).entity(message).type("test/plain").build());
     }
 }

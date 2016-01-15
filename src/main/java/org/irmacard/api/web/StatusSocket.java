@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.irmacard.verification.web;
+package org.irmacard.api.web;
 
 import javax.websocket.CloseReason;
 import javax.websocket.OnClose;

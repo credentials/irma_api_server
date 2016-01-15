@@ -28,7 +28,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.irmacard.verification.web;
+package org.irmacard.api.web;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -43,12 +43,12 @@ import org.irmacard.credentials.idemix.proofs.ProofListBuilder;
 import org.irmacard.credentials.idemix.proofs.ProofD;
 import org.irmacard.credentials.info.DescriptionStore;
 import org.irmacard.credentials.info.InfoException;
-import org.irmacard.verification.common.AttributeDisjunction;
-import org.irmacard.verification.common.DisclosureProofRequest;
-import org.irmacard.verification.common.DisclosureProofResult.Status;
-import org.irmacard.verification.common.DisclosureQr;
-import org.irmacard.verification.common.ServiceProviderRequest;
-import org.irmacard.verification.common.util.GsonUtil;
+import org.irmacard.api.common.AttributeDisjunction;
+import org.irmacard.api.common.DisclosureProofRequest;
+import org.irmacard.api.common.DisclosureProofResult.Status;
+import org.irmacard.api.common.DisclosureQr;
+import org.irmacard.api.common.ServiceProviderRequest;
+import org.irmacard.api.common.util.GsonUtil;
 import org.junit.BeforeClass;
 import org.junit.Test;
 

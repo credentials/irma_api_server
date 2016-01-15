@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.irmacard.verification.web;
+package org.irmacard.api.web;
 
 import java.net.URI;
 import java.net.URISyntaxException;

@@ -31,11 +31,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.irmacard.verification.web;
+package org.irmacard.api.web;
 
 import org.bouncycastle.util.encoders.Base64;
-import org.irmacard.verification.web.exceptions.InputInvalidException;
-import org.irmacard.verification.web.exceptions.SessionUnknownException;
+import org.irmacard.api.web.exceptions.InputInvalidException;
+import org.irmacard.api.web.exceptions.SessionUnknownException;
 
 import java.security.SecureRandom;
 import java.util.HashMap;

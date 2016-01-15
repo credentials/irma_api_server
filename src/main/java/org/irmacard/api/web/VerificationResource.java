@@ -31,21 +31,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.irmacard.verification.web;
+package org.irmacard.api.web;
 
 import io.jsonwebtoken.Jwts;
-import org.bouncycastle.util.encoders.Base64;
 import org.irmacard.credentials.idemix.proofs.ProofList;
 import org.irmacard.credentials.idemix.util.Crypto;
 import org.irmacard.credentials.info.InfoException;
-import org.irmacard.verification.common.DisclosureProofRequest;
-import org.irmacard.verification.common.DisclosureProofResult;
-import org.irmacard.verification.common.DisclosureQr;
-import org.irmacard.verification.common.ServiceProviderRequest;
-import org.irmacard.verification.common.util.GsonUtil;
-import org.irmacard.verification.web.exceptions.InputInvalidException;
-
-import org.irmacard.verification.web.exceptions.SessionUnknownException;
+import org.irmacard.api.common.DisclosureProofRequest;
+import org.irmacard.api.common.DisclosureProofResult;
+import org.irmacard.api.common.DisclosureQr;
+import org.irmacard.api.common.ServiceProviderRequest;
+import org.irmacard.api.common.util.GsonUtil;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -53,7 +49,6 @@ import javax.ws.rs.core.MediaType;
 
 import java.math.BigInteger;
 import java.security.KeyManagementException;
-import java.security.SecureRandom;
 import java.util.Calendar;
 
 
