@@ -100,13 +100,21 @@ public class StatusSocket {
      * server.
      */
     public void sendConnected() {
-        remote.sendText("CONNECTED");
+        sendUpdate("CONNECTED");
     }
 
     /**
      * Inform the client-website that the token has completed the verification.
      */
     public void sendDone() {
-        remote.sendText("DONE");
+        sendUpdate("DONE");
+    }
+
+    private void sendUpdate(String msg) {
+        if (remote != null) {
+            remote.sendText(msg);
+        } else {
+            System.out.println("No websocket registered");
+        }
     }
 }
