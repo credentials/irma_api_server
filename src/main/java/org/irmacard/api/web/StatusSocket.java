@@ -33,6 +33,8 @@
 
 package org.irmacard.api.web;
 
+import java.io.IOException;
+
 import javax.websocket.CloseReason;
 import javax.websocket.OnClose;
 import javax.websocket.OnMessage;
@@ -108,6 +110,35 @@ public class StatusSocket {
      */
     public void sendDone() {
         sendUpdate("DONE");
+    }
+
+    /**
+     * Inform the client website that the token rejected the verification
+     */
+    public void sendCancelled() {
+        sendUpdate("CANCELLED");
+    }
+
+    /**
+     * Returns whether the status socket is still connected.
+     *
+     * @return if the status socket is open
+     */
+    public boolean isSocketConnected() {
+        return remote != null;
+    }
+
+    /**
+     * Closes the statusSocket
+     */
+    public void close() {
+        if (session != null) {
+            try {
+                session.close();
+            } catch (IOException e) {
+            }
+        }
+
     }
 
     private void sendUpdate(String msg) {

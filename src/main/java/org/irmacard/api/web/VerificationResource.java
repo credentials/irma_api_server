@@ -42,6 +42,7 @@ import org.irmacard.api.common.DisclosureProofResult;
 import org.irmacard.api.common.DisclosureQr;
 import org.irmacard.api.common.ServiceProviderRequest;
 import org.irmacard.api.common.util.GsonUtil;
+import org.irmacard.api.web.VerificationSession.Status;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -100,7 +101,16 @@ public class VerificationResource {
     @Produces(MediaType.APPLICATION_JSON)
     public VerificationSession.Status getStatus(
             @PathParam("sessiontoken") String sessiontoken) {
-        return sessions.getNonNullSession(sessiontoken).getStatus();
+        VerificationSession session = sessions.getNonNullSession(sessiontoken);
+        Status status = session.getStatus();
+
+        // Remove the session if this session is cancelled
+        if (status == Status.CANCELLED) {
+            session.close();
+            sessions.remove(session);
+        }
+
+        return status;
     }
 
     @POST
@@ -177,6 +187,24 @@ public class VerificationResource {
         VerificationSession session = sessions.getNonNullSession(sessiontoken);
 
         System.out.println("Received delete, token: " + sessiontoken);
-        sessions.remove(session);
+        if (session.getStatus() == Status.CONNECTED) {
+            // We have connected clients, we need to inform listeners of cancel
+            session.setStatusCancelled();
+
+            // If status socket is still active, the update has been sent, we
+            // can remove the session immediately, otherwise we wait until the
+            // status has been polled.
+            // TODO: if the poll never happens, the session is never removed
+            if (session.isStatusSocketConnected()) {
+                session.close();
+                sessions.remove(session);
+            }
+        } else {
+            // In all other cases INITIALIZED, CANCELLED, DONE all parties
+            // are already informed, we can close the session
+
+            session.close();
+            sessions.remove(session);
+        }
     }
 }
