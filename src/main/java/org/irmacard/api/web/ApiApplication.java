@@ -49,11 +49,11 @@ public class ApiApplication extends ResourceConfig {
         // register Gson
         register(GsonJerseyProvider.class);
 
-        // register enrollment application
+        // register verification application
         register(VerificationResource.class);
 
-        // register session state
-        // register(new VerificationSessionsBinder());
+        // register issuing application
+        register(IssueResource.class);
 
         if (!DescriptionStore.isLocationSet() || !IdemixKeyStore.isLocationSet()) {
             try {
