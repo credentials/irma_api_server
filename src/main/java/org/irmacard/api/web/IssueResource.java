@@ -25,6 +25,7 @@ import org.irmacard.api.common.util.GsonUtil;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.math.BigInteger;
 import java.util.*;
 
@@ -40,6 +41,9 @@ public class IssueResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public DisclosureQr create(IdentityProviderRequest isRequest) throws InfoException {
 		IssuingRequest request = isRequest.getRequest();
+
+		if (request == null || request.getCredentials() == null || request.getCredentials().size() == 0)
+			throw new InputInvalidException("Incomplete request");
 
 		// Check if we have all necessary secret keys
 		for (CredentialRequest cred : request.getCredentials()) {
@@ -65,12 +69,12 @@ public class IssueResource {
 	@Path("/{sessiontoken}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public IssuingRequest get(@PathParam("sessiontoken") String sessiontoken) {
-		System.out.println("Received get, token: " + sessiontoken);
-
 		IssueSession session = sessions.getNonNullSession(sessiontoken);
 		if (session.getStatus() != IssueSession.Status.INITIALIZED) {
-			throw new InputInvalidException("Unexpected command");
+			throw new WebApplicationException(Response.Status.UNAUTHORIZED);
 		}
+
+		System.out.println("Received get, token: " + sessiontoken);
 
 		session.setStatusConnected();
 		return session.getRequest();
@@ -84,8 +88,10 @@ public class IssueResource {
 			@PathParam("sessiontoken") String sessiontoken) throws InfoException, CredentialsException {
 		IssueSession session = sessions.getNonNullSession(sessiontoken);
 		if (session.getStatus() != IssueSession.Status.CONNECTED) {
-			throw new InputInvalidException("Unexpected command");
+			throw new WebApplicationException(Response.Status.UNAUTHORIZED);
 		}
+
+		System.out.println("Received commitments, token: " + sessiontoken);
 
 		IssuingRequest request = session.getRequest();
 		ProofList proofs = commitments.getCombinedProofs();
@@ -96,14 +102,16 @@ public class IssueResource {
 		// Lookup the public keys of any ProofD's in the proof list
 		proofs.populatePublicKeyArray();
 
-		// Lookup the public keys of all ProofU's in the proof list
+		// Lookup the public keys of all ProofU's in the proof list. We have to do this before we can compute the CL
+		// sigatures below, because that also verifies the proofs, which needs these keys.
 		ArrayList<IssueSignatureMessage> sigs = new ArrayList<>(credcount);
 		for (int i = 0; i < credcount; i++) {
 			CredentialRequest cred = request.getCredentials().get(i);
 			proofs.setPublicKey(i, cred.getPublicKey());
 		}
 
-		// Construct the CL signature for each credential to be issued. This also checks the validity of the commitments
+		// Construct the CL signature for each credential to be issued.
+		// FIXME This also checks the validity of _all_ proofs, for each iteration - so more than once
 		for (int i = 0; i < credcount; i++) {
 			CredentialRequest cred = request.getCredentials().get(i);
 			IdemixSecretKey sk = IdemixKeyStore.getInstance().getSecretKey(cred.getIssuerDescription());
@@ -113,6 +121,7 @@ public class IssueResource {
 					commitments, cred.convertToBigIntegers(), i, request.getNonce()));
 		}
 
+		session.setStatusDone();
 		return sigs;
 	}
 }

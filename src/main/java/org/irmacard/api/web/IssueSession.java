@@ -12,7 +12,7 @@ public class IssueSession implements IrmaSession {
 	private IssueCommitmentMessage commitments;
 
 	public enum Status {
-		INITIALIZED, CONNECTED, DONE, ABORTED
+		INITIALIZED, CONNECTED, CANCELLED, DONE
 	};
 
 	public IssueSession(String sessionToken, IdentityProviderRequest ipRequest) {
@@ -54,7 +54,7 @@ public class IssueSession implements IrmaSession {
 		status = Status.DONE;
 	}
 
-	public void setStatusAborted() {
-		status = Status.ABORTED;
+	public void setStatusCancelled() {
+		status = Status.CANCELLED;
 	}
 }
