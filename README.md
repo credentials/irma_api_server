@@ -1,8 +1,12 @@
 # IRMA API server
 
-This is a server that sits between IRMA tokens such as the [card emulator app](https://github.com/credentials/irma_android_cardemu) on the one hand, and service providers on the other hand. Upon the request of a service provider, it requests attributes from the token and verifies their validity. If succesful, the service provider receives the attributes.
+This is a server that sits between IRMA tokens such as the [card emulator app](https://github.com/credentials/irma_android_cardemu) on the one hand, and service or identity providers on the other hand. It handles all IRMA-specific cryptographic details of issuing credentials and verifying disclosure proofs on behalf of the service or identity provider.
 
 The API that this server offers is described [here](https://credentials.github.io/proposals/irma-without-apdus).
+
+# Experimental
+
+This project is very new and still in heavy development. It is _not_ yet suitable for deployment.
 
 # Running the server
 
@@ -12,7 +16,7 @@ The gradle build file should take care the dependencies. To run the server in de
 
 ## Generating RSA keys
 
-The server returns JSON web tokens signed using RSA, so you should generate an RSA public-private keypair before running the server. The private key of this pair must be put in `src/main/resources`. Using `openssl`, you can generate such a pair as follows.
+In the case of verification the server returns JSON web tokens signed using RSA, so you should generate an RSA public-private keypair before running the server. The private key of this pair must be put in `src/main/resources`. Using `openssl`, you can generate such a pair as follows.
 
 ```bash
 cd src/main/resources
@@ -49,4 +53,3 @@ To make a GET request on a resource:
 To make a POST request on a resource:
 
     curl -X POST -H "Content-Type: application/json" -d '{"a": 5.0,"b": -22.0}' http://localhost:8080/irma_verification_server_jersey/api/hello/json
-
