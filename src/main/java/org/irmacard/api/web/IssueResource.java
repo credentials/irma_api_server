@@ -1,8 +1,6 @@
 package org.irmacard.api.web;
 
-import org.irmacard.api.common.CredentialRequest;
-import org.irmacard.api.common.IdentityProviderRequest;
-import org.irmacard.api.common.IssuingRequest;
+import org.irmacard.api.common.*;
 import org.irmacard.api.web.exceptions.InputInvalidException;
 import org.irmacard.credentials.CredentialsException;
 import org.irmacard.credentials.idemix.IdemixIssuer;
@@ -11,19 +9,15 @@ import org.irmacard.credentials.idemix.info.IdemixKeyStore;
 import org.irmacard.credentials.idemix.messages.IssueCommitmentMessage;
 import org.irmacard.credentials.idemix.messages.IssueSignatureMessage;
 import org.irmacard.credentials.idemix.proofs.ProofList;
-import org.irmacard.credentials.idemix.util.Crypto;
 import org.irmacard.credentials.info.DescriptionStore;
 import org.irmacard.credentials.info.InfoException;
 import org.irmacard.credentials.info.IssuerDescription;
-import org.irmacard.api.common.DisclosureProofRequest;
-import org.irmacard.api.common.ClientQr;
 import org.irmacard.api.common.util.GsonUtil;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.math.BigInteger;
 import java.util.*;
 
 @Path("issue")
@@ -99,14 +93,25 @@ public class IssueResource {
 
 		// Lookup the public keys of all ProofU's in the proof list. We have to do this before we can compute the CL
 		// sigatures below, because that also verifies the proofs, which needs these keys.
-		ArrayList<IssueSignatureMessage> sigs = new ArrayList<>(credcount);
+		proofs.populatePublicKeyArray();
+		int disclosureCount = proofs.getProofDCount();
 		for (int i = 0; i < credcount; i++) {
 			CredentialRequest cred = request.getCredentials().get(i);
-			proofs.setPublicKey(i, cred.getPublicKey());
+			proofs.setPublicKey(disclosureCount + i, cred.getPublicKey());
+		}
+
+		// If any disclosures are required before we give the credentials, verify that they are present and correct
+		if (request.getRequiredAttributes().size() > 0) {
+			DisclosureProofRequest disclosureRequest = new DisclosureProofRequest(
+					request.getNonce(), request.getContext(), request.getRequiredAttributes());
+			if (disclosureRequest.verify(proofs).getStatus() != DisclosureProofResult.Status.VALID) {
+				throw new InputInvalidException("Incorrect disclosure proof");
+			}
 		}
 
 		// Construct the CL signature for each credential to be issued.
 		// FIXME This also checks the validity of _all_ proofs, for each iteration - so more than once
+		ArrayList<IssueSignatureMessage> sigs = new ArrayList<>(credcount);
 		for (int i = 0; i < credcount; i++) {
 			CredentialRequest cred = request.getCredentials().get(i);
 			IdemixSecretKey sk = IdemixKeyStore.getInstance().getSecretKey(cred.getIssuerDescription());

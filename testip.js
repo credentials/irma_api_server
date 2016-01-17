@@ -26,6 +26,15 @@ var iprequest = {
                     "zipcode": "6525 EC"
                 }
             }
+        ],
+        "disclose": [
+            {
+                "label": "Over 18",
+                "attributes": {
+                    "MijnOverheid.ageLower.over18": "yes",
+                    "Thalia.age.over18": "Yes"
+                }
+            }
         ]
     }
 };
