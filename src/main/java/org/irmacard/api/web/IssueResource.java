@@ -4,22 +4,19 @@ import org.irmacard.api.common.CredentialRequest;
 import org.irmacard.api.common.IdentityProviderRequest;
 import org.irmacard.api.common.IssuingRequest;
 import org.irmacard.api.web.exceptions.InputInvalidException;
-import org.irmacard.credentials.Attributes;
 import org.irmacard.credentials.CredentialsException;
 import org.irmacard.credentials.idemix.IdemixIssuer;
-import org.irmacard.credentials.idemix.IdemixPublicKey;
 import org.irmacard.credentials.idemix.IdemixSecretKey;
 import org.irmacard.credentials.idemix.info.IdemixKeyStore;
 import org.irmacard.credentials.idemix.messages.IssueCommitmentMessage;
 import org.irmacard.credentials.idemix.messages.IssueSignatureMessage;
 import org.irmacard.credentials.idemix.proofs.ProofList;
 import org.irmacard.credentials.idemix.util.Crypto;
-import org.irmacard.credentials.info.CredentialDescription;
 import org.irmacard.credentials.info.DescriptionStore;
 import org.irmacard.credentials.info.InfoException;
 import org.irmacard.credentials.info.IssuerDescription;
 import org.irmacard.api.common.DisclosureProofRequest;
-import org.irmacard.api.common.DisclosureQr;
+import org.irmacard.api.common.ClientQr;
 import org.irmacard.api.common.util.GsonUtil;
 
 import javax.inject.Inject;
@@ -39,7 +36,7 @@ public class IssueResource {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public DisclosureQr create(IdentityProviderRequest isRequest) throws InfoException {
+	public ClientQr create(IdentityProviderRequest isRequest) throws InfoException {
 		IssuingRequest request = isRequest.getRequest();
 
 		if (request == null || request.getCredentials() == null || request.getCredentials().size() == 0)
@@ -51,9 +48,7 @@ public class IssueResource {
 			IdemixKeyStore.getInstance().getSecretKey(id); // Throws InfoException if we don't have it, TODO handle better
 		}
 
-		request.setNonce(DisclosureProofRequest.generateNonce());
-		if (request.getContext() == null || request.getContext().equals(BigInteger.ZERO))
-			request.setContext(Crypto.sha256Hash("TODO".getBytes())); // TODO
+		request.setNonceAndContext();
 
 		String token = Sessions.generateSessionToken();
 		IssueSession session = new IssueSession(token, isRequest);
@@ -62,7 +57,7 @@ public class IssueResource {
 		System.out.println("Received issue session, token: " + token);
 		System.out.println(GsonUtil.getGson().toJson(isRequest));
 
-		return new DisclosureQr("2.0", token);
+		return new ClientQr("2.0", token);
 	}
 
 	@GET

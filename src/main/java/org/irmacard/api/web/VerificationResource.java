@@ -34,13 +34,11 @@
 package org.irmacard.api.web;
 
 import io.jsonwebtoken.Jwts;
+import org.irmacard.api.common.*;
+import org.irmacard.api.web.exceptions.InputInvalidException;
 import org.irmacard.credentials.idemix.proofs.ProofList;
 import org.irmacard.credentials.idemix.util.Crypto;
 import org.irmacard.credentials.info.InfoException;
-import org.irmacard.api.common.DisclosureProofRequest;
-import org.irmacard.api.common.DisclosureProofResult;
-import org.irmacard.api.common.DisclosureQr;
-import org.irmacard.api.common.ServiceProviderRequest;
 import org.irmacard.api.common.util.GsonUtil;
 import org.irmacard.api.web.VerificationSession.Status;
 
@@ -65,15 +63,16 @@ public class VerificationResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public DisclosureQr create(ServiceProviderRequest spRequest) {
+    public ClientQr create(ServiceProviderRequest spRequest) {
         DisclosureProofRequest request = spRequest.getRequest();
+
+        if (request.getContent() == null || request.getContent().size() == 0)
+            throw new InputInvalidException("Cannot ask for empty disclosure");
 
         if (spRequest.getValidity() == 0)
             spRequest.setValidity(DEFAULT_TOKEN_VALIDITY);
 
-        request.setNonce(DisclosureProofRequest.generateNonce());
-        if (request.getContext() == null || request.getContext().equals(BigInteger.ZERO))
-            request.setContext(Crypto.sha256Hash(request.toString(false).getBytes()));
+        request.setNonceAndContext();
 
         String token = Sessions.generateSessionToken();
         VerificationSession session = new VerificationSession(token, spRequest);
@@ -82,7 +81,7 @@ public class VerificationResource {
         System.out.println("Received session, token: " + token);
         System.out.println(request.toString());
 
-        return new DisclosureQr("2.0", token);
+        return new ClientQr("2.0", token);
     }
 
     @GET
