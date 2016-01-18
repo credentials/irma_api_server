@@ -151,8 +151,10 @@ public class IssueResource {
 		System.out.println("Received status query, token: " + sessiontoken);
 
 		IssueSession.Status status = session.getStatus();
-		if (status == IssueSession.Status.DONE || status == IssueSession.Status.CANCELLED)
+		if (status == IssueSession.Status.DONE || status == IssueSession.Status.CANCELLED) {
+			System.out.println("Removing session " + sessiontoken);
 			sessions.remove(session);
+		}
 
 		return status.toString();
 	}

@@ -40,6 +40,24 @@ var iprequest = {
 };
 
 var server = process.argv[2] + "/irma_api_server/api/v2/issue/";
+var result = null;
+
+function poll(token) {
+    var pollOptions = {
+        uri: server + token + "/getstatus",
+        method: 'GET'
+    };
+
+    request(pollOptions, function (error, response, body) {
+        if (body == "INITIALIZED" || body == "CONNECTED")
+            process.stdout.write(".");
+        else {
+            console.log();
+            console.log(body);
+            result = body;
+        }
+    });
+}
 
 var options = {
     uri: server,
@@ -55,6 +73,15 @@ request(options, function (error, response, body) {
 
         console.log(qrcontent);
         qrcode.generate(JSON.stringify(qrcontent));
+
+        var check = function() {
+            if (result == null) {
+                poll(session);
+                setTimeout(check, 1000);
+            }
+        };
+
+        check();
     } else {
         console.log("Error in initial request: ", error);
         console.log(body);
