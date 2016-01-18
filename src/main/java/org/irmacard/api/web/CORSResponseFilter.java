@@ -1,7 +1,7 @@
 /*
- * VerificationApplication.java
+ * CORSResponseFilter.java
  *
- * Copyright (c) 2015, Sietse Ringers, Radboud University
+ * Copyright (c) 2016, Wouter Lueks, Radboud University
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,44 +33,28 @@
 
 package org.irmacard.api.web;
 
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.io.IOException;
 
-import javax.ws.rs.ApplicationPath;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerResponseContext;
+import javax.ws.rs.container.ContainerResponseFilter;
+import javax.ws.rs.core.MultivaluedMap;
 
-import org.glassfish.jersey.server.ResourceConfig;
-import org.irmacard.credentials.idemix.info.IdemixKeyStore;
-import org.irmacard.credentials.info.DescriptionStore;
-import org.irmacard.credentials.info.InfoException;
+public class CORSResponseFilter implements ContainerResponseFilter {
 
-@ApplicationPath("/")
-public class ApiApplication extends ResourceConfig {
-    public ApiApplication() {
-        // register Gson
-        register(GsonJerseyProvider.class);
+    @Override
+    public void filter(ContainerRequestContext requestContext,
+            ContainerResponseContext responseContext) throws IOException {
 
-        // register verification application
-        register(VerificationResource.class);
+        MultivaluedMap<String, Object> headers = responseContext.getHeaders();
 
-        // register issuing application
-        register(IssueResource.class);
+        // TODO: can do access control based on origin of request here
+        // currently this is the same as allowing all domains.
+        String origin = requestContext.getHeaderString("Origin");
+        headers.add("Access-Control-Allow-Origin", origin);
 
-        // register CORS filter
-        register(CORSResponseFilter.class);
-
-        if (!DescriptionStore.isLocationSet() || !IdemixKeyStore.isLocationSet()) {
-            try {
-                // Setup Core location for IRMA
-                URI CORE_LOCATION = ApiApplication.class.getClassLoader()
-                        .getResource("/irma_configuration/").toURI();
-                DescriptionStore.setCoreLocation(CORE_LOCATION);
-                DescriptionStore.getInstance();
-                IdemixKeyStore.setCoreLocation(CORE_LOCATION);
-                IdemixKeyStore.getInstance();
-            } catch (URISyntaxException | InfoException e) {
-                e.printStackTrace();
-                throw new RuntimeException(e);
-            }
-        }
+        headers.add("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT");
+        headers.add("Access-Control-Allow-Headers", "Content-Type");
     }
+
 }
