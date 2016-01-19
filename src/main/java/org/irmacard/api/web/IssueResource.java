@@ -1,5 +1,6 @@
 package org.irmacard.api.web;
 
+import io.jsonwebtoken.*;
 import org.irmacard.api.common.*;
 import org.irmacard.api.web.exceptions.InputInvalidException;
 import org.irmacard.credentials.CredentialsException;
@@ -18,36 +19,88 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.security.Key;
 import java.util.*;
 
 @Path("issue")
 public class IssueResource {
 	private Sessions<IssueSession> sessions = Sessions.getIssuingSessions();
 
+	/** Extracts the public key from the identity (from the JWT issuer field) from a JWT */
+	private SigningKeyResolver keyresolver = new SigningKeyResolverAdapter() {
+		@Override public Key resolveSigningKey(JwsHeader header, Claims claims) {
+			return ApiConfiguration.getInstance().getIdentityProviderKey(claims.getIssuer());
+		}
+	};
+
 	@Inject
 	public IssueResource() {}
 
+	/**
+	 * Entry post for issue sessions creations. This only verifies the authenticity of the JWT; all other handling
+	 * (checking if this issuer is authorized to issue, creating and saving the session, etc) is done by
+	 * {@link #create(IdentityProviderRequest, String)} below.
+	 */
 	@POST
-	@Consumes(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.TEXT_PLAIN)
 	@Produces(MediaType.APPLICATION_JSON)
-	public ClientQr create(IdentityProviderRequest isRequest) {
+	public ClientQr newSession(String jwt) {
 		// The entire issuing application should not be loaded if the following is false, but just to be sure
 		if (!ApiConfiguration.getInstance().isIssuingEnabled())
 			throw new WebApplicationException("Issuing is disabled", Response.Status.UNAUTHORIZED);
 
+		// Verify JWT validity
+		Claims jwtContents;
+		try {
+			jwtContents = Jwts.parser()
+					.requireSubject("issuerequest")
+					.setSigningKeyResolver(keyresolver)
+					.parseClaimsJws(jwt)
+					.getBody();
+		} catch (UnsupportedJwtException|MalformedJwtException|SignatureException
+				|ExpiredJwtException|IllegalArgumentException e) {
+			throw new WebApplicationException("Invalid JSON web token", Response.Status.UNAUTHORIZED);
+		}
+
+		// Check if the JWT is not too old
+		long now = Calendar.getInstance().getTimeInMillis();
+		long issued_at = jwtContents.getIssuedAt().getTime();
+		if (now - issued_at > ApiConfiguration.getInstance().getMaxJwtAge())
+			throw new WebApplicationException("JWT too old", Response.Status.UNAUTHORIZED);
+
+		// Dirty Hack (tm): we can get a Map from Jwts, but we need an IdentityProviderRequest.
+		// But the structure of the contents of the map exactly matches the fields from IdentityProviderRequest,
+		// (to be more specific: either this is the case or the identity provider made a mistake),
+		// so we convert the map to json, and then that json to an IdentityProviderRequest.
+		Map map = jwtContents.get("iprequest", Map.class);
+		String json = GsonUtil.getGson().toJson(map);
+		IdentityProviderRequest request = GsonUtil.getGson().fromJson(json, IdentityProviderRequest.class);
+
+		return create(request, jwtContents.getIssuer());
+	}
+
+	/**
+	 * Given an issuing request from a specified identity provider, check if it is authorized to issue what
+	 * it wants to issue, and if we can in fact issue those credentials; if so, generate a nonce and context
+	 * and store it in the sessions.
+	 *
+	 * @return The session token and protocol version, for the identity provider to forward to the token
+	 */
+	private ClientQr create(IdentityProviderRequest isRequest, String idp) {
 		IssuingRequest request = isRequest.getRequest();
 
 		if (request == null || request.getCredentials() == null || request.getCredentials().size() == 0)
 			throw new InputInvalidException("Incomplete request");
 
 		for (CredentialRequest cred : request.getCredentials()) {
-			if (!ApiConfiguration.getInstance().canIssueCredential(cred.getFullName()))
+			if (!ApiConfiguration.getInstance().canIssueCredential(idp, cred.getFullName()))
 				throw new WebApplicationException("Cannot issue credential " + cred.getFullName(),
 						Response.Status.UNAUTHORIZED);
 		}
 
 		try {
 			// Check if we have all necessary secret keys
+			// TODO: check if the requested attribute names match those from the DescriptionStore
 			for (CredentialRequest cred : request.getCredentials()) {
 				IssuerDescription id = DescriptionStore.getInstance().getIssuerDescription(cred.getIssuerName());
 				IdemixKeyStore.getInstance().getSecretKey(id); // Throws InfoException if we don't have it

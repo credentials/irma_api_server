@@ -1,0 +1,14 @@
+{
+    "jwt_privatekey": "sk.der",
+    "jwt_publickey": "pk.der",
+
+    "enable_issuing": true,
+    "max_issue_request_age": 5,
+
+    "authorized_idps": {
+        "testip": [
+            "MijnOverheid.ageLower",
+            "MijnOverheid.address"
+        ]
+    }
+}

@@ -1,5 +1,7 @@
 var qrcode = require('qrcode-terminal');
 var request = require('request');
+var jwt = require("jsonwebtoken");
+var fs = require('fs');
 
 var iprequest = {
     data: "foobar",
@@ -38,6 +40,13 @@ var iprequest = {
     }
 };
 
+var jwtOptions = {
+    algorithm: "RS256",
+    issuer: "testip",
+    subject: "issuerequest"
+};
+
+var token = jwt.sign({iprequest: iprequest}, fs.readFileSync('testip.pem'), jwtOptions);
 var server = process.argv[2] + "/irma_api_server/api/v2/issue/";
 var result = null;
 
@@ -61,13 +70,13 @@ function poll(token) {
 var options = {
     uri: server,
     method: 'POST',
-    json: iprequest
+    body: token
 };
 
 request(options, function (error, response, body) {
     if (!error && response.statusCode == 200) {
-        var qrcontent = body;
-        var session = body.u;
+        var qrcontent = JSON.parse(body);
+        var session = qrcontent.u;
         qrcontent.u = server + qrcontent.u;
 
         console.log(qrcontent);

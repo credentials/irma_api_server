@@ -3,6 +3,8 @@ package org.irmacard.api.web;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.irmacard.api.common.util.GsonUtil;
 
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,21 +16,23 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-@SuppressWarnings({"MismatchedQueryAndUpdateOfCollection", "FieldCanBeLocal"})
+// TODO: sanity check on configuration values
+
+@SuppressWarnings({"MismatchedQueryAndUpdateOfCollection", "FieldCanBeLocal", "unused"})
 public class ApiConfiguration {
 	private static final String filename = "config.json";
 	private static ApiConfiguration instance;
 
 	/* Configuration keys and defaults */
-	private String jwt_secretkey = "sk.der";
+	private String jwt_privatekey = "sk.der";
 	private String jwt_publickey = "pk.der";
 	private boolean enable_issuing = false;
-	private ArrayList<String> issue_credentials = new ArrayList<>();
-	public HashMap<String, String> idp_publickeys = new HashMap<>();
+	private int max_issue_request_age = 5;
+	private HashMap<String, ArrayList<String>> authorized_idps = new HashMap<>();
 
 	/* Transient members for convenience */
-	private transient PrivateKey jwtKey;
-	private transient PublicKey jwtPKey;
+	private transient PrivateKey jwtPrivateKey;
+	private transient PublicKey jwtPublicKey;
 
 	public ApiConfiguration() {}
 
@@ -38,47 +42,12 @@ public class ApiConfiguration {
 				String json = new String(getResource(filename));
 				instance = GsonUtil.getGson().fromJson(json, ApiConfiguration.class);
 			} catch (IOException e) {
+				System.out.println("WARNING: could not load configuration file. Using default values");
 				instance = new ApiConfiguration();
 			}
 		}
 
 		return instance;
-	}
-
-	public PrivateKey getJwtPrivateKey() throws KeyManagementException {
-		if (jwtKey == null) {
-			try {
-				byte[] bytes = ApiConfiguration.getResource(jwt_secretkey);
-				if (bytes == null || bytes.length == 0)
-					throw new KeyManagementException("Could not read private key");
-
-				PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(bytes);
-
-				jwtKey = KeyFactory.getInstance("RSA").generatePrivate(spec);
-			} catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
-				throw new KeyManagementException(e);
-			}
-		}
-
-		return jwtKey;
-	}
-
-	public PublicKey getJwtPublicKey() throws KeyManagementException {
-		if (jwtPKey == null) {
-			try {
-				byte[] bytes = ApiConfiguration.getResource(jwt_publickey);
-				if (bytes == null || bytes.length == 0)
-					throw new KeyManagementException("Could not read public key");
-
-				X509EncodedKeySpec spec = new X509EncodedKeySpec(bytes);
-
-				jwtPKey = KeyFactory.getInstance("RSA").generatePublic(spec);
-			} catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
-				throw new KeyManagementException(e);
-			}
-		}
-
-		return jwtPKey;
 	}
 
 	public SignatureAlgorithm getJwtAlgorithm() {
@@ -89,12 +58,64 @@ public class ApiConfiguration {
 		return enable_issuing;
 	}
 
-	public boolean canIssueCredential(String name) {
-		return issue_credentials.contains(name);
+	public boolean canIssueCredential(String idp, String name) {
+		return authorized_idps.containsKey(idp) && authorized_idps.get(idp).contains(name);
+	}
+
+	public int getMaxJwtAge() {
+		return max_issue_request_age * 1000;
+	}
+
+	public PublicKey getIdentityProviderKey(String name) {
+		try {
+			return getPublicKey(name + ".der");
+		} catch (KeyManagementException e) {
+			throw new WebApplicationException("No public key for identity provider " + name,
+					Response.Status.UNAUTHORIZED);
+		}
+	}
+
+	public PrivateKey getJwtPrivateKey() throws KeyManagementException {
+		if (jwtPrivateKey == null) {
+			try {
+				byte[] bytes = ApiConfiguration.getResource(jwt_privatekey);
+				if (bytes == null || bytes.length == 0)
+					throw new KeyManagementException("Could not read private key");
+
+				PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(bytes);
+
+				jwtPrivateKey = KeyFactory.getInstance("RSA").generatePrivate(spec);
+			} catch (IOException|NoSuchAlgorithmException|InvalidKeySpecException e) {
+				throw new KeyManagementException(e);
+			}
+		}
+
+		return jwtPrivateKey;
+	}
+
+	public PublicKey getJwtPublicKey() throws KeyManagementException {
+		if (jwtPublicKey == null)
+			jwtPublicKey = getPublicKey(jwt_publickey);
+
+		return jwtPublicKey;
+	}
+
+	private PublicKey getPublicKey(String filename) throws KeyManagementException {
+		try {
+			byte[] bytes = ApiConfiguration.getResource(filename);
+			if (bytes == null || bytes.length == 0)
+				throw new KeyManagementException("Could not read public key");
+
+			X509EncodedKeySpec spec = new X509EncodedKeySpec(bytes);
+
+			return KeyFactory.getInstance("RSA").generatePublic(spec);
+		} catch (IOException|NoSuchAlgorithmException|InvalidKeySpecException e) {
+			throw new KeyManagementException(e);
+		}
 	}
 
 	public static byte[] getResource(String filename) throws IOException {
-		URL url = TokenKeyManager.class.getClassLoader().getResource(filename);
+		URL url = ApiConfiguration.class.getClassLoader().getResource(filename);
 		if (url == null)
 			throw new IOException("Could not load file " + filename);
 
