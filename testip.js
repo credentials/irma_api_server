@@ -29,10 +29,9 @@ var iprequest = {
         ],
         "disclose": [
             {
-                "label": "Over 18",
+                "label": "Age (higher)",
                 "attributes": {
-                    "MijnOverheid.ageLower.over18": "yes",
-                    "Thalia.age.over18": "Yes"
+                    "MijnOverheid.ageHigher": "present"
                 }
             }
         ]

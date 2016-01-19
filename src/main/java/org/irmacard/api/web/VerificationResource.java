@@ -37,7 +37,6 @@ import io.jsonwebtoken.Jwts;
 import org.irmacard.api.common.*;
 import org.irmacard.api.web.exceptions.InputInvalidException;
 import org.irmacard.credentials.idemix.proofs.ProofList;
-import org.irmacard.credentials.idemix.util.Crypto;
 import org.irmacard.credentials.info.InfoException;
 import org.irmacard.api.common.util.GsonUtil;
 import org.irmacard.api.web.VerificationSession.Status;
@@ -46,7 +45,6 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
-import java.math.BigInteger;
 import java.security.KeyManagementException;
 import java.util.Calendar;
 
@@ -176,7 +174,8 @@ public class VerificationResource {
                 .setIssuedAt(now.getTime())
                 .setExpiration(expiry.getTime())
                 .setSubject("disclosure_result")
-                .signWith(TokenKeyManager.getAlgorithm(), TokenKeyManager.getKey())
+                .signWith(ApiConfiguration.getInstance().getJwtAlgorithm(),
+                        ApiConfiguration.getInstance().getJwtPrivateKey())
                 .compact();
     }
 

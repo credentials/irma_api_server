@@ -52,8 +52,13 @@ public class ApiApplication extends ResourceConfig {
         // register verification application
         register(VerificationResource.class);
 
-        // register issuing application
-        register(IssueResource.class);
+        // register issuing application, if applicable
+        if (ApiConfiguration.getInstance().isIssuingEnabled()) {
+            System.out.println("Enabling issuing");
+            register(IssueResource.class);
+        } else {
+            System.out.println("Disabling issuing");
+        }
 
         // register CORS filter
         register(CORSResponseFilter.class);

@@ -31,10 +31,20 @@ public class IssueResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public ClientQr create(IdentityProviderRequest isRequest) {
+		// The entire issuing application should not be loaded if the following is false, but just to be sure
+		if (!ApiConfiguration.getInstance().isIssuingEnabled())
+			throw new WebApplicationException("Issuing is disabled", Response.Status.UNAUTHORIZED);
+
 		IssuingRequest request = isRequest.getRequest();
 
 		if (request == null || request.getCredentials() == null || request.getCredentials().size() == 0)
 			throw new InputInvalidException("Incomplete request");
+
+		for (CredentialRequest cred : request.getCredentials()) {
+			if (!ApiConfiguration.getInstance().canIssueCredential(cred.getFullName()))
+				throw new WebApplicationException("Cannot issue credential " + cred.getFullName(),
+						Response.Status.UNAUTHORIZED);
+		}
 
 		try {
 			// Check if we have all necessary secret keys
@@ -89,8 +99,9 @@ public class IssueResource {
 		IssuingRequest request = session.getRequest();
 		ProofList proofs = commitments.getCombinedProofs();
 		int credcount = request.getCredentials().size();
-		if (proofs.size() < credcount)
+		if (proofs.size() < credcount) {
 			fail(new InputInvalidException("Proof count does not match credential count"), session);
+		}
 
 		// Lookup the public keys of any ProofD's in the proof list
 		proofs.populatePublicKeyArray();
@@ -165,6 +176,7 @@ public class IssueResource {
 	 */
 	private void fail(WebApplicationException e, IssueSession session) throws WebApplicationException {
 		session.setStatusCancelled();
+		e.printStackTrace();
 		throw e;
 	}
 }
