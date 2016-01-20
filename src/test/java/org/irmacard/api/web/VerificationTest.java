@@ -124,7 +124,7 @@ public class VerificationTest extends JerseyTest {
 		String jwt = target("/verification/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);
 
 		// Verify the token itself, and that the credential was valid
-		PublicKey pk = TokenKeyManager.getPublicKey();
+		PublicKey pk = ApiConfiguration.getInstance().getJwtPublicKey();
 		Claims body = Jwts.parser().setSigningKey(pk).parseClaimsJws(jwt).getBody();
 
 		assert body.get("status").toString().equals(expectedResult.name());
@@ -156,7 +156,7 @@ public class VerificationTest extends JerseyTest {
 		String jwt = target("/verification/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);
 
 		// Verify the token itself, and that the credential was valid
-		PublicKey pk = TokenKeyManager.getPublicKey();
+		PublicKey pk = ApiConfiguration.getInstance().getJwtPublicKey();
 		Claims body = Jwts.parser().setSigningKey(pk).parseClaimsJws(jwt).getBody();
 
 		assert body.get("status").toString().equals("WAITING");
@@ -177,7 +177,7 @@ public class VerificationTest extends JerseyTest {
 		String jwt = target("/verification/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);
 
 		// Verify the token itself, and that the credential was valid
-		PublicKey pk = TokenKeyManager.getPublicKey();
+		PublicKey pk = ApiConfiguration.getInstance().getJwtPublicKey();
 		Claims body = Jwts.parser().setSigningKey(pk).parseClaimsJws(jwt).getBody();
 
 		assert body.get("status").toString().equals("INVALID");
@@ -198,7 +198,7 @@ public class VerificationTest extends JerseyTest {
 		String jwt = target("/verification/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);
 
 		// Verify the token itself, and that the credential was valid
-		PublicKey pk = TokenKeyManager.getPublicKey();
+		PublicKey pk = ApiConfiguration.getInstance().getJwtPublicKey();
 		Claims body = Jwts.parser().setSigningKey(pk).parseClaimsJws(jwt).getBody();
 
 		assert body.get("status").toString().equals("INVALID");
@@ -231,7 +231,7 @@ public class VerificationTest extends JerseyTest {
 		String jwt = target("/verification/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);
 
 		// Verify the token itself, and that the credential was valid
-		PublicKey pk = TokenKeyManager.getPublicKey();
+		PublicKey pk = ApiConfiguration.getInstance().getJwtPublicKey();
 		Claims body = Jwts.parser().setSigningKey(pk).parseClaimsJws(jwt).getBody();
 
 		assert body.get("status").toString().equals("INVALID");
@@ -267,7 +267,7 @@ public class VerificationTest extends JerseyTest {
 		String jwt = target("/verification/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);
 
 		// Verify the token itself, and that the credential was valid
-		PublicKey pk = TokenKeyManager.getPublicKey();
+		PublicKey pk = ApiConfiguration.getInstance().getJwtPublicKey();
 		Claims body = Jwts.parser().setSigningKey(pk).parseClaimsJws(jwt).getBody();
 
 		assert body.get("status").toString().equals("VALID");
