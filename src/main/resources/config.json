@@ -10,6 +10,12 @@
     // Completely enable or disable issuing. Default: false
     "enable_issuing": true,
 
+    // In order to prevent linkability, the timestamps of all issued credentials must fall exactly on an
+    // epoch bondary. If this is set to true and the IdP requests a validity for a credential which does
+    // not fall on such a boundary, we reject the request. If set to true, we accept the request and
+    // floor it to the nearest epoch boundary ourselves. Default: true
+    "reject_unfloored_validity_timestamps": true,
+
     // DANGEROUS: Allow JWTs to be unsigned (using signing algorithm "none"). Default: false
     // Use with care: if you set this to true, anyone that can reach your server can create issuance requests!
     "allow_unsigned_issue_requests": false,

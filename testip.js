@@ -10,7 +10,7 @@ var iprequest = {
         "credentials": [
             {
                 "credential": "MijnOverheid.ageLower",
-                "validity": 6,
+                "validity": 1483228800,
                 "attributes": {
                     "over12": "yes",
                     "over16": "yes",
@@ -20,7 +20,7 @@ var iprequest = {
             },
             {
                 "credential": "MijnOverheid.address",
-                "validity": 6,
+                "validity": 1483228800,
                 "attributes": {
                     "country": "The Netherlands",
                     "city": "Nijmegen",

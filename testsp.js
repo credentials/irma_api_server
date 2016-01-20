@@ -8,10 +8,10 @@ var sprequest = {
 	"validity": 60,
 	"request": {
 		"content": [
-			{
-				"label": "Email",
-				"attributes": ["IRMAWiki.member.email", "Surfnet.root.userID"]
-			},
+			//{
+			//	"label": "Email",
+			//	"attributes": ["IRMAWiki.member.email", "Surfnet.root.userID"]
+			//},
 			{
 				"label": "Name",
 				"attributes": ["MijnOverheid.fullName.firstname", "IRMAWiki.member.realname"]

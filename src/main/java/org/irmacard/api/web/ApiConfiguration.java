@@ -30,6 +30,7 @@ public class ApiConfiguration {
 	private String jwt_privatekey = "sk.der";
 	private String jwt_publickey = "pk.der";
 	private boolean enable_issuing = false;
+	private boolean reject_unfloored_validity_timestamps = true;
 	private boolean allow_unsigned_issue_requests = false;
 	private int max_issue_request_age = 5;
 	private HashMap<String, ArrayList<String>> authorized_idps = new HashMap<>();
@@ -90,6 +91,10 @@ public class ApiConfiguration {
 		// This IDP can issue everything from the specified issuer
 		String issuer = parts[0];
 		return credentials.contains(issuer + ".*") || credentials.contains(name);
+	}
+
+	public boolean shouldRejectUnflooredTimestamps() {
+		return reject_unfloored_validity_timestamps;
 	}
 
 	public int getMaxJwtAge() {

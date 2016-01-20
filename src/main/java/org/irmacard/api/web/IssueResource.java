@@ -139,6 +139,13 @@ public class IssueResource {
 			throw new WebApplicationException("Missing Idemix secret key", Response.Status.UNAUTHORIZED);
 		}
 
+		if (ApiConfiguration.getInstance().shouldRejectUnflooredTimestamps()) {
+			for (CredentialRequest cred : request.getCredentials())
+				if (!cred.isValidityFloored())
+					throw new WebApplicationException("Requested credential validity does not match an epoch bondary",
+							Response.Status.UNAUTHORIZED);
+		}
+
 		request.setNonceAndContext();
 
 		String token = Sessions.generateSessionToken();
