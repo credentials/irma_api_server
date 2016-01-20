@@ -40,6 +40,7 @@ dependencies {
 
 gretty {
     contextConfigFile = file('src/test/resources/jetty-env.xml')
+    managedClassReload=true
     scanInterval = 10
     inplaceMode = "hard"
 }
