@@ -1,5 +1,6 @@
 package org.irmacard.api.web;
 
+import com.google.gson.JsonSyntaxException;
 import io.jsonwebtoken.*;
 import org.irmacard.api.common.*;
 import org.irmacard.api.web.exceptions.InputInvalidException;
@@ -45,6 +46,9 @@ public class IssueResource {
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Produces(MediaType.APPLICATION_JSON)
 	public ClientQr newSession(String jwt) {
+		if (ApiConfiguration.getInstance().isHotReloadEnabled())
+			ApiConfiguration.load();
+
 		// The entire issuing application should not be loaded if the following is false, but just to be sure
 		if (!ApiConfiguration.getInstance().isIssuingEnabled())
 			throw new WebApplicationException("Issuing is disabled", Response.Status.UNAUTHORIZED);
@@ -52,11 +56,7 @@ public class IssueResource {
 		// Verify JWT validity
 		Claims jwtContents;
 		try {
-			jwtContents = Jwts.parser()
-					.requireSubject("issuerequest")
-					.setSigningKeyResolver(keyresolver)
-					.parseClaimsJws(jwt)
-					.getBody();
+			jwtContents = checkJwtToken(jwt, ApiConfiguration.getInstance().allowUnsignedJwts());
 		} catch (UnsupportedJwtException|MalformedJwtException|SignatureException
 				|ExpiredJwtException|IllegalArgumentException e) {
 			throw new WebApplicationException("Invalid JSON web token", Response.Status.UNAUTHORIZED);
@@ -74,9 +74,39 @@ public class IssueResource {
 		// so we convert the map to json, and then that json to an IdentityProviderRequest.
 		Map map = jwtContents.get("iprequest", Map.class);
 		String json = GsonUtil.getGson().toJson(map);
-		IdentityProviderRequest request = GsonUtil.getGson().fromJson(json, IdentityProviderRequest.class);
+		IdentityProviderRequest request;
+		try {
+			request = GsonUtil.getGson().fromJson(json, IdentityProviderRequest.class);
+		} catch (JsonSyntaxException e) {
+			throw new InputInvalidException("Invalid JWT body");
+		}
 
 		return create(request, jwtContents.getIssuer());
+	}
+
+	/**
+	 * Helper function that, if allowUnsigned is true, first attempts to parse the JWT as an unsigned token and if
+	 * that fails, tries parsing it as a signed JWT. In the latter case the signature will have to be valid
+	 */
+	private Claims checkJwtToken(String jwt, boolean allowUnsigned) {
+		if (!allowUnsigned) { // Has to be signed, only try as signed JWT
+			System.out.println("Trying signed JWT");
+			return Jwts.parser()
+					.requireSubject("issuerequest")
+					.setSigningKeyResolver(keyresolver)
+					.parseClaimsJws(jwt)
+					.getBody();
+		} else { // First try to parse it as an unsigned JWT; if that fails, try it as a signed JWT
+			try {
+				System.out.println("Trying unsigned JWT");
+				return Jwts.parser()
+						.requireSubject("issuerequest")
+						.parseClaimsJwt(jwt)
+						.getBody();
+			} catch (UnsupportedJwtException e) {
+				return checkJwtToken(jwt, false);
+			}
+		}
 	}
 
 	/**

@@ -1,10 +1,30 @@
 {
+    // If this file should be reloaded on each new request. Default: true
+    "hot_reload_configuration": true,
+
+    // Names of the private/public key files for JWT signing (public key is only necessary for running unit tests)
+    // Default: "sk.der" and "pk.der"
     "jwt_privatekey": "sk.der",
     "jwt_publickey": "pk.der",
 
+    // Completely enable or disable issuing. Default: false
     "enable_issuing": true,
+
+    // DANGEROUS: Allow JWTs to be unsigned (using signing algorithm "none"). Default: false
+    // Use with care: if you set this to true, anyone that can reach your server can create issuance requests!
+    "allow_unsigned_issue_requests": false,
+
+    // Maximum age (in seconds) of incoming signing requests. Default: 5
     "max_issue_request_age": 5,
 
+    // A list of authorized IdP's and what credentials they may sign. Default: empty map {}
+    // Supports wildcards as follows:
+    // "testip": [ "*" ]              // testip can issue anything
+    // "testip": [ "MijnOverheid.*" ] // testip can issue all credentials from issuer MijnOverheid
+    // Assuming "allow_unsigned_issue_requests" is set to false, for each key identifying an identity provider,
+    // a .der public key file with the same name should be included in the src/main/resources folder, for
+    // verifying JWT's containing incoming issuing requests. For example, in the example below,
+    // src/main/resources/testip.der should exist.
     "authorized_idps": {
         "testip": [
             "MijnOverheid.ageLower",

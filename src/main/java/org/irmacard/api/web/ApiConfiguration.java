@@ -1,5 +1,6 @@
 package org.irmacard.api.web;
 
+import com.google.gson.JsonSyntaxException;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.irmacard.api.common.util.GsonUtil;
 
@@ -9,6 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -24,9 +26,11 @@ public class ApiConfiguration {
 	private static ApiConfiguration instance;
 
 	/* Configuration keys and defaults */
+	private boolean hot_reload_configuration = true;
 	private String jwt_privatekey = "sk.der";
 	private String jwt_publickey = "pk.der";
 	private boolean enable_issuing = false;
+	private boolean allow_unsigned_issue_requests = false;
 	private int max_issue_request_age = 5;
 	private HashMap<String, ArrayList<String>> authorized_idps = new HashMap<>();
 
@@ -36,16 +40,27 @@ public class ApiConfiguration {
 
 	public ApiConfiguration() {}
 
-	public static ApiConfiguration getInstance() {
-		if (instance == null) {
-			try {
-				String json = new String(getResource(filename));
-				instance = GsonUtil.getGson().fromJson(json, ApiConfiguration.class);
-			} catch (IOException e) {
-				System.out.println("WARNING: could not load configuration file. Using default values");
-				instance = new ApiConfiguration();
-			}
+	/**
+	 * Reloads the configuration from disk so that {@link #getInstance()} returns the updated version
+	 */
+	public static void load() {
+		// TODO: GSon seems to always be lenient (i.e. allow comments in the JSon), even though
+		// the documentation states that by default, it is not lenient. Why is this? Could change?
+		try {
+			String json = new String(getResource(filename));
+			instance = GsonUtil.getGson().fromJson(json, ApiConfiguration.class);
+		} catch (IOException|JsonSyntaxException e) {
+			System.out.println("WARNING: could not load configuration file. Using default values");
+			instance = new ApiConfiguration();
 		}
+
+		System.out.println("Configuration:");
+		System.out.println(instance.toString());
+	}
+
+	public static ApiConfiguration getInstance() {
+		if (instance == null)
+			load();
 
 		return instance;
 	}
@@ -59,11 +74,34 @@ public class ApiConfiguration {
 	}
 
 	public boolean canIssueCredential(String idp, String name) {
-		return authorized_idps.containsKey(idp) && authorized_idps.get(idp).contains(name);
+		if (!authorized_idps.containsKey(idp))
+			return false;
+
+		ArrayList<String> credentials = authorized_idps.get(idp);
+
+		// This IDP can issue everything
+		if (credentials.contains("*"))
+			return true;
+
+		String[] parts = name.split("\\.");
+		if (parts.length != 2)
+			throw new WebApplicationException("Unexpected credential identifier", Response.Status.UNAUTHORIZED);
+
+		// This IDP can issue everything from the specified issuer
+		String issuer = parts[0];
+		return credentials.contains(issuer + ".*") || credentials.contains(name);
 	}
 
 	public int getMaxJwtAge() {
 		return max_issue_request_age * 1000;
+	}
+
+	public boolean allowUnsignedJwts() {
+		return allow_unsigned_issue_requests;
+	}
+
+	public boolean isHotReloadEnabled() {
+		return hot_reload_configuration;
 	}
 
 	public PublicKey getIdentityProviderKey(String name) {
@@ -119,7 +157,9 @@ public class ApiConfiguration {
 		if (url == null)
 			throw new IOException("Could not load file " + filename);
 
-		return convertSteamToByteArray(url.openStream(), 2048);
+		URLConnection urlCon = url.openConnection();
+		urlCon.setUseCaches(false);
+		return convertSteamToByteArray(urlCon.getInputStream(), 2048);
 	}
 
 	public static byte[] convertSteamToByteArray(InputStream stream, int size) throws IOException {
@@ -135,5 +175,10 @@ public class ApiConfiguration {
 		os.flush();
 		os.close();
 		return os.toByteArray();
+	}
+
+	@Override
+	public String toString() {
+		return GsonUtil.getGson().toJson(this);
 	}
 }
