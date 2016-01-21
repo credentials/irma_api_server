@@ -43,4 +43,5 @@ gretty {
     managedClassReload=true
     scanInterval = 10
     inplaceMode = "hard"
+    httpsEnabled = true
 }

@@ -245,7 +245,7 @@ public class IssueResource {
 	}
 
 	@GET
-	@Path("/{sessiontoken}/getstatus")
+	@Path("/{sessiontoken}/status")
 	@Produces(MediaType.TEXT_PLAIN)
 	public String getStatus(@PathParam("sessiontoken") String sessiontoken) {
 		IssueSession session = sessions.getNonNullSession(sessiontoken);
