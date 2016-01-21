@@ -67,6 +67,14 @@ public class Sessions<T extends IrmaSession> {
         sessions = new HashMap<String, T>();
     }
 
+    public static IrmaSession findAnySession(String sessiontoken) {
+        IrmaSession session = getVerificationSessions().getSession(sessiontoken);
+        if (session != null)
+            return session;
+
+        return getIssuingSessions().getSession(sessiontoken);
+    }
+
     public void addSession(T session) {
         sessions.put(session.getSessionToken(), session);
     }

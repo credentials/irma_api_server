@@ -4,8 +4,7 @@ import org.irmacard.api.common.IssuingRequest;
 import org.irmacard.credentials.idemix.messages.IssueCommitmentMessage;
 import org.irmacard.api.common.IdentityProviderRequest;
 
-public class IssueSession implements IrmaSession {
-	private String sessionToken;
+public class IssueSession extends IrmaSession {
 	private Status status = Status.INITIALIZED;
 	private IdentityProviderRequest ipRequest;
 	private IssuingRequest request;
@@ -16,14 +15,9 @@ public class IssueSession implements IrmaSession {
 	};
 
 	public IssueSession(String sessionToken, IdentityProviderRequest ipRequest) {
-		this.sessionToken = sessionToken;
+		super(sessionToken);
 		this.ipRequest = ipRequest;
 		this.request = ipRequest.getRequest();
-	}
-
-	@Override
-	public String getSessionToken() {
-		return sessionToken;
 	}
 
 	public IdentityProviderRequest getIdentityProviderRequest() {
@@ -46,15 +40,21 @@ public class IssueSession implements IrmaSession {
 		return status;
 	}
 
+	@Override
 	public void setStatusConnected() {
+		super.setStatusConnected();
 		status = Status.CONNECTED;
 	}
 
+	@Override
 	public void setStatusDone() {
+		super.setStatusDone();
 		status = Status.DONE;
 	}
 
+	@Override
 	public void setStatusCancelled() {
+		super.setStatusCancelled();
 		status = Status.CANCELLED;
 	}
 }

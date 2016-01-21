@@ -44,12 +44,11 @@ import javax.websocket.Session;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 
-@ServerEndpoint("/api/v2/verification/status/{sessionToken}")
+@ServerEndpoint("/api/v2/status/{sessionToken}")
 public class StatusSocket {
 
     private Session session;
     private RemoteEndpoint.Async remote;
-    private Sessions<VerificationSession> sessions = Sessions.getVerificationSessions();
 
     @OnClose
     public void onWebSocketClose(CloseReason closeReason) {
@@ -71,12 +70,12 @@ public class StatusSocket {
         System.out.println("WebSocket Connect: " + session);
 
         // Store websocket connection in the corresponding session
-        VerificationSession vsession = sessions.getSession(sessionToken);
-        if (vsession == null) {
+        IrmaSession irmaSession = Sessions.findAnySession(sessionToken);
+        if (irmaSession == null) {
             // TODO: Add some error handling here
-            System.out.println("Strange verification not yet setup");
+            System.out.println("Strange: session not yet setup");
         } else {
-            vsession.setStatusSocket(this);
+            irmaSession.setStatusSocket(this);
         }
     }
 

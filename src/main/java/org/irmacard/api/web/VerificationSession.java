@@ -38,26 +38,19 @@ import org.irmacard.api.common.DisclosureProofRequest;
 import org.irmacard.api.common.DisclosureProofResult;
 import org.irmacard.api.common.ServiceProviderRequest;
 
-public class VerificationSession implements IrmaSession {
-    private String sessionToken;
+public class VerificationSession extends IrmaSession {
     private ServiceProviderRequest spRequest;
     private DisclosureProofResult result;
     private ProofD proof;
     private Status status = Status.INITIALIZED;
-    private StatusSocket statusSocket;
 
     public enum Status {
         INITIALIZED, CONNECTED, CANCELLED, DONE
     };
 
     public VerificationSession(String sessionToken, ServiceProviderRequest spRequest) {
-        this.sessionToken = sessionToken;
+        super(sessionToken);
         this.spRequest = spRequest;
-    }
-
-    @Override
-    public String getSessionToken() {
-        return sessionToken;
     }
 
     public DisclosureProofRequest getRequest() {
@@ -84,47 +77,22 @@ public class VerificationSession implements IrmaSession {
         return status;
     }
 
-    public void setStatusSocket(StatusSocket socket) {
-        this.statusSocket = socket;
-    }
-
+    @Override
     public void setStatusConnected() {
+        super.setStatusConnected();
         status = Status.CONNECTED;
-
-        if (statusSocket != null)
-            statusSocket.sendConnected();
     }
 
+    @Override
     public void setStatusDone() {
+        super.setStatusDone();
         status = Status.DONE;
-
-        if (statusSocket != null)
-            statusSocket.sendDone();
     }
 
+    @Override
     public void setStatusCancelled() {
+        super.setStatusCancelled();
         status = Status.CANCELLED;
-
-        if (statusSocket != null)
-            statusSocket.sendCancelled();
-    }
-
-    /**
-     * Returns whether the status socket is still connected. If it is, we can
-     * safely close it after sending a CANCELLED update.
-     *
-     * @return if the status socket is open
-     */
-    public boolean isStatusSocketConnected() {
-        return statusSocket != null && statusSocket.isSocketConnected();
-    }
-
-    /**
-     * Close the session. This also causes the socket to be closed
-     */
-    public void close() {
-        if (statusSocket != null)
-            statusSocket.close();
     }
 
     public DisclosureProofResult getResult() {
