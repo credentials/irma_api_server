@@ -1,29 +1,30 @@
 {
-    // If this file should be reloaded on each new request. Default: true
+    // A sample configuration file that have all options set to their default.
+
+    // If this file should be reloaded on each new request.
     "hot_reload_configuration": true,
 
     // Names of the private/public key files for JWT signing (public key is only necessary for running unit tests)
-    // Default: "sk.der" and "pk.der"
     "jwt_privatekey": "sk.der",
     "jwt_publickey": "pk.der",
 
-    // Completely enable or disable issuing. Default: false
-    "enable_issuing": true,
+    // Completely enable or disable issuing.
+    "enable_issuing": false,
 
     // In order to prevent linkability, the timestamps of all issued credentials must fall exactly on an
     // epoch bondary. If this is set to true and the IdP requests a validity for a credential which does
     // not fall on such a boundary, we reject the request. If set to true, we accept the request and
-    // floor it to the nearest epoch boundary ourselves. Default: true
+    // floor it to the nearest epoch boundary ourselves.
     "reject_unfloored_validity_timestamps": true,
 
-    // DANGEROUS: Allow JWTs to be unsigned (using signing algorithm "none"). Default: false
+    // DANGEROUS: Allow JWTs to be unsigned (using signing algorithm "none").
     // Use with care: if you set this to true, anyone that can reach your server can create issuance requests!
     "allow_unsigned_issue_requests": false,
 
-    // Maximum age (in seconds) of incoming signing requests. Default: 60
+    // Maximum age (in seconds) of incoming signing requests.
     "max_issue_request_age": 60,
 
-    // A list of authorized IdP's and what credentials they may sign. Default: empty map {}
+    // A list of authorized IdP's and what credentials they may sign.
     // Supports wildcards as follows:
     // "testip": [ "*" ]              // testip can issue anything
     // "testip": [ "MijnOverheid.*" ] // testip can issue all credentials from issuer MijnOverheid
@@ -31,10 +32,7 @@
     // a .der public key file with the same name should be included in the src/main/resources folder, for
     // verifying JWT's containing incoming issuing requests. For example, in the example below,
     // src/main/resources/testip.der should exist.
+    // Note that the included testip.js will not work untill you put it here, for example as above.
     "authorized_idps": {
-        "testip": [
-            "MijnOverheid.ageLower",
-            "MijnOverheid.address"
-        ]
     }
 }

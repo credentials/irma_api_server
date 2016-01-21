@@ -9,6 +9,7 @@ bin
 node_modules/
 *.der
 *.pem
+config.json
 src/main/webapp/bower_components/
 src/main/webapp/client/
 src/main/webapp/examples/
