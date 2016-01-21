@@ -43,7 +43,7 @@ var iprequest = {
 var jwtOptions = {
     algorithm: "RS256",
     issuer: "testip",
-    subject: "issuerequest"
+    subject: "issue_request"
 };
 
 var token = jwt.sign({iprequest: iprequest}, fs.readFileSync('testip.pem'), jwtOptions);

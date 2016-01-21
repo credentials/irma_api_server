@@ -92,7 +92,7 @@ public class IssueResource {
 		if (!allowUnsigned) { // Has to be signed, only try as signed JWT
 			System.out.println("Trying signed JWT");
 			return Jwts.parser()
-					.requireSubject("issuerequest")
+					.requireSubject("issue_request")
 					.setSigningKeyResolver(keyresolver)
 					.parseClaimsJws(jwt)
 					.getBody();
@@ -100,7 +100,7 @@ public class IssueResource {
 			try {
 				System.out.println("Trying unsigned JWT");
 				return Jwts.parser()
-						.requireSubject("issuerequest")
+						.requireSubject("issue_request")
 						.parseClaimsJwt(jwt)
 						.getBody();
 			} catch (UnsupportedJwtException e) {
