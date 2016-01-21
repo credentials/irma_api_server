@@ -246,8 +246,8 @@ public class IssueResource {
 
 	@GET
 	@Path("/{sessiontoken}/status")
-	@Produces(MediaType.TEXT_PLAIN)
-	public String getStatus(@PathParam("sessiontoken") String sessiontoken) {
+	@Produces(MediaType.APPLICATION_JSON)
+	public IssueSession.Status getStatus(@PathParam("sessiontoken") String sessiontoken) {
 		IssueSession session = sessions.getNonNullSession(sessiontoken);
 		System.out.println("Received status query, token: " + sessiontoken);
 
@@ -257,7 +257,7 @@ public class IssueResource {
 			sessions.remove(session);
 		}
 
-		return status.toString();
+		return status;
 	}
 
 	/**
