@@ -52,12 +52,12 @@ var result = null;
 
 function poll(token) {
     var pollOptions = {
-        uri: server + token + "/getstatus",
+        uri: server + token + "/status",
         method: 'GET'
     };
 
     request(pollOptions, function (error, response, body) {
-        if (body == "INITIALIZED" || body == "CONNECTED")
+        if (body == '"INITIALIZED"' || body == '"CONNECTED"')
             process.stdout.write(".");
         else {
             console.log();
