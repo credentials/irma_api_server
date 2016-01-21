@@ -20,8 +20,8 @@
     // Use with care: if you set this to true, anyone that can reach your server can create issuance requests!
     "allow_unsigned_issue_requests": false,
 
-    // Maximum age (in seconds) of incoming signing requests. Default: 5
-    "max_issue_request_age": 5,
+    // Maximum age (in seconds) of incoming signing requests. Default: 60
+    "max_issue_request_age": 60,
 
     // A list of authorized IdP's and what credentials they may sign. Default: empty map {}
     // Supports wildcards as follows:

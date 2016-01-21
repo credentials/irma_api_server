@@ -32,7 +32,7 @@ public class ApiConfiguration {
 	private boolean enable_issuing = false;
 	private boolean reject_unfloored_validity_timestamps = true;
 	private boolean allow_unsigned_issue_requests = false;
-	private int max_issue_request_age = 5;
+	private int max_issue_request_age = 60;
 	private HashMap<String, ArrayList<String>> authorized_idps = new HashMap<>();
 
 	/* Transient members for convenience */
