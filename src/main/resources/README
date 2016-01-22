@@ -1,3 +1,7 @@
 Two things should be present here:
 - the irma_configuration folder or a symlink to it
 - an RSA secret key in DER format, called 'sk.der'
+
+Optionally:
+- a configuration file called 'config.json', see the included sample file;
+- RSA public keys (in .der format) for incoming requests from identity providers.
