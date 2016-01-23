@@ -74,6 +74,10 @@ public class VerificationSession extends IrmaSession {
 
     public void setResult(DisclosureProofResult result) {
         this.result = result;
-        setStatusDone();
+        if (result.getStatus() == DisclosureProofResult.Status.VALID) {
+            setStatusSuccess();
+        } else {
+            setStatusFailed();
+        }
     }
 }

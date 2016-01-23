@@ -7,7 +7,7 @@ public abstract class IrmaSession {
 	private Status status = Status.INITIALIZED;
 
 	public enum Status {
-		INITIALIZED, CONNECTED, CANCELLED, DONE
+		INITIALIZED, CONNECTED, CANCELLED, FAILED, SUCCESS
 	};
 
 	public IrmaSession(String sessionToken) {
@@ -28,10 +28,16 @@ public abstract class IrmaSession {
 		status = Status.CONNECTED;
 	}
 
-	public void setStatusDone() {
+	public void setStatusSuccess() {
 		if (statusSocket != null)
-			statusSocket.sendDone();
-		status = Status.DONE;
+			statusSocket.sendSuccess();
+		status = Status.SUCCESS;
+	}
+
+	public void setStatusFailed() {
+		if (statusSocket != null)
+			statusSocket.sendFailed();
+		status = Status.FAILED;
 	}
 
 	public void setStatusCancelled() {
