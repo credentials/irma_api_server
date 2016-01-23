@@ -34,8 +34,8 @@
 package org.irmacard.api.web;
 
 import org.bouncycastle.util.encoders.Base64;
-import org.irmacard.api.web.exceptions.InputInvalidException;
-import org.irmacard.api.web.exceptions.SessionUnknownException;
+import org.irmacard.api.common.exceptions.ApiError;
+import org.irmacard.api.common.exceptions.ApiException;
 
 import java.security.SecureRandom;
 import java.util.HashMap;
@@ -64,7 +64,7 @@ public class Sessions<T extends IrmaSession> {
     private HashMap<String, T> sessions;
 
     public Sessions() {
-        sessions = new HashMap<String, T>();
+        sessions = new HashMap<>();
     }
 
     public static IrmaSession findAnySession(String sessiontoken) {
@@ -99,16 +99,15 @@ public class Sessions<T extends IrmaSession> {
 
     /**
      * Either returns a valid, non-null session associated to the specified token, or throws an exception.
-     * @throws InputInvalidException if the token is null or ""
-     * @throws SessionUnknownException if there is no session corresponding to the token
+     * @throws ApiException if the token is null or "", or not found
      */
-    public T getNonNullSession(String token) throws InputInvalidException, SessionUnknownException {
+    public T getNonNullSession(String token) throws ApiException {
         if (token == null || token.equals(""))
-            throw new InputInvalidException("Supply a valid session token");
+            throw new ApiException(ApiError.SESSION_TOKEN_MALFORMED);
 
         T session = getSession(token);
         if (session == null)
-            throw new SessionUnknownException();
+            throw new ApiException(ApiError.SESSION_UNKNOWN);
 
         return session;
     }

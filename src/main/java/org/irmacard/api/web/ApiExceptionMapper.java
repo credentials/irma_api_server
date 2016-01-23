@@ -1,4 +1,4 @@
-package org.irmacard.api.web.exceptions;
+package org.irmacard.api.web;
 
 import org.irmacard.api.common.exceptions.ApiErrorMessage;
 

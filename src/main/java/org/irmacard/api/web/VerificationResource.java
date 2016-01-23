@@ -37,7 +37,6 @@ import io.jsonwebtoken.Jwts;
 import org.irmacard.api.common.*;
 import org.irmacard.api.common.exceptions.ApiError;
 import org.irmacard.api.common.exceptions.ApiException;
-import org.irmacard.api.web.exceptions.InputInvalidException;
 import org.irmacard.credentials.idemix.proofs.ProofList;
 import org.irmacard.credentials.info.InfoException;
 import org.irmacard.api.common.util.GsonUtil;
