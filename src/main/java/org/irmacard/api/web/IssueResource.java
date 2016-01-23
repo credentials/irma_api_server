@@ -252,6 +252,11 @@ public class IssueResource {
 	@Path("/{sessiontoken}")
 	public void delete(@PathParam("sessiontoken") String sessiontoken) {
 		IssueSession session = sessions.getNonNullSession(sessiontoken);
+
+		// Allow DELETEs only after the initial GET and before the credentials are issued
+		if (session.getStatus() != IssueSession.Status.CONNECTED) {
+			throw new ApiException(ApiError.UNEXPECTED_REQUEST);
+		}
 		System.out.println("Received delete, token: " + sessiontoken);
 
 		session.setStatusCancelled();
