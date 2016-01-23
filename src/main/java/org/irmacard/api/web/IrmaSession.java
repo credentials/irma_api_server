@@ -4,6 +4,12 @@ public abstract class IrmaSession {
 	private String sessionToken;
 	private StatusSocket statusSocket;
 
+	private Status status = Status.INITIALIZED;
+
+	public enum Status {
+		INITIALIZED, CONNECTED, CANCELLED, DONE
+	};
+
 	public IrmaSession(String sessionToken) {
 		this.sessionToken = sessionToken;
 	}
@@ -19,16 +25,23 @@ public abstract class IrmaSession {
 	public void setStatusConnected() {
 		if (statusSocket != null)
 			statusSocket.sendConnected();
+		status = Status.CONNECTED;
 	}
 
 	public void setStatusDone() {
 		if (statusSocket != null)
 			statusSocket.sendDone();
+		status = Status.DONE;
 	}
 
 	public void setStatusCancelled() {
 		if (statusSocket != null)
 			statusSocket.sendCancelled();
+		status = Status.CANCELLED;
+	}
+
+	public Status getStatus() {
+		return status;
 	}
 
 	/**

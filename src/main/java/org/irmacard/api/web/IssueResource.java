@@ -6,6 +6,7 @@ import org.irmacard.api.common.*;
 import org.irmacard.api.common.exceptions.ApiError;
 import org.irmacard.api.common.exceptions.ApiException;
 import org.irmacard.credentials.Attributes;
+import org.irmacard.api.web.IrmaSession.Status;
 import org.irmacard.credentials.CredentialsException;
 import org.irmacard.credentials.idemix.IdemixIssuer;
 import org.irmacard.credentials.idemix.IdemixSecretKey;
@@ -265,11 +266,11 @@ public class IssueResource {
 	@GET
 	@Path("/{sessiontoken}/status")
 	@Produces(MediaType.APPLICATION_JSON)
-	public IssueSession.Status getStatus(@PathParam("sessiontoken") String sessiontoken) {
+	public Status getStatus(@PathParam("sessiontoken") String sessiontoken) {
 		IssueSession session = sessions.getNonNullSession(sessiontoken);
 		System.out.println("Received status query, token: " + sessiontoken);
 
-		IssueSession.Status status = session.getStatus();
+		Status status = session.getStatus();
 		if (status == IssueSession.Status.DONE || status == IssueSession.Status.CANCELLED) {
 			System.out.println("Removing session " + sessiontoken);
 			sessions.remove(session);

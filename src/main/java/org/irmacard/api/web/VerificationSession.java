@@ -42,11 +42,6 @@ public class VerificationSession extends IrmaSession {
     private ServiceProviderRequest spRequest;
     private DisclosureProofResult result;
     private ProofD proof;
-    private Status status = Status.INITIALIZED;
-
-    public enum Status {
-        INITIALIZED, CONNECTED, CANCELLED, DONE
-    };
 
     public VerificationSession(String sessionToken, ServiceProviderRequest spRequest) {
         super(sessionToken);
@@ -71,28 +66,6 @@ public class VerificationSession extends IrmaSession {
 
     public void setProof(ProofD proof) {
         this.proof = proof;
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    @Override
-    public void setStatusConnected() {
-        super.setStatusConnected();
-        status = Status.CONNECTED;
-    }
-
-    @Override
-    public void setStatusDone() {
-        super.setStatusDone();
-        status = Status.DONE;
-    }
-
-    @Override
-    public void setStatusCancelled() {
-        super.setStatusCancelled();
-        status = Status.CANCELLED;
     }
 
     public DisclosureProofResult getResult() {

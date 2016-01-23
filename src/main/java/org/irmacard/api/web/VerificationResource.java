@@ -40,7 +40,7 @@ import org.irmacard.api.common.exceptions.ApiException;
 import org.irmacard.credentials.idemix.proofs.ProofList;
 import org.irmacard.credentials.info.InfoException;
 import org.irmacard.api.common.util.GsonUtil;
-import org.irmacard.api.web.VerificationSession.Status;
+import org.irmacard.api.web.IrmaSession.Status;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -97,7 +97,7 @@ public class VerificationResource {
     @GET
     @Path("/{sessiontoken}/status")
     @Produces(MediaType.APPLICATION_JSON)
-    public VerificationSession.Status getStatus(
+    public Status getStatus(
             @PathParam("sessiontoken") String sessiontoken) {
         VerificationSession session = sessions.getNonNullSession(sessiontoken);
         Status status = session.getStatus();
