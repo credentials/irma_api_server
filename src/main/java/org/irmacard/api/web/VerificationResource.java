@@ -35,6 +35,8 @@ package org.irmacard.api.web;
 
 import io.jsonwebtoken.Jwts;
 import org.irmacard.api.common.*;
+import org.irmacard.api.common.exceptions.ApiError;
+import org.irmacard.api.common.exceptions.ApiException;
 import org.irmacard.api.web.exceptions.InputInvalidException;
 import org.irmacard.credentials.idemix.proofs.ProofList;
 import org.irmacard.credentials.info.InfoException;
@@ -65,7 +67,7 @@ public class VerificationResource {
         DisclosureProofRequest request = spRequest.getRequest();
 
         if (request.getContent() == null || request.getContent().size() == 0)
-            throw new InputInvalidException("Cannot ask for empty disclosure");
+            throw new ApiException(ApiError.MALFORMED_VERIFIER_REQUEST);
 
         if (spRequest.getValidity() == 0)
             spRequest.setValidity(DEFAULT_TOKEN_VALIDITY);
@@ -189,8 +191,8 @@ public class VerificationResource {
             // We have connected clients, we need to inform listeners of cancel
             session.setStatusCancelled();
 
-            // If status socket is still active, the update has been sent, we
-            // can remove the session immediately, otherwise we wait until the
+            // If status socket is still active then the update has been sent, so we
+            // can remove the session immediately. Otherwise we wait until the
             // status has been polled.
             // TODO: if the poll never happens, the session is never removed
             if (session.isStatusSocketConnected()) {

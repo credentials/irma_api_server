@@ -3,7 +3,9 @@ package org.irmacard.api.web;
 import com.google.gson.JsonSyntaxException;
 import io.jsonwebtoken.*;
 import org.irmacard.api.common.*;
-import org.irmacard.api.web.exceptions.InputInvalidException;
+import org.irmacard.api.common.exceptions.ApiError;
+import org.irmacard.api.common.exceptions.ApiException;
+import org.irmacard.credentials.Attributes;
 import org.irmacard.credentials.CredentialsException;
 import org.irmacard.credentials.idemix.IdemixIssuer;
 import org.irmacard.credentials.idemix.IdemixSecretKey;
@@ -19,7 +21,6 @@ import org.irmacard.api.common.util.GsonUtil;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.security.Key;
 import java.util.*;
 
@@ -51,7 +52,7 @@ public class IssueResource {
 
 		// The entire issuing application should not be loaded if the following is false, but just to be sure
 		if (!ApiConfiguration.getInstance().isIssuingEnabled())
-			throw new WebApplicationException("Issuing is disabled", Response.Status.UNAUTHORIZED);
+			throw new ApiException(ApiError.ISSUING_DISABLED);
 
 		// Verify JWT validity
 		Claims jwtContents;
@@ -59,14 +60,16 @@ public class IssueResource {
 			jwtContents = checkJwtToken(jwt, ApiConfiguration.getInstance().allowUnsignedJwts());
 		} catch (UnsupportedJwtException|MalformedJwtException|SignatureException
 				|ExpiredJwtException|IllegalArgumentException e) {
-			throw new WebApplicationException("Invalid JSON web token", Response.Status.UNAUTHORIZED);
+			throw new ApiException(ApiError.JWT_INVALID);
 		}
 
 		// Check if the JWT is not too old
 		long now = Calendar.getInstance().getTimeInMillis();
 		long issued_at = jwtContents.getIssuedAt().getTime();
 		if (now - issued_at > ApiConfiguration.getInstance().getMaxJwtAge())
-			throw new WebApplicationException("JWT too old", Response.Status.UNAUTHORIZED);
+			throw new ApiException(ApiError.JWT_TOO_OLD,
+					"Max age: " + ApiConfiguration.getInstance().getMaxJwtAge()
+					+ ", was " + (now - issued_at));
 
 		// Dirty Hack (tm): we can get a Map from Jwts, but we need an IdentityProviderRequest.
 		// But the structure of the contents of the map exactly matches the fields from IdentityProviderRequest,
@@ -78,7 +81,7 @@ public class IssueResource {
 		try {
 			request = GsonUtil.getGson().fromJson(json, IdentityProviderRequest.class);
 		} catch (JsonSyntaxException e) {
-			throw new InputInvalidException("Invalid JWT body");
+			throw new ApiException(ApiError.MALFORMED_ISSUER_REQUEST);
 		}
 
 		return create(request, jwtContents.getIssuer());
@@ -120,30 +123,30 @@ public class IssueResource {
 		IssuingRequest request = isRequest.getRequest();
 
 		if (request == null || request.getCredentials() == null || request.getCredentials().size() == 0)
-			throw new InputInvalidException("Incomplete request");
+			throw new ApiException(ApiError.MALFORMED_ISSUER_REQUEST);
 
 		for (CredentialRequest cred : request.getCredentials()) {
 			if (!ApiConfiguration.getInstance().canIssueCredential(idp, cred.getFullName()))
-				throw new WebApplicationException("Cannot issue credential " + cred.getFullName(),
-						Response.Status.UNAUTHORIZED);
+				throw new ApiException(ApiError.UNAUTHORIZED, cred.getFullName());
 		}
 
-		try {
-			// Check if we have all necessary secret keys
-			// TODO: check if the requested attribute names match those from the DescriptionStore
-			for (CredentialRequest cred : request.getCredentials()) {
+		// TODO: check if the requested attribute names match those from the DescriptionStore
+
+		// Check if we have all necessary secret key
+		for (CredentialRequest cred : request.getCredentials()) {
+			try {
 				IssuerDescription id = DescriptionStore.getInstance().getIssuerDescription(cred.getIssuerName());
 				IdemixKeyStore.getInstance().getSecretKey(id); // Throws InfoException if we don't have it
+			} catch (InfoException e) {
+				throw new ApiException(ApiError.CANNOT_ISSUE, cred.getIssuerName());
 			}
-		} catch (InfoException e) {
-			throw new WebApplicationException("Missing Idemix secret key", Response.Status.UNAUTHORIZED);
 		}
 
 		if (ApiConfiguration.getInstance().shouldRejectUnflooredTimestamps()) {
 			for (CredentialRequest cred : request.getCredentials())
 				if (!cred.isValidityFloored())
-					throw new WebApplicationException("Requested credential validity does not match an epoch bondary",
-							Response.Status.UNAUTHORIZED);
+					throw new ApiException(ApiError.INVALID_TIMESTAMP,
+							"Epoch length: " + Attributes.EXPIRY_FACTOR);
 		}
 
 		request.setNonceAndContext();
@@ -164,7 +167,7 @@ public class IssueResource {
 	public IssuingRequest get(@PathParam("sessiontoken") String sessiontoken) {
 		IssueSession session = sessions.getNonNullSession(sessiontoken);
 		if (session.getStatus() != IssueSession.Status.INITIALIZED) {
-			fail(new WebApplicationException(Response.Status.UNAUTHORIZED), session);
+			fail(ApiError.UNEXPECTED_REQUEST, session);
 		}
 
 		System.out.println("Received get, token: " + sessiontoken);
@@ -181,7 +184,7 @@ public class IssueResource {
 			@PathParam("sessiontoken") String sessiontoken) throws WebApplicationException {
 		IssueSession session = sessions.getNonNullSession(sessiontoken);
 		if (session.getStatus() != IssueSession.Status.CONNECTED) {
-			fail(new WebApplicationException(Response.Status.UNAUTHORIZED), session);
+			fail(ApiError.UNEXPECTED_REQUEST, session);
 		}
 
 		System.out.println("Received commitments, token: " + sessiontoken);
@@ -190,7 +193,7 @@ public class IssueResource {
 		ProofList proofs = commitments.getCombinedProofs();
 		int credcount = request.getCredentials().size();
 		if (proofs.size() < credcount) {
-			fail(new InputInvalidException("Proof count does not match credential count"), session);
+			fail(ApiError.ATTRIBUTES_MISSING, session);
 		}
 
 		// Lookup the public keys of any ProofD's in the proof list
@@ -210,8 +213,15 @@ public class IssueResource {
 			if (request.getRequiredAttributes().size() > 0) {
 				DisclosureProofRequest disclosureRequest = new DisclosureProofRequest(
 						request.getNonce(), request.getContext(), request.getRequiredAttributes());
-				if (disclosureRequest.verify(proofs).getStatus() != DisclosureProofResult.Status.VALID) {
-					fail(new InputInvalidException("Incorrect disclosure proof"), session);
+				DisclosureProofResult.Status status = disclosureRequest.verify(proofs).getStatus();
+
+				switch (status) {
+					case EXPIRED:
+						fail(ApiError.ATTRIBUTES_EXPIRED, session);
+					case MISSING_ATTRIBUTES:
+						fail(ApiError.ATTRIBUTES_MISSING, session);
+					case INVALID:
+						fail(ApiError.INVALID_PROOFS, session);
 				}
 			}
 
@@ -229,8 +239,11 @@ public class IssueResource {
 
 			session.setStatusDone();
 			return sigs;
-		} catch (InfoException|CredentialsException e) {
-			fail(new WebApplicationException(e), session);
+		} catch (InfoException e) {
+			fail(ApiError.EXCEPTION, session);
+			return null;
+		} catch (CredentialsException e) {
+			fail(ApiError.ISSUANCE_FAILED, session);
 			return null;
 		}
 	}
@@ -261,12 +274,11 @@ public class IssueResource {
 	}
 
 	/**
-	 * Removes the session, informs the identity provider, and throws the exception to notify the token.
-	 * @throws WebApplicationException The specified exception
+	 * Removes the session, informs the identity provider, and throws an exception to notify the token.
+	 * @throws ApiException The specified exception
 	 */
-	private void fail(WebApplicationException e, IssueSession session) throws WebApplicationException {
+	private void fail(ApiError error, IssueSession session) throws ApiException {
 		session.setStatusCancelled();
-		e.printStackTrace();
-		throw e;
+		throw new ApiException(error);
 	}
 }

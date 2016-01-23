@@ -39,6 +39,7 @@ import java.net.URISyntaxException;
 import javax.ws.rs.ApplicationPath;
 
 import org.glassfish.jersey.server.ResourceConfig;
+import org.irmacard.api.web.exceptions.ApiExceptionMapper;
 import org.irmacard.credentials.idemix.info.IdemixKeyStore;
 import org.irmacard.credentials.info.DescriptionStore;
 import org.irmacard.credentials.info.InfoException;
@@ -48,6 +49,9 @@ public class ApiApplication extends ResourceConfig {
     public ApiApplication() {
         // register Gson
         register(GsonJerseyProvider.class);
+
+        // register exception handler, for converting and then returning exceptions as JSON output
+        register(ApiExceptionMapper.class);
 
         // register verification application
         register(VerificationResource.class);
