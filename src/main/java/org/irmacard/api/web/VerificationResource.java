@@ -127,8 +127,6 @@ public class VerificationResource {
             // Everything in the verification has to be exactly right; if not, we don't accept the proofs as valid
             e.printStackTrace();
             result = new DisclosureProofResult();
-
-            // TODO: determine the exact reason for failure and report back
             result.setStatus(DisclosureProofResult.Status.INVALID);
         }
         session.setResult(result);
@@ -157,6 +155,9 @@ public class VerificationResource {
         return result;
     }
 
+    // TODO: This seems to also return (signed) data even if the proof does not
+    // verify, maybe we want to refuse this method if that is the case, need to
+    // change workflow to allow this.
     @GET
     @Path("/{sessiontoken}/getproof")
     @Produces(MediaType.TEXT_PLAIN)
@@ -164,12 +165,6 @@ public class VerificationResource {
         System.out.println("Retrieving signed proof");
         VerificationSession session = sessions.getNonNullSession(sessiontoken);
         DisclosureProofResult result = getproof(sessiontoken);
-
-        // Do not return a signed token if the proof is invalid
-        if (result.getStatus() != DisclosureProofResult.Status.VALID) {
-            System.out.println("Returning failed proof");
-            throw new ApiException(ApiError.INVALID_PROOFS);
-        }
 
         Calendar now = Calendar.getInstance();
         Calendar expiry = Calendar.getInstance();

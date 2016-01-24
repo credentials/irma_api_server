@@ -105,18 +105,10 @@ public class StatusSocket {
     }
 
     /**
-     * Inform the client-website that the token has successfully completed the
-     * verification.
+     * Inform the client-website that the token has completed the verification.
      */
-    public void sendSuccess() {
-        sendUpdate("SUCCESS");
-    }
-
-    /**
-     * Inform the client-website that the action failed
-     */
-    public void sendFailed() {
-        sendUpdate("FAILED");
+    public void sendDone() {
+        sendUpdate("DONE");
     }
 
     /**

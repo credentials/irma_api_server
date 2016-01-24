@@ -238,8 +238,7 @@ public class IssueResource {
 						commitments, cred.convertToBigIntegers(), i, request.getNonce()));
 			}
 
-			// TODO: check if this is always success
-			session.setStatusSuccess();
+			session.setStatusDone();
 			return sigs;
 		} catch (InfoException e) {
 			fail(ApiError.EXCEPTION, session);
@@ -272,8 +271,7 @@ public class IssueResource {
 		System.out.println("Received status query, token: " + sessiontoken);
 
 		Status status = session.getStatus();
-		if (status == Status.SUCCESS || status == Status.FAILED
-				|| status == Status.CANCELLED) {
+		if (status == IssueSession.Status.DONE || status == IssueSession.Status.CANCELLED) {
 			System.out.println("Removing session " + sessiontoken);
 			sessions.remove(session);
 		}
