@@ -49,9 +49,10 @@ public class CORSResponseFilter implements ContainerResponseFilter {
         MultivaluedMap<String, Object> headers = responseContext.getHeaders();
 
         // TODO: can do access control based on origin of request here
-        // currently this is the same as allowing all domains.
-        String origin = requestContext.getHeaderString("Origin");
-        headers.add("Access-Control-Allow-Origin", origin);
+        // by using the source origin. This doesn't play so well with our
+        // reverse proxy, so setting universal origin for now.
+        // String origin = requestContext.getHeaderString("Origin");
+        headers.add("Access-Control-Allow-Origin", "*");
 
         headers.add("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT");
         headers.add("Access-Control-Allow-Headers", "Content-Type");
