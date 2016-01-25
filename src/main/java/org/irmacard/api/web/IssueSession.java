@@ -4,23 +4,11 @@ import org.irmacard.api.common.IssuingRequest;
 import org.irmacard.credentials.idemix.messages.IssueCommitmentMessage;
 import org.irmacard.api.common.IdentityProviderRequest;
 
-public class IssueSession extends IrmaSession {
-	private IdentityProviderRequest ipRequest;
-	private IssuingRequest request;
+public class IssueSession extends IrmaSession<IdentityProviderRequest, IssuingRequest> {
 	private IssueCommitmentMessage commitments;
 
-	public IssueSession(String sessionToken, IdentityProviderRequest ipRequest) {
-		super(sessionToken, ipRequest.getTimeout());
-		this.ipRequest = ipRequest;
-		this.request = ipRequest.getRequest();
-	}
-
-	public IdentityProviderRequest getIdentityProviderRequest() {
-		return ipRequest;
-	}
-
-	public IssuingRequest getRequest() {
-		return request;
+	public IssueSession(IdentityProviderRequest ipRequest) {
+		super(ipRequest);
 	}
 
 	public IssueCommitmentMessage getCommitments() {

@@ -38,26 +38,12 @@ import org.irmacard.api.common.DisclosureProofRequest;
 import org.irmacard.api.common.DisclosureProofResult;
 import org.irmacard.api.common.ServiceProviderRequest;
 
-public class VerificationSession extends IrmaSession {
-    private ServiceProviderRequest spRequest;
+public class VerificationSession extends IrmaSession<ServiceProviderRequest, DisclosureProofRequest> {
     private DisclosureProofResult result;
     private ProofD proof;
 
-    public VerificationSession(String sessionToken, ServiceProviderRequest spRequest) {
-        super(sessionToken, spRequest.getTimeout());
-        this.spRequest = spRequest;
-    }
-
-    public DisclosureProofRequest getRequest() {
-        return spRequest.getRequest();
-    }
-
-    public ServiceProviderRequest getServiceProviderRequest() {
-        return spRequest;
-    }
-
-    public void setServiceProviderRequest(ServiceProviderRequest spRequest) {
-        this.spRequest = spRequest;
+    public VerificationSession(ServiceProviderRequest spRequest) {
+        super(spRequest);
     }
 
     public ProofD getProof() {

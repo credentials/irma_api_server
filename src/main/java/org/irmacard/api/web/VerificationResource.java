@@ -75,8 +75,8 @@ public class VerificationResource {
 
         request.setNonceAndContext();
 
-        String token = Sessions.generateSessionToken();
-        VerificationSession session = new VerificationSession(token, spRequest);
+        VerificationSession session = new VerificationSession(spRequest);
+        String token = session.getSessionToken();
         sessions.addSession(session);
 
         System.out.println("Received session, token: " + token);
@@ -152,7 +152,7 @@ public class VerificationResource {
             session.close();
         }
 
-        result.setServiceProviderData(session.getServiceProviderRequest().getData());
+        result.setServiceProviderData(session.getClientRequest().getData());
         return result;
     }
 
@@ -169,7 +169,7 @@ public class VerificationResource {
 
         Calendar now = Calendar.getInstance();
         Calendar expiry = Calendar.getInstance();
-        expiry.add(Calendar.SECOND, session.getServiceProviderRequest().getValidity());
+        expiry.add(Calendar.SECOND, session.getClientRequest().getValidity());
 
         return Jwts.builder()
                 .setClaims(result.getAsMap())

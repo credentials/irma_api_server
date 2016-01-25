@@ -1,12 +1,15 @@
 package org.irmacard.api.web;
 
+import org.irmacard.api.common.ClientRequest;
+
 import java.util.Timer;
 import java.util.TimerTask;
 
-public abstract class IrmaSession {
+public abstract class IrmaSession<T extends ClientRequest<S>, S> {
 	private String sessionToken;
 	private StatusSocket statusSocket;
 	private Timer timer;
+	private T clientRequest;
 
 	private class RemovalTask extends TimerTask {
 		@Override
@@ -23,13 +26,13 @@ public abstract class IrmaSession {
 	}
 
 	/**
-	 * Construct a new session that will be removed after the specified timeout.
-	 * @param sessionToken Sessiontoken for this session
-	 * @param timeout Timeout in seconds
+	 * Construct a new session for the specified client (IdP or SP) request.
+	 * @param clientRequest The request that started this session
 	 */
-	public IrmaSession(String sessionToken, int timeout) {
-		this.sessionToken = sessionToken;
-		delayRemoval(timeout);
+	public IrmaSession(T clientRequest) {
+		this.sessionToken = Sessions.generateSessionToken();
+		this.clientRequest = clientRequest;
+		delayRemoval(clientRequest.getTimeout());
 	}
 
 	private void delayRemoval(int timeout) {
@@ -39,6 +42,14 @@ public abstract class IrmaSession {
 			timer.cancel();
 		timer = new Timer();
 		timer.schedule(new RemovalTask(), timeout * 1000);
+	}
+
+	public T getClientRequest() {
+		return clientRequest;
+	}
+
+	public S getRequest() {
+		return clientRequest.getRequest();
 	}
 
 	public String getSessionToken() {

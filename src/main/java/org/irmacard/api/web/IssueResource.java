@@ -155,8 +155,8 @@ public class IssueResource {
 
 		request.setNonceAndContext();
 
-		String token = Sessions.generateSessionToken();
-		IssueSession session = new IssueSession(token, isRequest);
+		IssueSession session = new IssueSession(isRequest);
+		String token = session.getSessionToken();
 		sessions.addSession(session);
 
 		System.out.println("Received issue session, token: " + token);
