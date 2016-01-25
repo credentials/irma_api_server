@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.irmacard.api.web;
+package org.irmacard.api.web.sessions;
 
 import org.bouncycastle.util.encoders.Base64;
 import org.irmacard.api.common.exceptions.ApiError;

@@ -33,6 +33,9 @@
 
 package org.irmacard.api.web;
 
+import org.irmacard.api.web.sessions.IrmaSession;
+import org.irmacard.api.web.sessions.Sessions;
+
 import java.io.IOException;
 
 import javax.websocket.CloseReason;

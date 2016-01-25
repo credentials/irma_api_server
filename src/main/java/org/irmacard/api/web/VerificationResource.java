@@ -37,10 +37,12 @@ import io.jsonwebtoken.Jwts;
 import org.irmacard.api.common.*;
 import org.irmacard.api.common.exceptions.ApiError;
 import org.irmacard.api.common.exceptions.ApiException;
+import org.irmacard.api.web.sessions.Sessions;
+import org.irmacard.api.web.sessions.VerificationSession;
 import org.irmacard.credentials.idemix.proofs.ProofList;
 import org.irmacard.credentials.info.InfoException;
 import org.irmacard.api.common.util.GsonUtil;
-import org.irmacard.api.web.IrmaSession.Status;
+import org.irmacard.api.web.sessions.IrmaSession.Status;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;

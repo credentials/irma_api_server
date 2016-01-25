@@ -1,4 +1,4 @@
-package org.irmacard.api.web;
+package org.irmacard.api.web.sessions;
 
 import org.irmacard.api.common.IssuingRequest;
 import org.irmacard.credentials.idemix.messages.IssueCommitmentMessage;

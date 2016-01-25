@@ -1,6 +1,8 @@
-package org.irmacard.api.web;
+package org.irmacard.api.web.sessions;
 
 import org.irmacard.api.common.ClientRequest;
+import org.irmacard.api.web.ApiConfiguration;
+import org.irmacard.api.web.StatusSocket;
 
 import java.util.Timer;
 import java.util.TimerTask;
