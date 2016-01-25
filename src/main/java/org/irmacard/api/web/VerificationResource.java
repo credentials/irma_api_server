@@ -65,7 +65,7 @@ public class VerificationResource {
     public ClientQr create(ServiceProviderRequest spRequest) {
         DisclosureProofRequest request = spRequest.getRequest();
 
-        if (request.getContent() == null || request.getContent().size() == 0)
+        if (request == null || request.getContent() == null || request.getContent().size() == 0)
             throw new ApiException(ApiError.MALFORMED_VERIFIER_REQUEST);
 
         if (spRequest.getValidity() == 0)

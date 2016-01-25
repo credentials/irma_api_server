@@ -33,7 +33,9 @@
 
 package org.irmacard.api.web;
 
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.JsonParseException;
+import org.irmacard.api.common.exceptions.ApiError;
+import org.irmacard.api.common.exceptions.ApiException;
 import org.irmacard.api.common.util.GsonUtil;
 
 import java.io.IOException;
@@ -71,15 +73,11 @@ public class GsonJerseyProvider implements MessageBodyWriter<Object>, MessageBod
 						   Annotation[] annotations, MediaType mediaType,
 						   MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
 			throws IOException {
-		InputStreamReader streamReader = new InputStreamReader(entityStream, UTF_8);
-		try {
+		try (InputStreamReader streamReader = new InputStreamReader(entityStream, UTF_8)) {
 			return GsonUtil.getGson().fromJson(streamReader, genericType);
-		} catch (JsonSyntaxException e) {
-			// Log exception
-		} finally {
-			streamReader.close();
+		} catch (JsonParseException e) {
+			throw new ApiException(ApiError.MALFORMED_INPUT);
 		}
-		return null;
 	}
 
 	@Override
@@ -100,11 +98,8 @@ public class GsonJerseyProvider implements MessageBodyWriter<Object>, MessageBod
 						MultivaluedMap<String, Object> httpHeaders,
 						OutputStream entityStream) throws IOException,
 			WebApplicationException {
-		OutputStreamWriter writer = new OutputStreamWriter(entityStream, UTF_8);
-		try {
+		try (OutputStreamWriter writer = new OutputStreamWriter(entityStream, UTF_8)) {
 			GsonUtil.getGson().toJson(object, genericType, writer);
-		} finally {
-			writer.close();
 		}
 	}
 }

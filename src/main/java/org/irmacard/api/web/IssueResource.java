@@ -123,11 +123,11 @@ public class IssueResource {
 	private ClientQr create(IdentityProviderRequest isRequest, String idp) {
 		IssuingRequest request = isRequest.getRequest();
 
-		if (isRequest.getTimeout() == 0)
-			isRequest.setTimeout(ApiConfiguration.getInstance().getTokenGetTimeout());
-
 		if (request == null || request.getCredentials() == null || request.getCredentials().size() == 0)
 			throw new ApiException(ApiError.MALFORMED_ISSUER_REQUEST);
+
+		if (isRequest.getTimeout() == 0)
+			isRequest.setTimeout(ApiConfiguration.getInstance().getTokenGetTimeout());
 
 		for (CredentialRequest cred : request.getCredentials()) {
 			if (!ApiConfiguration.getInstance().canIssueCredential(idp, cred.getFullName()))
