@@ -123,6 +123,9 @@ public class IssueResource {
 	private ClientQr create(IdentityProviderRequest isRequest, String idp) {
 		IssuingRequest request = isRequest.getRequest();
 
+		if (isRequest.getTimeout() == 0)
+			isRequest.setTimeout(ApiConfiguration.getInstance().getTokenGetTimeout());
+
 		if (request == null || request.getCredentials() == null || request.getCredentials().size() == 0)
 			throw new ApiException(ApiError.MALFORMED_ISSUER_REQUEST);
 
@@ -272,8 +275,7 @@ public class IssueResource {
 
 		Status status = session.getStatus();
 		if (status == IssueSession.Status.DONE || status == IssueSession.Status.CANCELLED) {
-			System.out.println("Removing session " + sessiontoken);
-			sessions.remove(session);
+			session.close();
 		}
 
 		return status;

@@ -10,7 +10,7 @@ public class IssueSession extends IrmaSession {
 	private IssueCommitmentMessage commitments;
 
 	public IssueSession(String sessionToken, IdentityProviderRequest ipRequest) {
-		super(sessionToken);
+		super(sessionToken, ipRequest.getTimeout());
 		this.ipRequest = ipRequest;
 		this.request = ipRequest.getRequest();
 	}

@@ -44,7 +44,7 @@ public class VerificationSession extends IrmaSession {
     private ProofD proof;
 
     public VerificationSession(String sessionToken, ServiceProviderRequest spRequest) {
-        super(sessionToken);
+        super(sessionToken, ApiConfiguration.getInstance().getTokenGetTimeout());
         this.spRequest = spRequest;
     }
 

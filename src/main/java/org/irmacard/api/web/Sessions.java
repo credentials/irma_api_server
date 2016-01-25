@@ -125,4 +125,9 @@ public class Sessions<T extends IrmaSession> {
         String strtoken = new String(Base64.encode(token));
         return strtoken.replace("+", "").replace("/", "");
     }
+
+    public static void removeSession(String session) {
+        getVerificationSessions().sessions.remove(session);
+        getIssuingSessions().sessions.remove(session);
+    }
 }

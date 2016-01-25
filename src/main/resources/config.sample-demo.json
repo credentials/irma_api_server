@@ -32,6 +32,18 @@
     // Maximum age (in seconds) of incoming signing requests.
     "max_issue_request_age": 60,
 
+    // Time (in seconds) the token has to post its proof or secret key commitments. After this the session
+    // expires and is removed.
+    "token_response_timeout": 600,
+
+    // Time (in seconds) the token has to retrieve the session info after the session has been created.
+    // After this the session expires and is removed.
+    "token_get_timeout": 120,
+
+    // Time (in seconds) the client (i.e. the identity or service provider) has to fetch the result after the
+    // token is done. After this the session expires and is removed.
+    "client_get_timeout": 120,
+
     // A list of authorized IdP's and what credentials they may sign.
     // Supports wildcards as follows:
     // "testip": [ "*" ]              // testip can issue anything

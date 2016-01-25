@@ -105,7 +105,6 @@ public class VerificationResource {
         // Remove the session if this session is cancelled
         if (status == Status.CANCELLED) {
             session.close();
-            sessions.remove(session);
         }
 
         return status;
@@ -148,7 +147,7 @@ public class VerificationResource {
             result = new DisclosureProofResult();
             result.setStatus(DisclosureProofResult.Status.WAITING);
         } else {
-            sessions.remove(session);
+            session.close();
         }
 
         result.setServiceProviderData(session.getServiceProviderRequest().getServiceProviderData());
@@ -193,17 +192,13 @@ public class VerificationResource {
             // If status socket is still active then the update has been sent, so we
             // can remove the session immediately. Otherwise we wait until the
             // status has been polled.
-            // TODO: if the poll never happens, the session is never removed
             if (session.isStatusSocketConnected()) {
                 session.close();
-                sessions.remove(session);
             }
         } else {
             // In all other cases INITIALIZED, CANCELLED, DONE all parties
             // are already informed, we can close the session
-
             session.close();
-            sessions.remove(session);
         }
     }
 }

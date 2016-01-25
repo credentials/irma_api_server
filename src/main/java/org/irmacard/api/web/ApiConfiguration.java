@@ -33,6 +33,9 @@ public class ApiConfiguration {
 	private boolean reject_unfloored_validity_timestamps = true;
 	private boolean allow_unsigned_issue_requests = false;
 	private int max_issue_request_age = 60;
+	private int token_response_timeout = 10 * 60;
+	private int token_get_timeout = 2 * 60;
+	private int client_get_timeout = 2 * 60;
 	private HashMap<String, ArrayList<String>> authorized_idps = new HashMap<>();
 
 	/* Transient members for convenience */
@@ -107,6 +110,18 @@ public class ApiConfiguration {
 
 	public boolean isHotReloadEnabled() {
 		return hot_reload_configuration;
+	}
+
+	public int getTokenResponseTimeout() {
+		return token_response_timeout;
+	}
+
+	public int getTokenGetTimeout() {
+		return token_get_timeout;
+	}
+
+	public int getClientGetTimeout() {
+		return client_get_timeout;
 	}
 
 	public PublicKey getIdentityProviderKey(String name) {
