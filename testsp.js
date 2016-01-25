@@ -6,6 +6,7 @@ var fs = require('fs');
 var sprequest = {
 	"data": "foobar",
 	"validity": 60,
+	"timeout": 60,
 	"request": {
 		"content": [
 			//{

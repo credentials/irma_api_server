@@ -70,6 +70,8 @@ public class VerificationResource {
 
         if (spRequest.getValidity() == 0)
             spRequest.setValidity(DEFAULT_TOKEN_VALIDITY);
+        if (spRequest.getTimeout() == 0)
+            spRequest.setTimeout(ApiConfiguration.getInstance().getTokenGetTimeout());
 
         request.setNonceAndContext();
 
@@ -150,7 +152,7 @@ public class VerificationResource {
             session.close();
         }
 
-        result.setServiceProviderData(session.getServiceProviderRequest().getServiceProviderData());
+        result.setServiceProviderData(session.getServiceProviderRequest().getData());
         return result;
     }
 
