@@ -121,6 +121,10 @@ public class StatusSocket {
         sendUpdate("CANCELLED");
     }
 
+    public void sendTimeout() {
+        sendUpdate("TIMEOUT");
+    }
+
     /**
      * Returns whether the status socket is still connected.
      *

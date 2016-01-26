@@ -17,6 +17,7 @@ public abstract class IrmaSession<T extends ClientRequest<S>, S> {
 		@Override
 		public void run() {
 			System.out.println("Session " + sessionToken + " timeout, removing");
+			status = Status.TIMEOUT;
 			close();
 		}
 	}
@@ -24,7 +25,7 @@ public abstract class IrmaSession<T extends ClientRequest<S>, S> {
 	private Status status = Status.INITIALIZED;
 
 	public enum Status {
-		INITIALIZED, CONNECTED, CANCELLED, DONE
+		INITIALIZED, CONNECTED, CANCELLED, TIMEOUT, DONE
 	}
 
 	/**
@@ -106,7 +107,20 @@ public abstract class IrmaSession<T extends ClientRequest<S>, S> {
 		timer.cancel();
 		Sessions.removeSession(sessionToken);
 
-		if (statusSocket != null)
+		if (statusSocket != null) {
+			switch (status) {
+				case TIMEOUT:
+					statusSocket.sendTimeout();
+					break;
+				case DONE:
+					statusSocket.sendDone();
+					break;
+				default: // In all other cases something must have gone wrong
+					statusSocket.sendCancelled();
+					break;
+			}
+
 			statusSocket.close();
+		}
 	}
 }
