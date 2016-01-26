@@ -24,7 +24,7 @@ repositories {
 dependencies {
     compile 'org.glassfish.jersey.core:jersey-server:2.19'
     compile 'org.glassfish.jersey.containers:jersey-container-servlet:2.19'
-    compile 'org.eclipse.jetty.websocket:javax-websocket-server-impl:9.2.14.v20151106'
+    //compile 'org.eclipse.jetty.websocket:javax-websocket-server-impl:9.2.14.v20151106'
 
     compile 'io.jsonwebtoken:jjwt:0.6.0'
 
