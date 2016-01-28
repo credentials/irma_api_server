@@ -43,4 +43,6 @@ gretty {
     scanInterval = 10
     inplaceMode = "hard"
     httpsEnabled = true
+    httpPort = 8081
+    httpsPort = 8444
 }

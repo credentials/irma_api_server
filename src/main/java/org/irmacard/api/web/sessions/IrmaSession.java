@@ -17,7 +17,8 @@ public abstract class IrmaSession<T extends ClientRequest<S>, S> {
 		@Override
 		public void run() {
 			System.out.println("Session " + sessionToken + " timeout, removing");
-			statusSocket.sendTimeout();
+			if (statusSocket != null)
+				statusSocket.sendTimeout();
 			close();
 		}
 	}

@@ -41,12 +41,13 @@ var iprequest = {
 };
 
 var jwtOptions = {
-    algorithm: "RS256",
+    algorithm: "none",
     issuer: "testip",
     subject: "issue_request"
 };
 
 var token = jwt.sign({iprequest: iprequest}, fs.readFileSync('testip.pem'), jwtOptions);
+console.log(token);
 var server = process.argv[2] + "/irma_api_server/api/v2/issue/";
 var result = null;
 
