@@ -135,7 +135,6 @@ public class VerificationResource {
         session.setResult(result);
 
         System.out.println("Received proofs, token: " + sessiontoken);
-        System.out.println(GsonUtil.getGson().toJson(result));
 
         return result.getStatus();
     }

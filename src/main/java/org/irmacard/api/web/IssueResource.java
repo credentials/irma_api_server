@@ -273,7 +273,6 @@ public class IssueResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Status getStatus(@PathParam("sessiontoken") String sessiontoken) {
 		IssueSession session = sessions.getNonNullSession(sessiontoken);
-		System.out.println("Received status query, token: " + sessiontoken);
 
 		Status status = session.getStatus();
 		if (status == IssueSession.Status.DONE || status == IssueSession.Status.CANCELLED) {
