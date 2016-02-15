@@ -2,11 +2,13 @@
 
 This is a server that sits between IRMA tokens such as the [card emulator app](https://github.com/credentials/irma_android_cardemu) on the one hand, and service or identity providers on the other hand. It handles all IRMA-specific cryptographic details of issuing credentials and verifying disclosure proofs on behalf of the service or identity provider.
 
-The API that this server offers is described [here](https://credentials.github.io/proposals/irma-without-apdus).
+The API that this server offers is described [here](https://credentials.github.io/proposals/irma-without-apdus). We offer a javascript library, [irma.js](https://github.com/credentials/irma_js), that you can use in your webpages to easily issue and verify credentials.
+
+See below to run the server yourself. Alternatively, you can use our demo API server, which is setup to be very permissive (but only in the demo domain). It is hosted at `https://demo.irmacard.org/tomcat/irma_api_server/`, you can find its signing key [here](https://demo.irmacard.org/v2/data/pk.pem).
 
 # Experimental
 
-This project is very new and still in heavy development. It is _not_ yet suitable for deployment.
+This project is quite new, so do not be surprised by sudden changes in the API.
 
 # Running the server
 
