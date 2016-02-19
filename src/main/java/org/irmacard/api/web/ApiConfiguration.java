@@ -30,6 +30,7 @@ public class ApiConfiguration {
 	private boolean hot_reload_configuration = true;
 	private String jwt_privatekey = "sk.der";
 	private String jwt_publickey = "pk.der";
+	private String jwt_issuer = null;
 	private boolean enable_issuing = false;
 	private boolean reject_unfloored_validity_timestamps = true;
 	private boolean allow_unsigned_issue_requests = false;
@@ -152,6 +153,10 @@ public class ApiConfiguration {
 			jwtPublicKey = getPublicKey(jwt_publickey);
 
 		return jwtPublicKey;
+	}
+
+	public String getJwtIssuer() {
+		return jwt_issuer;
 	}
 
 	private PublicKey getPublicKey(String filename) throws KeyManagementException {

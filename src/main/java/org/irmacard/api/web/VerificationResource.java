@@ -33,6 +33,7 @@
 
 package org.irmacard.api.web;
 
+import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import org.irmacard.api.common.ClientQr;
 import org.irmacard.api.common.DisclosureProofRequest;
@@ -173,11 +174,17 @@ public class VerificationResource {
         Calendar expiry = Calendar.getInstance();
         expiry.add(Calendar.SECOND, session.getClientRequest().getValidity());
 
-        return Jwts.builder()
+        JwtBuilder builder = Jwts.builder()
                 .setClaims(result.getAsMap())
                 .setIssuedAt(now.getTime())
                 .setExpiration(expiry.getTime())
-                .setSubject("disclosure_result")
+                .setSubject("disclosure_result");
+
+        String jwt_issuer = ApiConfiguration.getInstance().getJwtIssuer();
+        if (jwt_issuer != null)
+            builder = builder.setIssuer(jwt_issuer);
+
+        return builder
                 .signWith(ApiConfiguration.getInstance().getJwtAlgorithm(),
                         ApiConfiguration.getInstance().getJwtPrivateKey())
                 .compact();
