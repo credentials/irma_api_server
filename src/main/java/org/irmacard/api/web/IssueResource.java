@@ -141,7 +141,7 @@ public class IssueResource {
 		// Check if we have all necessary secret key
 		for (CredentialRequest cred : request.getCredentials()) {
 			try {
-				IssuerDescription id = DescriptionStore.getInstance().getIssuerDescription(cred.getIssuerName());
+				IssuerDescription id = cred.getIssuerDescription();
 				IdemixKeyStore.getInstance().getSecretKey(id); // Throws InfoException if we don't have it
 			} catch (InfoException e) {
 				throw new ApiException(ApiError.CANNOT_ISSUE, cred.getIssuerName());

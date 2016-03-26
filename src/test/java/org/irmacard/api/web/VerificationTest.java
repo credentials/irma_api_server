@@ -38,10 +38,12 @@ import org.glassfish.jersey.test.TestProperties;
 import org.glassfish.jersey.test.jetty.JettyTestContainerFactory;
 import org.irmacard.credentials.idemix.IdemixCredential;
 import org.irmacard.credentials.idemix.info.IdemixKeyStore;
+import org.irmacard.credentials.idemix.info.IdemixKeyStoreDeserializer;
 import org.irmacard.credentials.idemix.proofs.ProofList;
 import org.irmacard.credentials.idemix.proofs.ProofListBuilder;
 import org.irmacard.credentials.idemix.proofs.ProofD;
 import org.irmacard.credentials.info.DescriptionStore;
+import org.irmacard.credentials.info.DescriptionStoreDeserializer;
 import org.irmacard.credentials.info.InfoException;
 import org.irmacard.api.common.AttributeDisjunction;
 import org.irmacard.api.common.DisclosureProofRequest;
@@ -73,10 +75,8 @@ public class VerificationTest extends JerseyTest {
 	@BeforeClass
 	public static void initializeInformation() throws InfoException {
 		URI core = new File(System.getProperty("user.dir")).toURI().resolve("src/main/resources/irma_configuration/");
-		DescriptionStore.setCoreLocation(core);
-		DescriptionStore.getInstance();
-		IdemixKeyStore.setCoreLocation(core);
-		IdemixKeyStore.getInstance();
+		DescriptionStore.initialize(new DescriptionStoreDeserializer(core));
+		IdemixKeyStore.initialize(new IdemixKeyStoreDeserializer(core));
 	}
 
 	@Override

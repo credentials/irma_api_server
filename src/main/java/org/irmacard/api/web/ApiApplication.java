@@ -40,8 +40,8 @@ import javax.ws.rs.ApplicationPath;
 
 import org.glassfish.jersey.server.ResourceConfig;
 import org.irmacard.credentials.idemix.info.IdemixKeyStore;
-import org.irmacard.credentials.info.DescriptionStore;
-import org.irmacard.credentials.info.InfoException;
+import org.irmacard.credentials.idemix.info.IdemixKeyStoreDeserializer;
+import org.irmacard.credentials.info.*;
 
 @ApplicationPath("/")
 public class ApiApplication extends ResourceConfig {
@@ -66,19 +66,15 @@ public class ApiApplication extends ResourceConfig {
         // register CORS filter
         register(CORSResponseFilter.class);
 
-        if (!DescriptionStore.isLocationSet() || !IdemixKeyStore.isLocationSet()) {
-            try {
-                // Setup Core location for IRMA
-                URI CORE_LOCATION = ApiApplication.class.getClassLoader()
-                        .getResource("/irma_configuration/").toURI();
-                DescriptionStore.setCoreLocation(CORE_LOCATION);
-                DescriptionStore.getInstance();
-                IdemixKeyStore.setCoreLocation(CORE_LOCATION);
-                IdemixKeyStore.getInstance();
-            } catch (URISyntaxException | InfoException e) {
-                e.printStackTrace();
-                throw new RuntimeException(e);
+        try {
+            if (!DescriptionStore.isInitialized() || !IdemixKeyStore.isInitialized()) {
+                URI CORE_LOCATION = ApiApplication.class.getClassLoader().getResource("/irma_configuration/").toURI();
+                DescriptionStore.initialize(new DescriptionStoreDeserializer(CORE_LOCATION));
+                IdemixKeyStore.initialize(new IdemixKeyStoreDeserializer(CORE_LOCATION));
             }
+        } catch (URISyntaxException|InfoException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 }
