@@ -9,26 +9,14 @@ var sprequest = {
 	"timeout": 60,
 	"request": {
 		"content": [
-			//{
-			//	"label": "Email",
-			//	"attributes": ["IRMAWiki.member.email", "Surfnet.root.userID"]
-			//},
 			{
 				"label": "Name",
-				"attributes": ["MijnOverheid.fullName.firstname", "IRMAWiki.member.realname"]
+				"attributes": ["irma-demo.MijnOverheid.fullName.firstname", "irma-demo.IRMAWiki.member.realname"]
 			},
 			{
 				"label": "Over 18",
-				"attributes": ["MijnOverheid.ageLower.over18", "MijnOverheid.ageLower.over9000"]
-			},
-			//{
-			//	"label": "Foo",
-			//	"attributes": ["MijnOverheid.foobar.baz"]
-			//},
-			//{
-			//	"label": "Bar",
-			//	"attributes": ["MijnOverheid.barfoo.baz"]
-			//},
+				"attributes": ["irma-demo.MijnOverheid.ageLower.over18", "irma-demo.MijnOverheid.ageLower.nonexisting"]
+			}
 		]
 	}
 };

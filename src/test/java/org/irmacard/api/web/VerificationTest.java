@@ -68,6 +68,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class VerificationTest extends JerseyTest {
+	public static final String schemeManager = "irma-demo";
+
 	public VerificationTest() {
 		super(new JettyTestContainerFactory());
 	}
@@ -93,7 +95,7 @@ public class VerificationTest extends JerseyTest {
 
 	public String createSession() throws InfoException {
 		DisclosureProofRequest request = new DisclosureProofRequest(DescriptionStore.getInstance()
-				.getVerificationDescriptionByName("NYTimes", "ageLowerOver12"));
+				.getVerificationDescriptionByName(schemeManager, "NYTimes", "ageLowerOver12"));
 		ServiceProviderRequest spRequest = new ServiceProviderRequest("testrequest", request, 60);
 
 		DisclosureQr qr = target("/verification/").request(MediaType.APPLICATION_JSON)
@@ -243,8 +245,8 @@ public class VerificationTest extends JerseyTest {
 		IdemixCredential cred2 = getNameCredential();
 
 		DisclosureProofRequest request = new DisclosureProofRequest(DescriptionStore.getInstance()
-				.getVerificationDescriptionByName("NYTimes", "ageLowerOver12"));
-		request.getContent().add(new AttributeDisjunction("name", "MijnOverheid.fullName.firstname"));
+				.getVerificationDescriptionByName(schemeManager, "NYTimes", "ageLowerOver12"));
+		request.getContent().add(new AttributeDisjunction("name", schemeManager + ".MijnOverheid.fullName.firstname"));
 		ServiceProviderRequest spRequest = new ServiceProviderRequest("testrequest", request, 60);
 
 		DisclosureQr qr = target("/verification/").request(MediaType.APPLICATION_JSON)

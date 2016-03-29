@@ -3,6 +3,7 @@ package org.irmacard.api.web;
 import com.google.gson.JsonSyntaxException;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.irmacard.api.common.util.GsonUtil;
+import org.irmacard.credentials.info.CredentialIdentifier;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
@@ -77,23 +78,18 @@ public class ApiConfiguration {
 		return enable_issuing;
 	}
 
-	public boolean canIssueCredential(String idp, String name) {
+	public boolean canIssueCredential(String idp, CredentialIdentifier credential) {
 		if (!authorized_idps.containsKey(idp))
 			return false;
 
 		ArrayList<String> credentials = authorized_idps.get(idp);
 
 		// This IDP can issue everything
-		if (credentials.contains("*"))
-			return true;
-
-		String[] parts = name.split("\\.");
-		if (parts.length != 2)
-			throw new WebApplicationException("Unexpected credential identifier", Response.Status.UNAUTHORIZED);
-
-		// This IDP can issue everything from the specified issuer
-		String issuer = parts[0];
-		return credentials.contains(issuer + ".*") || credentials.contains(name);
+		return credentials.contains("*")
+				// This IDP can issue everything from the specified issuer
+				|| credentials.contains(credential.getIssuerIdentifier() + ".*")
+				// The credential is explicitly listed
+				|| credentials.contains(credential);
 	}
 
 	public boolean shouldRejectUnflooredTimestamps() {

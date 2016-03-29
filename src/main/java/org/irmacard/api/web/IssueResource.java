@@ -132,7 +132,7 @@ public class IssueResource {
 			isRequest.setTimeout(ApiConfiguration.getInstance().getTokenGetTimeout());
 
 		for (CredentialRequest cred : request.getCredentials()) {
-			if (!ApiConfiguration.getInstance().canIssueCredential(idp, cred.getFullName()))
+			if (!ApiConfiguration.getInstance().canIssueCredential(idp, cred.getIdentifier()))
 				throw new ApiException(ApiError.UNAUTHORIZED, cred.getFullName());
 		}
 

@@ -9,7 +9,7 @@ var iprequest = {
     request: {
         "credentials": [
             {
-                "credential": "MijnOverheid.ageLower",
+                "credential": "irma-demo.MijnOverheid.ageLower",
                 "validity": 1483228800,
                 "attributes": {
                     "over12": "yes",
@@ -19,7 +19,7 @@ var iprequest = {
                 }
             },
             {
-                "credential": "MijnOverheid.address",
+                "credential": "irma-demo.MijnOverheid.address",
                 "validity": 1483228800,
                 "attributes": {
                     "country": "The Netherlands",
@@ -33,7 +33,7 @@ var iprequest = {
             {
                 "label": "Age (higher)",
                 "attributes": {
-                    "MijnOverheid.ageHigher": "present"
+                    "irma-demo.MijnOverheid.ageHigher": "present"
                 }
             }
         ]
