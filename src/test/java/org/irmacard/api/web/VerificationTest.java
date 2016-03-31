@@ -36,20 +36,15 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.glassfish.jersey.test.TestProperties;
 import org.glassfish.jersey.test.jetty.JettyTestContainerFactory;
+import org.irmacard.api.common.*;
 import org.irmacard.credentials.idemix.IdemixCredential;
 import org.irmacard.credentials.idemix.info.IdemixKeyStore;
 import org.irmacard.credentials.idemix.info.IdemixKeyStoreDeserializer;
 import org.irmacard.credentials.idemix.proofs.ProofList;
 import org.irmacard.credentials.idemix.proofs.ProofListBuilder;
 import org.irmacard.credentials.idemix.proofs.ProofD;
-import org.irmacard.credentials.info.DescriptionStore;
-import org.irmacard.credentials.info.DescriptionStoreDeserializer;
-import org.irmacard.credentials.info.InfoException;
-import org.irmacard.api.common.AttributeDisjunction;
-import org.irmacard.api.common.DisclosureProofRequest;
+import org.irmacard.credentials.info.*;
 import org.irmacard.api.common.DisclosureProofResult.Status;
-import org.irmacard.api.common.DisclosureQr;
-import org.irmacard.api.common.ServiceProviderRequest;
 import org.irmacard.api.common.util.GsonUtil;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -94,8 +89,9 @@ public class VerificationTest extends JerseyTest {
 	}
 
 	public String createSession() throws InfoException {
-		DisclosureProofRequest request = new DisclosureProofRequest(DescriptionStore.getInstance()
-				.getVerificationDescriptionByName(schemeManager, "NYTimes", "ageLowerOver12"));
+		AttributeDisjunctionList attrs = new AttributeDisjunctionList(1);
+		attrs.add(new AttributeDisjunction("Over 12", schemeManager + ".MijnOverheid.ageLower.over12"));
+		DisclosureProofRequest request = new DisclosureProofRequest(null, null, attrs);
 		ServiceProviderRequest spRequest = new ServiceProviderRequest("testrequest", request, 60);
 
 		DisclosureQr qr = target("/verification/").request(MediaType.APPLICATION_JSON)
@@ -244,9 +240,11 @@ public class VerificationTest extends JerseyTest {
 		IdemixCredential cred1 = getAgeLowerCredential();
 		IdemixCredential cred2 = getNameCredential();
 
-		DisclosureProofRequest request = new DisclosureProofRequest(DescriptionStore.getInstance()
-				.getVerificationDescriptionByName(schemeManager, "NYTimes", "ageLowerOver12"));
-		request.getContent().add(new AttributeDisjunction("name", schemeManager + ".MijnOverheid.fullName.firstname"));
+		AttributeDisjunctionList attrs = new AttributeDisjunctionList(1);
+		attrs.add(new AttributeDisjunction("Over 12", schemeManager + ".MijnOverheid.ageLower.over12"));
+		attrs.add(new AttributeDisjunction("Name", schemeManager + ".MijnOverheid.fullName.firstname"));
+		DisclosureProofRequest request = new DisclosureProofRequest(null, null, attrs);
+
 		ServiceProviderRequest spRequest = new ServiceProviderRequest("testrequest", request, 60);
 
 		DisclosureQr qr = target("/verification/").request(MediaType.APPLICATION_JSON)
