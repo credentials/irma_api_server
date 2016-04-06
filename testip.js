@@ -10,7 +10,7 @@ var iprequest = {
         "credentials": [
             {
                 "credential": "irma-demo.MijnOverheid.ageLower",
-                "validity": 1483228800,
+                "validity": 1482969600,
                 "attributes": {
                     "over12": "yes",
                     "over16": "yes",
@@ -20,7 +20,7 @@ var iprequest = {
             },
             {
                 "credential": "irma-demo.MijnOverheid.address",
-                "validity": 1483228800,
+                "validity": 1482969600,
                 "attributes": {
                     "country": "The Netherlands",
                     "city": "Nijmegen",
