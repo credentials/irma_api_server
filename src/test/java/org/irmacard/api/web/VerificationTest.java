@@ -52,6 +52,7 @@ import org.junit.Test;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.math.BigInteger;
@@ -167,18 +168,10 @@ public class VerificationTest extends JerseyTest {
 		DisclosureProofRequest request = target("/verification/" + session).request(MediaType.APPLICATION_JSON)
 				.get(DisclosureProofRequest.class);
 
-		Status status = target("/verification/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
-				.post(Entity.entity("{\"foo\": 1}", MediaType.APPLICATION_JSON), Status.class);
-		assert(status == Status.INVALID);
+		Response response = target("/verification/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
+				.post(Entity.entity("{\"foo\": 1}", MediaType.APPLICATION_JSON));
 
-		// Fetch the JSON web token containing the attributes
-		String jwt = target("/verification/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);
-
-		// Verify the token itself, and that the credential was valid
-		PublicKey pk = ApiConfiguration.getInstance().getJwtPublicKey();
-		Claims body = Jwts.parser().setSigningKey(pk).parseClaimsJws(jwt).getBody();
-
-		assert body.get("status").toString().equals("INVALID");
+		assert(response.getStatus() == 400);
 	}
 
 	@Test
@@ -188,18 +181,10 @@ public class VerificationTest extends JerseyTest {
 		DisclosureProofRequest request = target("/verification/" + session).request(MediaType.APPLICATION_JSON)
 				.get(DisclosureProofRequest.class);
 
-		Status status = target("/verification/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
-				.post(Entity.entity("{\"foo\": 1", MediaType.APPLICATION_JSON), Status.class);
-		assert(status == Status.INVALID);
+		Response response = target("/verification/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
+				.post(Entity.entity("{\"foo\": 1", MediaType.APPLICATION_JSON));
 
-		// Fetch the JSON web token containing the attributes
-		String jwt = target("/verification/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);
-
-		// Verify the token itself, and that the credential was valid
-		PublicKey pk = ApiConfiguration.getInstance().getJwtPublicKey();
-		Claims body = Jwts.parser().setSigningKey(pk).parseClaimsJws(jwt).getBody();
-
-		assert body.get("status").toString().equals("INVALID");
+		assert(response.getStatus() == 400);
 	}
 
 	@Test

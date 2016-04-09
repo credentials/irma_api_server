@@ -5,10 +5,11 @@ import io.jsonwebtoken.*;
 import org.irmacard.api.common.*;
 import org.irmacard.api.common.exceptions.ApiError;
 import org.irmacard.api.common.exceptions.ApiException;
+import org.irmacard.api.common.util.GsonUtil;
+import org.irmacard.api.web.sessions.IrmaSession.Status;
 import org.irmacard.api.web.sessions.IssueSession;
 import org.irmacard.api.web.sessions.Sessions;
 import org.irmacard.credentials.Attributes;
-import org.irmacard.api.web.sessions.IrmaSession.Status;
 import org.irmacard.credentials.CredentialsException;
 import org.irmacard.credentials.idemix.IdemixIssuer;
 import org.irmacard.credentials.idemix.IdemixSecretKey;
@@ -16,16 +17,16 @@ import org.irmacard.credentials.idemix.info.IdemixKeyStore;
 import org.irmacard.credentials.idemix.messages.IssueCommitmentMessage;
 import org.irmacard.credentials.idemix.messages.IssueSignatureMessage;
 import org.irmacard.credentials.idemix.proofs.ProofList;
-import org.irmacard.credentials.info.DescriptionStore;
 import org.irmacard.credentials.info.InfoException;
-import org.irmacard.credentials.info.IssuerDescription;
-import org.irmacard.api.common.util.GsonUtil;
+import org.irmacard.credentials.info.IssuerIdentifier;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.security.Key;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Map;
 
 @Path("issue")
 public class IssueResource {
@@ -138,11 +139,15 @@ public class IssueResource {
 
 		// TODO: check if the requested attribute names match those from the DescriptionStore
 
-		// Check if we have all necessary secret key
+		// Check if we have all necessary secret keys
+		int counter;
 		for (CredentialRequest cred : request.getCredentials()) {
 			try {
-				IssuerDescription id = cred.getIssuerDescription();
-				IdemixKeyStore.getInstance().getSecretKey(id); // Throws InfoException if we don't have it
+				IssuerIdentifier identifier = cred.getIssuerDescription().getIdentifier();
+				counter = IdemixKeyStore.getInstance().getKeyCounter(identifier);
+				cred.setKeyCounter(counter);
+				if (!IdemixKeyStore.getInstance().containsSecretKey(identifier, counter))
+					throw new ApiException(ApiError.CANNOT_ISSUE, cred.getIssuerName());
 			} catch (InfoException e) {
 				throw new ApiException(ApiError.CANNOT_ISSUE, cred.getIssuerName());
 			}
@@ -236,7 +241,8 @@ public class IssueResource {
 			ArrayList<IssueSignatureMessage> sigs = new ArrayList<>(credcount);
 			for (int i = 0; i < credcount; i++) {
 				CredentialRequest cred = request.getCredentials().get(i);
-				IdemixSecretKey sk = IdemixKeyStore.getInstance().getSecretKey(cred.getIssuerDescription());
+				IdemixSecretKey sk = IdemixKeyStore.getInstance().getLatestSecretKey(
+						cred.getIdentifier().getIssuerIdentifier());
 
 				IdemixIssuer issuer = new IdemixIssuer(cred.getPublicKey(), sk, request.getContext());
 				sigs.add(issuer.issueSignature(

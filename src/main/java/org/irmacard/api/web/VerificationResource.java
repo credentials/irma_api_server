@@ -34,20 +34,21 @@
 package org.irmacard.api.web;
 
 import io.jsonwebtoken.Jwts;
-import org.irmacard.api.common.*;
+import org.irmacard.api.common.ClientQr;
+import org.irmacard.api.common.DisclosureProofRequest;
+import org.irmacard.api.common.DisclosureProofResult;
+import org.irmacard.api.common.ServiceProviderRequest;
 import org.irmacard.api.common.exceptions.ApiError;
 import org.irmacard.api.common.exceptions.ApiException;
+import org.irmacard.api.web.sessions.IrmaSession.Status;
 import org.irmacard.api.web.sessions.Sessions;
 import org.irmacard.api.web.sessions.VerificationSession;
 import org.irmacard.credentials.idemix.proofs.ProofList;
 import org.irmacard.credentials.info.InfoException;
-import org.irmacard.api.common.util.GsonUtil;
-import org.irmacard.api.web.sessions.IrmaSession.Status;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-
 import java.security.KeyManagementException;
 import java.util.Calendar;
 
