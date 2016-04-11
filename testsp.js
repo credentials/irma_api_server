@@ -11,7 +11,7 @@ var sprequest = {
 		"content": [
 			{
 				"label": "Name",
-				"attributes": ["irma-demo.MijnOverheid.fullName.firstname", "irma-demo.IRMAWiki.member.realname"]
+				"attributes": ["irma-demo.MijnOverheid.fullName.firstname"]
 			},
 			{
 				"label": "Over 18",
