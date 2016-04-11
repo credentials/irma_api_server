@@ -50,7 +50,7 @@
     // A list of authorized IdP's and what credentials they may sign.
     // Supports wildcards as follows:
     // "testip": [ "*" ]              // testip can issue anything
-    // "testip": [ "MijnOverheid.*" ] // testip can issue all credentials from issuer MijnOverheid
+    // "testip": [ "irma-demo.MijnOverheid.*" ] // testip can issue all credentials from issuer MijnOverheid
     // Assuming "allow_unsigned_issue_requests" is set to false, for each key identifying an identity provider,
     // a .der public key file with the same name should be included in the src/main/resources folder, for
     // verifying JWT's containing incoming issuing requests. For example, in the example below,
