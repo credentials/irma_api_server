@@ -237,7 +237,6 @@ public class IssueResource {
 			}
 
 			// Construct the CL signature for each credential to be issued.
-			// FIXME This also checks the validity of _all_ proofs, for each iteration - so more than once
 			ArrayList<IssueSignatureMessage> sigs = new ArrayList<>(credcount);
 			for (int i = 0; i < credcount; i++) {
 				CredentialRequest cred = request.getCredentials().get(i);
@@ -245,8 +244,14 @@ public class IssueResource {
 						cred.getIdentifier().getIssuerIdentifier());
 
 				IdemixIssuer issuer = new IdemixIssuer(cred.getPublicKey(), sk, request.getContext());
-				sigs.add(issuer.issueSignature(
+				if (i == 0) {
+					// Verify all commitments, but only for the first
+					// credential, the others are implied
+					issuer.verifyCommitments(commitments, request.getNonce());
+				}
+				sigs.add(issuer.issueSignatureNoCheck(
 						commitments, cred.convertToBigIntegers(), i, request.getNonce()));
+
 			}
 
 			session.setStatusDone();
