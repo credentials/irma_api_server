@@ -72,6 +72,10 @@ public class VerificationResource {
         if (request == null || request.getContent() == null || request.getContent().size() == 0)
             throw new ApiException(ApiError.MALFORMED_VERIFIER_REQUEST);
 
+        // Check if the requested attributes match the DescriptionStore
+        if (!request.attributesMatchStore())
+            throw new ApiException(ApiError.ATTRIBUTES_WRONG);
+
         if (spRequest.getValidity() == 0)
             spRequest.setValidity(DEFAULT_TOKEN_VALIDITY);
         if (spRequest.getTimeout() == 0)

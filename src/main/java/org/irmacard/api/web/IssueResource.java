@@ -137,7 +137,9 @@ public class IssueResource {
 				throw new ApiException(ApiError.UNAUTHORIZED, cred.getFullName());
 		}
 
-		// TODO: check if the requested attribute names match those from the DescriptionStore
+		// Check if the requested credentials have the right attributes
+		if (!request.credentialsMatchStore())
+			throw new ApiException(ApiError.ATTRIBUTES_WRONG);
 
 		// Check if we have all necessary secret keys
 		int counter;

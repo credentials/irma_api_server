@@ -14,8 +14,8 @@ var sprequest = {
 				"attributes": ["irma-demo.MijnOverheid.fullName.firstname"]
 			},
 			{
-				"label": "Over 18",
-				"attributes": ["irma-demo.MijnOverheid.ageLower.over18", "irma-demo.MijnOverheid.ageLower.nonexisting"]
+				"label": "Over 21",
+				"attributes": ["irma-demo.MijnOverheid.ageLower.over18", "irma-demo.MijnOverheid.ageLower.over21"]
 			}
 		]
 	}
