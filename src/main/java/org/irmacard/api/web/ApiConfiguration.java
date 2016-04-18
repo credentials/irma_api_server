@@ -28,16 +28,22 @@ public class ApiConfiguration {
 
 	/* Configuration keys and defaults */
 	private boolean hot_reload_configuration = true;
+
 	private String jwt_privatekey = "sk.der";
 	private String jwt_publickey = "pk.der";
 	private String jwt_issuer = null;
+
 	private boolean enable_issuing = false;
 	private boolean reject_unfloored_validity_timestamps = true;
+
 	private boolean allow_unsigned_issue_requests = false;
-	private int max_issue_request_age = 60;
+	private boolean allow_unsigned_verification_requests = false;
+
+	private int max_jwt_age = 60;
 	private int token_response_timeout = 10 * 60;
 	private int token_get_timeout = 2 * 60;
 	private int client_get_timeout = 2 * 60;
+
 	private HashMap<String, ArrayList<String>> authorized_idps = new HashMap<>();
 
 	/* Transient members for convenience */
@@ -90,7 +96,7 @@ public class ApiConfiguration {
 				// This IDP can issue everything from the specified issuer
 				|| credentials.contains(credential.getIssuerIdentifier() + ".*")
 				// The credential is explicitly listed
-				|| credentials.contains(credential);
+				|| credentials.contains(credential.toString());
 	}
 
 	public boolean shouldRejectUnflooredTimestamps() {
@@ -98,11 +104,15 @@ public class ApiConfiguration {
 	}
 
 	public int getMaxJwtAge() {
-		return max_issue_request_age * 1000;
+		return max_jwt_age * 1000;
 	}
 
-	public boolean allowUnsignedJwts() {
+	public boolean allowUnsignedIssueRequests() {
 		return allow_unsigned_issue_requests;
+	}
+
+	public boolean allowUnsignedVerificationRequests() {
+		return allow_unsigned_verification_requests;
 	}
 
 	public boolean isHotReloadEnabled() {
@@ -121,9 +131,9 @@ public class ApiConfiguration {
 		return client_get_timeout;
 	}
 
-	public PublicKey getIdentityProviderKey(String name) {
+	public PublicKey getClientPublicKey(String path, String name) {
 		try {
-			return getPublicKey(name + ".der");
+			return getPublicKey(path + "/" + name + ".der");
 		} catch (KeyManagementException e) {
 			throw new WebApplicationException("No public key for identity provider " + name,
 					Response.Status.UNAUTHORIZED);

@@ -1,7 +1,5 @@
 package org.irmacard.api.web;
 
-import com.google.gson.JsonSyntaxException;
-import io.jsonwebtoken.*;
 import org.irmacard.api.common.*;
 import org.irmacard.api.common.exceptions.ApiError;
 import org.irmacard.api.common.exceptions.ApiException;
@@ -23,21 +21,11 @@ import org.irmacard.credentials.info.IssuerIdentifier;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import java.security.Key;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Map;
 
 @Path("issue")
 public class IssueResource {
 	private Sessions<IssueSession> sessions = Sessions.getIssuingSessions();
-
-	/** Extracts the public key from the identity (from the JWT issuer field) from a JWT */
-	private SigningKeyResolver keyresolver = new SigningKeyResolverAdapter() {
-		@Override public Key resolveSigningKey(JwsHeader header, Claims claims) {
-			return ApiConfiguration.getInstance().getIdentityProviderKey(claims.getIssuer());
-		}
-	};
 
 	@Inject
 	public IssueResource() {}
@@ -58,62 +46,13 @@ public class IssueResource {
 		if (!ApiConfiguration.getInstance().isIssuingEnabled())
 			throw new ApiException(ApiError.ISSUING_DISABLED);
 
-		// Verify JWT validity
-		Claims jwtContents;
-		try {
-			jwtContents = checkJwtToken(jwt, ApiConfiguration.getInstance().allowUnsignedJwts());
-		} catch (UnsupportedJwtException|MalformedJwtException|SignatureException
-				|ExpiredJwtException|IllegalArgumentException e) {
-			throw new ApiException(ApiError.JWT_INVALID);
-		}
+		JwtParser<IdentityProviderRequest> parser = new JwtParser<>(
+				ApiConfiguration.getInstance().allowUnsignedIssueRequests(),
+				"issue_request", "iprequest", "issuers", IdentityProviderRequest.class);
 
-		// Check if the JWT is not too old
-		long now = Calendar.getInstance().getTimeInMillis();
-		long issued_at = jwtContents.getIssuedAt().getTime();
-		if (now - issued_at > ApiConfiguration.getInstance().getMaxJwtAge())
-			throw new ApiException(ApiError.JWT_TOO_OLD,
-					"Max age: " + ApiConfiguration.getInstance().getMaxJwtAge()
-					+ ", was " + (now - issued_at));
-
-		// Dirty Hack (tm): we can get a Map from Jwts, but we need an IdentityProviderRequest.
-		// But the structure of the contents of the map exactly matches the fields from IdentityProviderRequest,
-		// (to be more specific: either this is the case or the identity provider made a mistake),
-		// so we convert the map to json, and then that json to an IdentityProviderRequest.
-		Map map = jwtContents.get("iprequest", Map.class);
-		String json = GsonUtil.getGson().toJson(map);
-		IdentityProviderRequest request;
-		try {
-			request = GsonUtil.getGson().fromJson(json, IdentityProviderRequest.class);
-		} catch (JsonSyntaxException e) {
-			throw new ApiException(ApiError.MALFORMED_ISSUER_REQUEST);
-		}
-
-		return create(request, jwtContents.getIssuer());
-	}
-
-	/**
-	 * Helper function that, if allowUnsigned is true, first attempts to parse the JWT as an unsigned token and if
-	 * that fails, tries parsing it as a signed JWT. In the latter case the signature will have to be valid
-	 */
-	private Claims checkJwtToken(String jwt, boolean allowUnsigned) {
-		if (!allowUnsigned) { // Has to be signed, only try as signed JWT
-			System.out.println("Trying signed JWT");
-			return Jwts.parser()
-					.requireSubject("issue_request")
-					.setSigningKeyResolver(keyresolver)
-					.parseClaimsJws(jwt)
-					.getBody();
-		} else { // First try to parse it as an unsigned JWT; if that fails, try it as a signed JWT
-			try {
-				System.out.println("Trying unsigned JWT");
-				return Jwts.parser()
-						.requireSubject("issue_request")
-						.parseClaimsJwt(jwt)
-						.getBody();
-			} catch (UnsupportedJwtException e) {
-				return checkJwtToken(jwt, false);
-			}
-		}
+		// Parse and verify JWT
+		IdentityProviderRequest request = parser.parseJwt(jwt).getPayload();
+		return create(request, parser.getJwtIssuer());
 	}
 
 	/**

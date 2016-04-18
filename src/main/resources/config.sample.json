@@ -9,7 +9,7 @@
     "jwt_publickey": "pk.der",
 
     // Name of the JWT issuer that signs the JWT's
-    jwt_issuer: "irma_api_server",
+    "jwt_issuer": "irma_api_server",
 
     // Completely enable or disable issuing.
     "enable_issuing": false,
@@ -24,8 +24,11 @@
     // Use with care: if you set this to true, anyone that can reach your server can create issuance requests!
     "allow_unsigned_issue_requests": false,
 
-    // Maximum age (in seconds) of incoming signing requests.
-    "max_issue_request_age": 60,
+    // Same as above for verification requests
+    "allow_unsigned_verification_requests": true,
+
+    // Maximum age (in seconds) of incoming JSON web tokens for issuing or verification.
+    "max_jwt_age": 60,
 
     // Time (in seconds) the token has to post its proof or secret key commitments. After this the session
     // expires and is removed.
