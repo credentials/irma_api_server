@@ -35,16 +35,14 @@ package org.irmacard.api.web;
 
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
-import org.irmacard.api.common.ClientQr;
-import org.irmacard.api.common.DisclosureProofRequest;
-import org.irmacard.api.common.DisclosureProofResult;
-import org.irmacard.api.common.ServiceProviderRequest;
+import org.irmacard.api.common.*;
 import org.irmacard.api.common.exceptions.ApiError;
 import org.irmacard.api.common.exceptions.ApiException;
 import org.irmacard.api.web.sessions.IrmaSession.Status;
 import org.irmacard.api.web.sessions.Sessions;
 import org.irmacard.api.web.sessions.VerificationSession;
 import org.irmacard.credentials.idemix.proofs.ProofList;
+import org.irmacard.credentials.info.AttributeIdentifier;
 import org.irmacard.credentials.info.InfoException;
 
 import javax.inject.Inject;
@@ -64,9 +62,26 @@ public class VerificationResource {
     public VerificationResource() {}
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes({MediaType.TEXT_PLAIN,MediaType.APPLICATION_JSON})
     @Produces(MediaType.APPLICATION_JSON)
-    public ClientQr create(ServiceProviderRequest spRequest) {
+    public ClientQr newSession(String jwt) {
+        if (ApiConfiguration.getInstance().isHotReloadEnabled())
+            ApiConfiguration.load();
+
+        JwtParser<ServiceProviderRequest> parser = new JwtParser<>(
+                ApiConfiguration.getInstance().allowUnsignedVerificationRequests(),
+                "verification_request", "sprequest", "verifiers", ServiceProviderRequest.class);
+
+        /* Important difference with incoming issuing requests:
+           If unsigned verification JWT's are accepted according to the ApiConfiguration, then we accept:
+           validly signed JWT's; unsigned JWT's; OR a ServiceProviderRequest instead of a JWT.
+           This is for backbards compatibility. (Issuing requests only accept JWT's in this case.) */
+
+        ServiceProviderRequest request = parser.parsePlainOrJwt(jwt).getPayload();
+        return create(request, parser.getJwtIssuer());
+    }
+
+    public ClientQr create(ServiceProviderRequest spRequest, String verifier) {
         DisclosureProofRequest request = spRequest.getRequest();
 
         if (request == null || request.getContent() == null || request.getContent().size() == 0)
@@ -75,6 +90,12 @@ public class VerificationResource {
         // Check if the requested attributes match the DescriptionStore
         if (!request.attributesMatchStore())
             throw new ApiException(ApiError.ATTRIBUTES_WRONG);
+
+        // Check if this SP is authorized to verify these attributes
+        for (AttributeDisjunction disjunction : request.getContent())
+            for (AttributeIdentifier identifier : disjunction)
+                if (!ApiConfiguration.getInstance().canVerifyAttribute(verifier, identifier))
+                    throw new ApiException(ApiError.UNAUTHORIZED, identifier.toString());
 
         if (spRequest.getValidity() == 0)
             spRequest.setValidity(DEFAULT_TOKEN_VALIDITY);

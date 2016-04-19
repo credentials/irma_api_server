@@ -107,7 +107,7 @@ public class Sessions<T extends IrmaSession> {
 
         T session = getSession(token);
         if (session == null)
-            throw new ApiException(ApiError.SESSION_UNKNOWN);
+            throw new ApiException(ApiError.SESSION_UNKNOWN, token);
 
         return session;
     }

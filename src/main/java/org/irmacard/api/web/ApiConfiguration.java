@@ -3,6 +3,7 @@ package org.irmacard.api.web;
 import com.google.gson.JsonSyntaxException;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.irmacard.api.common.util.GsonUtil;
+import org.irmacard.credentials.info.AttributeIdentifier;
 import org.irmacard.credentials.info.CredentialIdentifier;
 
 import javax.ws.rs.WebApplicationException;
@@ -45,6 +46,7 @@ public class ApiConfiguration {
 	private int client_get_timeout = 2 * 60;
 
 	private HashMap<String, ArrayList<String>> authorized_idps = new HashMap<>();
+	private HashMap<String, ArrayList<String>> authorized_sps = new HashMap<>();
 
 	/* Transient members for convenience */
 	private transient PrivateKey jwtPrivateKey;
@@ -85,6 +87,30 @@ public class ApiConfiguration {
 		return enable_issuing;
 	}
 
+	public boolean canVerifyAttribute(String sp, AttributeIdentifier attribute) {
+		/* If allow_unsigned_verification_requests is true, then the service provider's
+		 * name might be unknown (see VerificationResource#newSession()), so it makes
+		 * no sense to insist here that it is present in the list of authorized verifiers. */
+		if (allow_unsigned_verification_requests)
+			return true;
+
+		if (!authorized_sps.containsKey(sp))
+			return false;
+
+		ArrayList<String> attributes = authorized_sps.get(sp);
+
+		// This SP can verify anything
+		return attributes.contains("*")
+				// This SP can verify everything from this scheme manager
+				|| attributes.contains(attribute.getSchemeManagerName() + ".*")
+				// This SP can verify any credential from the specified issuer
+				|| attributes.contains(attribute.getIssuerIdentifier() + ".*")
+				// This SP can verify any attribute from the specified credential
+				|| attributes.contains(attribute.getCredentialIdentifier() + ".*")
+				// The attribute is explicitly listed
+				|| attributes.contains(attribute.toString());
+	}
+
 	public boolean canIssueCredential(String idp, CredentialIdentifier credential) {
 		if (!authorized_idps.containsKey(idp))
 			return false;
@@ -93,6 +119,8 @@ public class ApiConfiguration {
 
 		// This IDP can issue everything
 		return credentials.contains("*")
+				// This IDP can issue everything from this scheme manager
+				|| credentials.contains(credential.getSchemeManagerName() + ".*")
 				// This IDP can issue everything from the specified issuer
 				|| credentials.contains(credential.getIssuerIdentifier() + ".*")
 				// The credential is explicitly listed

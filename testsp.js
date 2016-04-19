@@ -21,9 +21,54 @@ var sprequest = {
 	}
 };
 
+var jwtOptions = {
+	algorithm: "RS256",
+	issuer: "testip",
+	subject: "verification_request"
+};
+
+var token = jwt.sign({sprequest: sprequest}, fs.readFileSync('testip.pem'), jwtOptions);
 var server = process.argv[2] + "/irma_api_server/api/v2/verification/";
 var publickey = fs.readFileSync('src/main/resources/pk.pem');
 var result = null;
+
+var options = {
+	uri: server,
+	method: 'POST',
+	json: sprequest
+	//body: token
+};
+
+request(options, function (error, response, body) {
+	if (!error && response.statusCode == 200) {
+		var qrcontent;
+
+		// The request library calls JSON.parse() on the body only if the POST body
+		// also was json - if not, we have to do this manually.
+		if (Object.prototype.toString.call(body) == '[object String]')
+			qrcontent = JSON.parse(body);
+		else
+			qrcontent = body;
+		var session = qrcontent.u;
+		qrcontent.u = server + qrcontent.u;
+
+		console.log(qrcontent);
+		qrcode.generate(JSON.stringify(qrcontent));
+
+		var check = function() {
+			if (result == null) {
+				poll(session);
+				setTimeout(check, 1000);
+			}
+		};
+
+		check();
+	} else {
+		console.log("Error in initial request:");
+		console.log(body);
+	}
+});
+
 
 function poll(token) {
 	var pollOptions = {
@@ -55,33 +100,4 @@ function poll(token) {
 		}
 	});
 }
-
-var options = {
-	uri: server,
-	method: 'POST',
-	json: sprequest
-};
-
-request(options, function (error, response, body) {
-	if (!error && response.statusCode == 200) {
-		var qrcontent = body;
-		var session = body.u;
-		qrcontent.u = server + qrcontent.u;
-
-		console.log(qrcontent);
-		qrcode.generate(JSON.stringify(qrcontent));
-
-		var check = function() {
-			if (result == null) {
-				poll(session);
-				setTimeout(check, 1000);
-			}
-		};
-
-		check();
-	} else {
-		console.log("Error in initial request:");
-		console.log(body);
-	}
-});
 
