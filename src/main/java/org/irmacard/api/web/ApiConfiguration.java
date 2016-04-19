@@ -24,29 +24,31 @@ import java.util.HashMap;
 
 @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection", "FieldCanBeLocal", "unused"})
 public class ApiConfiguration {
-	private static final String filename = "config.json";
-	private static ApiConfiguration instance;
+	/* The 'private' modifier is purposefully absent for some of these members so that
+	 * the unit tests from the same package can modify them. */
+	static final String filename = "config.json";
+	static ApiConfiguration instance;
 
 	/* Configuration keys and defaults */
-	private boolean hot_reload_configuration = true;
+	boolean hot_reload_configuration = true;
 
 	private String jwt_privatekey = "sk.der";
 	private String jwt_publickey = "pk.der";
 	private String jwt_issuer = null;
 
-	private boolean enable_issuing = false;
-	private boolean reject_unfloored_validity_timestamps = true;
+	boolean enable_issuing = false;
+	boolean reject_unfloored_validity_timestamps = true;
 
-	private boolean allow_unsigned_issue_requests = false;
-	private boolean allow_unsigned_verification_requests = false;
+	boolean allow_unsigned_issue_requests = false;
+	boolean allow_unsigned_verification_requests = false;
 
-	private int max_jwt_age = 60;
-	private int token_response_timeout = 10 * 60;
-	private int token_get_timeout = 2 * 60;
-	private int client_get_timeout = 2 * 60;
+	int max_jwt_age = 60;
+	int token_response_timeout = 10 * 60;
+	int token_get_timeout = 2 * 60;
+	int client_get_timeout = 2 * 60;
 
-	private HashMap<String, ArrayList<String>> authorized_idps = new HashMap<>();
-	private HashMap<String, ArrayList<String>> authorized_sps = new HashMap<>();
+	HashMap<String, ArrayList<String>> authorized_idps = new HashMap<>();
+	HashMap<String, ArrayList<String>> authorized_sps = new HashMap<>();
 
 	/* Transient members for convenience */
 	private transient PrivateKey jwtPrivateKey;
@@ -168,22 +170,18 @@ public class ApiConfiguration {
 		}
 	}
 
-	public PrivateKey getJwtPrivateKey() throws KeyManagementException {
-		if (jwtPrivateKey == null) {
-			try {
-				byte[] bytes = ApiConfiguration.getResource(jwt_privatekey);
-				if (bytes == null || bytes.length == 0)
-					throw new KeyManagementException("Could not read private key");
+	public PrivateKey getPrivateKey(String filename) throws KeyManagementException {
+		try {
+			byte[] bytes = ApiConfiguration.getResource(filename);
+			if (bytes == null || bytes.length == 0)
+				throw new KeyManagementException("Could not read private key");
 
-				PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(bytes);
+			PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(bytes);
 
-				jwtPrivateKey = KeyFactory.getInstance("RSA").generatePrivate(spec);
-			} catch (IOException|NoSuchAlgorithmException|InvalidKeySpecException e) {
-				throw new KeyManagementException(e);
-			}
+			return KeyFactory.getInstance("RSA").generatePrivate(spec);
+		} catch (IOException|NoSuchAlgorithmException|InvalidKeySpecException e) {
+			throw new KeyManagementException(e);
 		}
-
-		return jwtPrivateKey;
 	}
 
 	public PublicKey getJwtPublicKey() throws KeyManagementException {
@@ -191,6 +189,14 @@ public class ApiConfiguration {
 			jwtPublicKey = getPublicKey(jwt_publickey);
 
 		return jwtPublicKey;
+	}
+
+	public PrivateKey getJwtPrivateKey() throws KeyManagementException {
+		if (jwtPrivateKey == null) {
+			jwtPrivateKey = getPrivateKey(jwt_privatekey);
+		}
+
+		return jwtPrivateKey;
 	}
 
 	public String getJwtIssuer() {

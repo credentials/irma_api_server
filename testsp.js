@@ -23,7 +23,7 @@ var sprequest = {
 
 var jwtOptions = {
 	algorithm: "RS256",
-	issuer: "testip",
+	issuer: "testsp",
 	subject: "verification_request"
 };
 
