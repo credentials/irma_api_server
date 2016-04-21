@@ -34,9 +34,9 @@ openssl rsa -in sk.pem -pubout -outform DER -out pk.der
 rm sk.pem
 ```
 
-You can use the public key `pk.pem` or `pk.der` to check the validity of the JSON web tokens. (The `irma_verification_server` has no need of these two keys so they can safely be deleted from this directory - except when running the unit tests; then `pk.der` is needed to check the validity of the JSON web tokens.)
+You can use the public key `pk.pem` or `pk.der` to check the validity of the JSON web tokens. (The `irma_api_server` has no need of these two keys so they can safely be deleted from this directory - except when running the unit tests; then `pk.der` is needed to check the validity of the JSON web tokens.)
 
-As to issuing, identity providers must send their requests to the server in the form of JSON web tokens. Thus the server needs to know the public keys of all authorized identity providers. These are also stored in `src/main/resources`; see the configuration file (and the section below) for details. Such keys kan be generated using `openssl` as above.
+Identity providers, and if the server is so configured service providers as well, must send their requests to the server in the form of JSON web tokens. Thus the server needs to know the public keys of all authorized service and/or identity providers. These are also stored in `src/main/resources/issuers` and `src/main/resources/verifiers`; see the configuration file (and the section below) for details. Such keys kan be generated using `openssl` as above.
 
 ## Configuring the server
 The server can be configured using a json file at `src/main/resources/config.json`. In the same directory a sample configuration file called `config.SAMPLE.json` is included, showing all options, their defaults, and what they mean.
@@ -49,7 +49,7 @@ See the credentials/irma_configuration project for the specifics. Remember that 
 
 # Testing
 
-A test service provider and identity provider, written in node.js, is included; see `testsp.js` and `testip.js` respectively. Assuming you have node.js installed, you can run it by `js testsp.js url-to-server` (perhaps after running `npm install qrcode-terminal request jsonwebtoken fs`).
+A test service provider and identity provider, written in node.js, is included; see `testsp.js` and `testip.js` respectively. Assuming you have node.js installed, you can run it by `node testsp.js url-to-server` (perhaps after running `npm install qrcode-terminal request jsonwebtoken fs`).
 
 For more sophisticated examples, see [irma_js](https://github.com/credentials/irma_js).
 
@@ -57,8 +57,8 @@ For more sophisticated examples, see [irma_js](https://github.com/credentials/ir
 
 To make a GET request on a resource:
 
-    curl -i -H "Accept: application/json" http://localhost:8080/irma_verification_server/api/hello/json
+    curl -i -H "Accept: application/json" http://localhost:8080/irma_api_server/api/hello/json
 
 To make a POST request on a resource:
 
-    curl -X POST -H "Content-Type: application/json" -d '{"a": 5.0,"b": -22.0}' http://localhost:8080/irma_verification_server_jersey/api/hello/json
+    curl -X POST -H "Content-Type: application/json" -d '{"a": 5.0,"b": -22.0}' http://localhost:8080/irma_api_server/api/hello/json
