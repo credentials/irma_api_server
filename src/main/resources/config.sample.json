@@ -43,14 +43,24 @@
     "client_get_timeout": 120,
 
     // A list of authorized IdP's and what credentials they may sign.
+    // Example entry: "testip": [ "irma-demo.MijnOverheid.ageLower" ]
     // Supports wildcards as follows:
     // "testip": [ "*" ]              // testip can issue anything
+    // "testip": [ "irma-demo.*" ]    // testip can issue anything managed by the irma-demo scheme manager
     // "testip": [ "irma-demo.MijnOverheid.*" ] // testip can issue all credentials from issuer MijnOverheid
     // Assuming "allow_unsigned_issue_requests" is set to false, for each key identifying an identity provider,
-    // a .der public key file with the same name should be included in the src/main/resources folder, for
+    // a .der public key file with the same name should be included in the src/main/resources/issuers folder, for
     // verifying JWT's containing incoming issuing requests. For example, in the example below,
-    // src/main/resources/testip.der should exist.
-    // Note that the included testip.js will not work untill you put it here, for example as above.
+    // src/main/resources/issuers/testip.der should exist.
+    // Note that the included testip.js will not work until you put it here, for example as above.
     "authorized_idps": {
+    },
+
+    // A list of authorized SP's and what attributes they may verify.
+    // Example entry: "testsp": [ "irma-demo.MijnOverheid.ageLower.over12" ]
+    // Wildcards are supported as above, plus:
+    // "testsp": [ "irma-demo.MijnOverheid.ageLower.*" ] // testsp can verify all attributes from ageLower
+    // .der public keys of authorized verifiers are expected at the path src/main/resources/verifiers.
+    "authorized_sps": {
     }
 }
