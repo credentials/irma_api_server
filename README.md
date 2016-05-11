@@ -43,9 +43,11 @@ The server can be configured using a json file at `src/main/resources/config.jso
 
 ## irma_configuration
 
-Download or link the `irma_configuration` project to `src/main/resources/`.
+Download or link the `irma_configuration` project to `src/main/resources/`. If both projects are in the same directory the following should work
 
-See the credentials/irma_configuration project for the specifics. Remember that you can check out a different branch to get a different set of credentials and corresponding keys. In particular, the demo branch contains keys for all the issuers as well, thus making it very easy to test and develop applications.
+    ln -s ../irma_configuration src/main/resources/
+
+See the credentials/irma_configuration project for the specifics. Since we already transitioned the irma_api_server to the new configuration format you have to use the `combined` branch of `irma_configuration`.
 
 # Testing
 
