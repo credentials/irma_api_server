@@ -1,0 +1,11 @@
+{
+    // Configuration file for unit tests, not used for anything else
+    "enable_issuing": true,
+    "allow_unsigned_issue_requests": false,
+    "allow_unsigned_verification_requests": true,
+    "authorized_idps": {
+        "testip": [ "irma-demo.MijnOverheid.ageLower" ]
+    },
+    "authorized_sps": {
+    }
+}

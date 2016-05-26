@@ -85,7 +85,7 @@ public class VerificationTest extends JerseyTest {
 		IdemixKeyStore.initialize(new IdemixKeyStoreDeserializer(core));
 
 		try {
-			configuration = new String(ApiConfiguration.getResource(ApiConfiguration.filename));
+			configuration = new String(ApiConfiguration.getResource("config.test.json"));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
