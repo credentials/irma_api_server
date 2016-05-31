@@ -24,7 +24,7 @@ In the case of verification the server returns JSON web tokens signed using RSA,
 cd src/main/resources
 
 # Generate a private key in PEM format
-openssl genrsa 2048 -out sk.pem
+openssl genrsa -out sk.pem 2048
 # Convert it to DER for Java
 openssl pkcs8 -topk8 -inform PEM -outform DER -in sk.pem -out sk.der -nocrypt
 # Calculate corresponding public key, saved in PEM format
