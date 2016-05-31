@@ -1,0 +1,3 @@
+includeFlat 'credentials_api'
+includeFlat 'credentials_idemix'
+includeFlat 'irma_api_common'
