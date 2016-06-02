@@ -41,13 +41,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class IssueTest extends JerseyTest {
-	private static String configuration;
-
 	public IssueTest() {
 		super(new JettyTestContainerFactory());
-
-		ApiConfiguration.instance = GsonUtil.getGson().fromJson(configuration, ApiConfiguration.class);
-		ApiConfiguration.instance.hot_reload_configuration = false;
 	}
 
 	@BeforeClass
@@ -57,7 +52,9 @@ public class IssueTest extends JerseyTest {
 		IdemixKeyStore.initialize(new IdemixKeyStoreDeserializer(core));
 
 		try {
-			configuration = new String(ApiConfiguration.getResource("config.test.json"));
+			String configuration = new String(ApiConfiguration.getResource("config.test.json"));
+			ApiConfiguration.instance = GsonUtil.getGson().fromJson(configuration, ApiConfiguration.class);
+			ApiConfiguration.instance.hot_reload_configuration = false;
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
