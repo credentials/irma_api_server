@@ -2,6 +2,8 @@ apply plugin: 'war'
 apply plugin: 'org.akhikhl.gretty'
 apply plugin: 'eclipse-wtp'
 
+import org.gradle.internal.os.OperatingSystem;
+
 buildscript {
     repositories {
         mavenLocal()
@@ -37,6 +39,17 @@ dependencies {
     testCompile "junit:junit:4.11"
     testCompile 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-jetty:2.19'
 }
+
+
+task preTest(type: Exec) {
+    // If we run on Windows then it might have (ba)sh through cygwin, but probably
+    // not openssl (on which keygen.sh depends on which preparetest.sh depends).
+    if (!OperatingSystem.current().isWindows()) {
+        commandLine 'sh', './preparetest.sh'
+    }
+}
+
+processResources.dependsOn preTest
 
 gretty {
     contextConfigFile = file('src/test/resources/jetty-env.xml')
