@@ -45,7 +45,7 @@ task preTest(type: Exec) {
     // If we run on Windows then it might have (ba)sh through cygwin, but probably
     // not openssl (on which keygen.sh depends on which preparetest.sh depends).
     if (!OperatingSystem.current().isWindows()) {
-        commandLine 'sh', './preparetest.sh'
+        commandLine 'sh', './utils/preparetest.sh'
     }
 }
 

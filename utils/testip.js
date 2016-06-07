@@ -46,7 +46,8 @@ var jwtOptions = {
     subject: "issue_request"
 };
 
-var token = jwt.sign({iprequest: iprequest}, fs.readFileSync('testip.pem'), jwtOptions);
+var keyfile = "src/main/resources/issuers/testip-sk.pem";
+var token = jwt.sign({iprequest: iprequest}, fs.readFileSync(keyfile), jwtOptions);
 console.log(token);
 var server = process.argv[2] + "/irma_api_server/api/v2/issue/";
 var result = null;
