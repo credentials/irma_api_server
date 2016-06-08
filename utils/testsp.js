@@ -27,7 +27,7 @@ var jwtOptions = {
 	subject: "verification_request"
 };
 
-var keyfile = "src/main/resources/issuers/testip-sk.pem";
+var keyfile = "src/main/resources/verifiers/testsp-sk.pem";
 var token = jwt.sign({sprequest: sprequest}, fs.readFileSync(keyfile), jwtOptions);
 var server = process.argv[2] + "/irma_api_server/api/v2/verification/";
 var publickey = fs.readFileSync('src/main/resources/pk.pem');
@@ -36,8 +36,7 @@ var result = null;
 var options = {
 	uri: server,
 	method: 'POST',
-	json: sprequest
-	//body: token
+	body: token
 };
 
 request(options, function (error, response, body) {
