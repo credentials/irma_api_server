@@ -35,6 +35,7 @@ package org.irmacard.api.web;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 
 import javax.ws.rs.ApplicationPath;
 
@@ -68,7 +69,12 @@ public class ApiApplication extends ResourceConfig {
 
         try {
             if (!DescriptionStore.isInitialized() || !IdemixKeyStore.isInitialized()) {
-                URI CORE_LOCATION = ApiApplication.class.getClassLoader().getResource("/irma_configuration/").toURI();
+                URL url = ApiApplication.class.getClassLoader().getResource("/irma_configuration/");
+                if (url == null)
+                    throw new IllegalStateException("irma_configuration not found in src/main/resources. " +
+                            "See README.md for more information.");
+
+                URI CORE_LOCATION = url.toURI();
                 DescriptionStore.initialize(new DescriptionStoreDeserializer(CORE_LOCATION));
                 IdemixKeyStore.initialize(new IdemixKeyStoreDeserializer(CORE_LOCATION));
             }
