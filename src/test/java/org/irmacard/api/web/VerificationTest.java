@@ -31,6 +31,7 @@
 package org.irmacard.api.web;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.test.JerseyTest;
@@ -103,19 +104,44 @@ public class VerificationTest extends JerseyTest {
 		return new ApiApplication();
 	}
 
-	public String createSession() throws InfoException {
+	public String createSession() throws KeyManagementException {
+		return createSession(System.currentTimeMillis() / 1000,
+				ApiConfiguration.getInstance().getPrivateKey("test-sk.der"));
+	}
+
+	public String createSession(long issuedAt, PrivateKey jwtPrivateKey) throws KeyManagementException {
 		AttributeDisjunctionList attrs = new AttributeDisjunctionList(1);
 		attrs.add(new AttributeDisjunction("Over 12", schemeManager + ".MijnOverheid.ageLower.over12"));
 		DisclosureProofRequest request = new DisclosureProofRequest(null, null, attrs);
+
+		return createSession(request, issuedAt, jwtPrivateKey);
+	}
+
+	public String createSession(DisclosureProofRequest request) throws KeyManagementException {
+		return createSession(request, System.currentTimeMillis() / 1000,
+				ApiConfiguration.getInstance().getPrivateKey("test-sk.der"));
+	}
+
+	public String createSession(DisclosureProofRequest request, long issuedAt, PrivateKey jwtPrivateKey)
+	throws KeyManagementException {
 		ServiceProviderRequest spRequest = new ServiceProviderRequest("testrequest", request, 60);
 
+		Map<String, Object> claims = new HashMap<>();
+		claims.put("sprequest", spRequest);
+		claims.put("iss", "testsp");
+		claims.put("sub", "verification_request");
+		claims.put("iat", issuedAt);
+
+		JwtBuilder builder = Jwts.builder().setPayload(GsonUtil.getGson().toJson(claims));
+		if (jwtPrivateKey != null)
+			builder.signWith(ApiConfiguration.getInstance().getJwtAlgorithm(), jwtPrivateKey);
+		String jwt = builder.compact();
+
 		ClientQr qr = target("/verification/").request(MediaType.APPLICATION_JSON)
-				.post(Entity.entity(spRequest, MediaType.APPLICATION_JSON), ClientQr.class);
+				.post(Entity.entity(jwt, MediaType.TEXT_PLAIN), ClientQr.class);
 
-		String sessiontoken = qr.getUrl();
-
-		assert(sessiontoken.length() > 20);
-		return sessiontoken;
+		System.out.println(qr.getUrl());
+		return qr.getUrl();
 	}
 
 	public void doSession(List<Integer> disclosed, Status expectedResult)
@@ -236,24 +262,20 @@ public class VerificationTest extends JerseyTest {
 
 	@Test
 	public void boundProofsTest() throws InfoException, KeyManagementException {
-		IdemixCredential cred1 = getAgeLowerCredential();
-		IdemixCredential cred2 = getNameCredential();
-
+		// Prepare the session
 		AttributeDisjunctionList attrs = new AttributeDisjunctionList(1);
 		attrs.add(new AttributeDisjunction("Over 12", schemeManager + ".MijnOverheid.ageLower.over12"));
 		attrs.add(new AttributeDisjunction("Name", schemeManager + ".MijnOverheid.fullName.firstname"));
 		DisclosureProofRequest request = new DisclosureProofRequest(null, null, attrs);
 
-		ServiceProviderRequest spRequest = new ServiceProviderRequest("testrequest", request, 60);
-
-		ClientQr qr = target("/verification/").request(MediaType.APPLICATION_JSON)
-				.post(Entity.entity(spRequest, MediaType.APPLICATION_JSON), ClientQr.class);
-
-		String session = qr.getUrl();
-
+		// Create the session
+		String session = createSession(request);
 		request = target("/verification/" + session).request(MediaType.APPLICATION_JSON).get(DisclosureProofRequest.class);
 
-		// Create the proof and post it;
+		IdemixCredential cred1 = getAgeLowerCredential();
+		IdemixCredential cred2 = getNameCredential();
+
+		// Create the proof and post it
 		ProofList proofs = new ProofListBuilder(request.getContext(), request.getNonce())
 				.addProofD(cred1, Arrays.asList(1, 2))
 				.addProofD(cred2, Arrays.asList(1, 3))
@@ -290,47 +312,23 @@ public class VerificationTest extends JerseyTest {
 	@Test(expected=NotAuthorizedException.class)
 	public void shouldBeJwtTest() throws InfoException, KeyManagementException {
 		ApiConfiguration.getInstance().allow_unsigned_verification_requests = false;
-		validSessionTest();
+		createSession(System.currentTimeMillis() / 1000, null);
 	}
 
-	public void signedVerificationRequest() throws KeyManagementException {
-		signedVerificationSession(System.currentTimeMillis() / 1000,
-				ApiConfiguration.getInstance().getPrivateKey("test-sk.der"));
-	}
-
-	public void signedVerificationSession(long issuedAt, PrivateKey jwtPrivateKey) throws KeyManagementException {
-		ApiConfiguration.instance.allow_unsigned_verification_requests = false;
-
-		AttributeDisjunctionList attrs = new AttributeDisjunctionList(1);
-		attrs.add(new AttributeDisjunction("Over 12", schemeManager + ".MijnOverheid.ageLower.over12"));
-		DisclosureProofRequest request = new DisclosureProofRequest(null, null, attrs);
-		ServiceProviderRequest spRequest = new ServiceProviderRequest("testrequest", request, 60);
-
-		Map<String, Object> claims = new HashMap<>();
-		claims.put("sprequest", spRequest);
-		claims.put("iss", "testsp");
-		claims.put("sub", "verification_request");
-		claims.put("iat", issuedAt);
-
-		String jwt = Jwts.builder()
-				.setPayload(GsonUtil.getGson().toJson(claims))
-				.signWith(ApiConfiguration.getInstance().getJwtAlgorithm(), jwtPrivateKey)
-				.compact();
-
-		ClientQr qr = target("/verification/").request(MediaType.APPLICATION_JSON)
-				.post(Entity.entity(jwt, MediaType.TEXT_PLAIN), ClientQr.class);
-
-		System.out.println(qr.getUrl());
+	@Test
+	public void unsignedJwt() throws KeyManagementException {
+		ApiConfiguration.getInstance().allow_unsigned_verification_requests = true;
+		createSession(System.currentTimeMillis() / 1000, null);
 	}
 
 	@Test(expected=NotAuthorizedException.class)
 	public void oldJwtTest() throws KeyManagementException {
-		signedVerificationSession(1, ApiConfiguration.getInstance().getPrivateKey("test-sk.der"));
+		createSession(1, ApiConfiguration.getInstance().getPrivateKey("test-sk.der"));
 	}
 
 	@Test(expected=NotAuthorizedException.class)
 	public void wrongJwtKeyTest() throws KeyManagementException {
-		signedVerificationSession(System.currentTimeMillis() / 1000,
+		createSession(System.currentTimeMillis() / 1000,
 				ApiConfiguration.instance.getPrivateKey("sk.der"));
 	}
 
@@ -338,19 +336,19 @@ public class VerificationTest extends JerseyTest {
 	public void authorizedVerifierTest() throws KeyManagementException {
 		ApiConfiguration.instance.authorized_sps.put("testsp", new ArrayList<String>());
 		try {
-			signedVerificationRequest();
+			createSession();
 		} catch (ForbiddenException e) { /* Expected */ }
 
 		ApiConfiguration.instance.authorized_sps.get("testsp").add(schemeManager+".MijnOverheid.ageLower.over12");
-		signedVerificationRequest();
+		createSession();
 
 		ApiConfiguration.instance.authorized_sps.get("testsp").set(0, schemeManager+".*");
-		signedVerificationRequest();
+		createSession();
 
 		ApiConfiguration.instance.authorized_sps.get("testsp").set(0, schemeManager+".MijnOverheid.*");
-		signedVerificationRequest();
+		createSession();
 
 		ApiConfiguration.instance.authorized_sps.get("testsp").set(0, schemeManager+".MijnOverheid.ageLower.*");
-		signedVerificationRequest();
+		createSession();
 	}
 }

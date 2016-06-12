@@ -72,12 +72,7 @@ public class VerificationResource {
                 ApiConfiguration.getInstance().allowUnsignedVerificationRequests(),
                 "verification_request", "sprequest", "verifiers", ServiceProviderRequest.class);
 
-        /* Important difference with incoming issuing requests:
-           If unsigned verification JWT's are accepted according to the ApiConfiguration, then we accept:
-           validly signed JWT's; unsigned JWT's; OR a ServiceProviderRequest instead of a JWT.
-           This is for backbards compatibility. (Issuing requests only accept JWT's in this case.) */
-
-        ServiceProviderRequest request = parser.parsePlainOrJwt(jwt).getPayload();
+        ServiceProviderRequest request = parser.parseJwt(jwt).getPayload();
         return create(request, parser.getJwtIssuer());
     }
 
@@ -191,7 +186,6 @@ public class VerificationResource {
     @Path("/{sessiontoken}/getproof")
     @Produces(MediaType.TEXT_PLAIN)
     public String gettoken(@PathParam("sessiontoken") String sessiontoken) throws KeyManagementException {
-        System.out.println("Retrieving signed proof");
         VerificationSession session = sessions.getNonNullSession(sessiontoken);
         DisclosureProofResult result = getproof(sessiontoken);
 

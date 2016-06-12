@@ -7,5 +7,6 @@
         "testip": [ "irma-demo.MijnOverheid.ageLower" ]
     },
     "authorized_sps": {
+        "testsp": [ "irma-demo.*" ]
     }
 }
