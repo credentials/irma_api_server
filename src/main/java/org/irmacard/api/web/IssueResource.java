@@ -148,9 +148,6 @@ public class IssueResource {
 			fail(ApiError.ATTRIBUTES_MISSING, session);
 		}
 
-		// Lookup the public keys of any ProofD's in the proof list
-		proofs.populatePublicKeyArray();
-
 		try {
 			// Lookup the public keys of all ProofU's in the proof list. We have to do this before we can compute the CL
 			// sigatures below, because that also verifies the proofs, which needs these keys.
