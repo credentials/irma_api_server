@@ -34,7 +34,7 @@ dependencies {
 
     providedCompile 'javax.servlet:javax.servlet-api:3.1.0'
 
-    compile 'org.irmacard.api:irma_api_common:0.3.7'
+    compile 'org.irmacard.api:irma_api_common:0.3.9'
 
     testCompile "junit:junit:4.11"
     testCompile 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-jetty:2.19'
