@@ -21,6 +21,7 @@ import org.irmacard.credentials.idemix.proofs.ProofListBuilder;
 import org.irmacard.credentials.info.DescriptionStore;
 import org.irmacard.credentials.info.DescriptionStoreDeserializer;
 import org.irmacard.credentials.info.InfoException;
+import org.irmacard.credentials.info.KeyException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -73,38 +74,44 @@ public class IssueTest extends JerseyTest {
 	}
 
 	@Test // Valid issuance without disclosure
-	public void validIssueTest() throws KeyManagementException, InfoException, CredentialsException {
+	public void validIssueTest()
+	throws CredentialsException, InfoException, KeyManagementException, KeyException {
 		doIssueSession(getAgeLowerIPrequest(), null);
 	}
 
 	@Test // Valid issuance with disclosure of 1 attribute
-	public void validBoundIssueTest() throws CredentialsException, InfoException, KeyManagementException {
+	public void validBoundIssueTest()
+	throws CredentialsException, InfoException, KeyManagementException, KeyException {
 		IdemixCredential ageLower = doIssueSession(getAgeLowerIPrequest(), null).get(0);
 		doIssueSession(getBoundIPrequest("\"irma-demo.MijnOverheid.ageLower.over12\": \"yes\""), ageLower);
 	}
 
 	@Test // Valid issuance with proof of ownership of a credential (no attribute disclosure)
-	public void validBoundIssueTest2() throws CredentialsException, InfoException, KeyManagementException {
+	public void validBoundIssueTest2()
+	throws CredentialsException, InfoException, KeyManagementException, KeyException {
 		IdemixCredential ageLower = doIssueSession(getAgeLowerIPrequest(), null).get(0);
 		doIssueSession(getBoundIPrequest("\"irma-demo.MijnOverheid.ageLower\": \"present\""), ageLower);
 	}
 
 	// Issuance where an attribute with the wrong value is disclosed
 	@Test(expected=BadRequestException.class)
-	public void boundIssueWrongValueTest() throws CredentialsException, InfoException, KeyManagementException {
+	public void boundIssueWrongValueTest()
+	throws CredentialsException, InfoException, KeyManagementException, KeyException {
 		IdemixCredential ageLower = doIssueSession(getAgeLowerIPrequest(), null).get(0);
 		doIssueSession(getBoundIPrequest("\"irma-demo.MijnOverheid.ageLower.over12\": \"no\""), ageLower);
 	}
 
 	// Issuance where a disclosed attribute is expected but not provided
 	@Test(expected=BadRequestException.class)
-	public void boundIssueMissingValueTest() throws CredentialsException, InfoException, KeyManagementException {
+	public void boundIssueMissingValueTest()
+	throws CredentialsException, InfoException, KeyManagementException, KeyException {
 		doIssueSession(getBoundIPrequest("\"irma-demo.MijnOverheid.ageLower.over12\": \"yes\""), null);
 	}
 
 	// Issuance where a credential ownership proof is expected but not provided
 	@Test(expected=BadRequestException.class)
-	public void boundIssueMissingValueTest2() throws CredentialsException, InfoException, KeyManagementException {
+	public void boundIssueMissingValueTest2()
+	throws CredentialsException, InfoException, KeyManagementException, KeyException {
 		doIssueSession(getBoundIPrequest("\"irma-demo.MijnOverheid.ageLower\": \"present\""), null);
 	}
 
@@ -112,7 +119,7 @@ public class IssueTest extends JerseyTest {
 	 * Perform an issuing session, disclosing all attributes of the specified credential if present.
 	 */
 	public ArrayList<IdemixCredential> doIssueSession(IdentityProviderRequest ipRequest, IdemixCredential cred)
-	throws KeyManagementException, InfoException, CredentialsException {
+	throws KeyManagementException, InfoException, CredentialsException, KeyException {
 		String sessiontoken = createSession(ipRequest);
 
 		IssuingRequest request = target("/issue/" + sessiontoken)
@@ -136,7 +143,7 @@ public class IssueTest extends JerseyTest {
 	public IssueCommitmentMessage getIssueCommitments(IssuingRequest request,
 	                                                  ArrayList<CredentialBuilder> credentialBuilders,
 	                                                  IdemixCredential credential)
-	throws InfoException, CredentialsException {
+	throws InfoException, CredentialsException, KeyException {
 		BigInteger nonce2 = CredentialBuilder.createReceiverNonce(request.getCredentials().get(0).getPublicKey());
 
 		// Construct the commitment proofs

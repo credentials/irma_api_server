@@ -17,6 +17,7 @@ import org.irmacard.credentials.idemix.messages.IssueSignatureMessage;
 import org.irmacard.credentials.idemix.proofs.ProofList;
 import org.irmacard.credentials.info.InfoException;
 import org.irmacard.credentials.info.IssuerIdentifier;
+import org.irmacard.credentials.info.KeyException;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -89,7 +90,7 @@ public class IssueResource {
 				cred.setKeyCounter(counter);
 				if (!IdemixKeyStore.getInstance().containsSecretKey(identifier, counter))
 					throw new ApiException(ApiError.CANNOT_ISSUE, cred.getIssuerName());
-			} catch (InfoException e) {
+			} catch (KeyException e) {
 				throw new ApiException(ApiError.CANNOT_ISSUE, cred.getIssuerName());
 			}
 		}
@@ -199,6 +200,9 @@ public class IssueResource {
 			return null;
 		} catch (CredentialsException e) {
 			fail(ApiError.ISSUANCE_FAILED, session);
+			return null;
+		} catch (KeyException e) {
+			fail(ApiError.UNKNOWN_PUBLIC_KEY, session);
 			return null;
 		}
 	}
