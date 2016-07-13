@@ -48,20 +48,6 @@ public class JwtParser <T> {
 	}
 
 	/**
-	 * Parse the given string, first assuming it is bare JSON if unsigned JWT's are allowed, then parsing it as a JWT
-	 */
-	public JwtParser<T> parsePlainOrJwt(String jwt) {
-		if (allowUnsigned) {
-			try {
-				payload = GsonUtil.getGson().fromJson(jwt, clazz);
-				return this;
-			} catch (JsonParseException e) { /* ignore, retry below as JWT */ }
-		}
-
-		return parseJwt(jwt);
-	}
-
-	/**
 	 * Parse the given JWT.
 	 */
 	public JwtParser<T> parseJwt(String jwt) {
