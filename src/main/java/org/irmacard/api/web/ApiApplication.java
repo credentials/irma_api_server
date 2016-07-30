@@ -48,10 +48,8 @@ import org.irmacard.credentials.info.*;
 
 @ApplicationPath("/")
 public class ApiApplication extends ResourceConfig {
-    private static URI confPath;
-
     public ApiApplication() {
-        System.out.println("Using configuration path: " + getConfigurationPath().toString());
+        System.out.println("Using configuration path: " + ApiConfiguration.getConfigurationPath().toString());
 
         // register Gson
         register(GsonJerseyProvider.class);
@@ -74,118 +72,12 @@ public class ApiApplication extends ResourceConfig {
         register(CORSResponseFilter.class);
 
         try {
-            URI CORE_LOCATION = getConfigurationPath().resolve("irma_configuration/");
+            URI CORE_LOCATION = ApiConfiguration.getConfigurationPath().resolve("irma_configuration/");
             DescriptionStore.initialize(new DescriptionStoreDeserializer(CORE_LOCATION));
             IdemixKeyStore.initialize(new IdemixKeyStoreDeserializer(CORE_LOCATION));
         } catch (InfoException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Returns true if the specified path is a valid configuration directory. Currently a directory
-     * is considered a valid configuration directory if it contains a subdir called irma_configuration.
-     */
-    public static boolean isConfDirectory(URI candidate) {
-        if (candidate == null)
-            return false;
-        return new File(candidate.resolve("irma_configuration/")).isDirectory();
-    }
-
-    /**
-     * Depending on if we're running tests according to {@link ApiConfiguration#testing},
-     * returns either src/main/resources or src/test/resources, if it contains irma_configuration.
-     * @return URI to src/main/resources or src/test/resources if it contains irma_configuration, null otherwise
-     */
-    public static URI getResourcesConfPath() throws URISyntaxException {
-        // The only way to actually get the resource folder, as opposed to the classes folder,
-        // seems to be to ask for an existing file or directory within the resources. That is,
-        // ApiApplication.class.getClassLoader().getResource("/") or variants thereof
-        // give an incorrect path. This is why we must treat this as a separate case.
-        // Also, to get src/main/resources/irma_configuration one must apparently include a leading
-        // slash, but not when fetching src/test/resources/irma_configuration :(
-
-        URL url = ApiApplication.class.getClassLoader().getResource(
-                (ApiConfiguration.testing ? "" : "/") + "irma_configuration/");
-        if (url != null) // Construct an URI of the parent path
-            return  new URI("file://" + new File(url.getPath()).getParent() + "/");
-        else
-            return null;
-    }
-
-    /**
-     * If a path was set in the IRMA_CONF_PATH environment variable, return it
-     */
-    public static URI getEnvVariableConfPath() throws URISyntaxException {
-        String envPath = System.getenv("IRMA_CONF_PATH");
-        if (envPath == null || envPath.length() == 0)
-            return null;
-
-        if (!envPath.startsWith("file://"))
-            envPath = "file://" + envPath;
-        if (!envPath.endsWith("/"))
-            envPath += "/";
-
-        return new URI(envPath);
-    }
-
-    /**
-     * Get the configuration directory.
-     * @throws IllegalStateException If no suitable configuration directory was found
-     * @throws IllegalArgumentException If the path from the IRMA_CONF_PATH environment variable was
-     *                                  not a valid path
-     */
-    public static URI getConfigurationPath() throws IllegalStateException, IllegalArgumentException {
-        if (confPath != null)
-            return confPath;
-
-        try {
-            URI resourcesCandidate = getResourcesConfPath();
-
-            // If we're running unit tests, only accept src/test/resources
-            if (ApiConfiguration.testing) {
-                if (resourcesCandidate != null) {
-                    confPath = resourcesCandidate;
-                    return confPath;
-                }
-                else
-                    throw new IllegalStateException("irma_configuration not found in src/test/resources. " +
-                            "(Have you run `git submodule init && git submodule update`?)");
-            }
-
-            // If we're here, we're not running unit tests.
-            // If a path was given in the IRMA_CONF_PATH environment variable, prefer it
-            URI envCandidate = getEnvVariableConfPath();
-            if (envCandidate != null) {
-                if (isConfDirectory(envCandidate)) {
-                    confPath = envCandidate;
-                    return confPath;
-                } else {
-                    // If the user specified an incorrect path (s)he will want to know, so bail out here
-                    throw new IllegalArgumentException("Specified path in IRMA_API_CONF is not " +
-                            "a valid configuration directory");
-                }
-            }
-
-            // See if a number of other fixed candidates are suitable
-            ArrayList<URI> candidates = new ArrayList<>(4);
-            candidates.add(resourcesCandidate);
-            candidates.add(new URI("file:///etc/irma_api_server/"));
-            candidates.add(new URI("file:///C:/irma_api_server/"));
-            candidates.add(new File(System.getProperty("user.home")).toURI().resolve("irma_api_server/"));
-
-            for (URI candidate : candidates) {
-                if (isConfDirectory(candidate)) {
-                    confPath = candidate;
-                    return confPath;
-                }
-            }
-
-            throw new IllegalStateException("irma_configuration not found in any of the possible " +
-                    "configuration directories. See README.md for more information.");
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException(e);
         }
     }
 }
