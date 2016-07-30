@@ -8,9 +8,9 @@ import org.irmacard.credentials.info.CredentialIdentifier;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.*;
@@ -28,6 +28,8 @@ public class ApiConfiguration {
 	 * the unit tests from the same package can modify them. */
 	static final String filename = "config.json";
 	static ApiConfiguration instance;
+
+	public static transient boolean testing = false;
 
 	/* Configuration keys and defaults */
 	boolean hot_reload_configuration = true;
@@ -218,13 +220,8 @@ public class ApiConfiguration {
 	}
 
 	public static byte[] getResource(String filename) throws IOException {
-		URL url = ApiConfiguration.class.getClassLoader().getResource(filename);
-		if (url == null)
-			throw new IOException("Could not load file " + filename);
-
-		URLConnection urlCon = url.openConnection();
-		urlCon.setUseCaches(false);
-		return convertSteamToByteArray(urlCon.getInputStream(), 2048);
+		File file = new File(ApiApplication.getConfigurationPath().resolve(filename));
+		return convertSteamToByteArray(new FileInputStream(file), 2048);
 	}
 
 	public static byte[] convertSteamToByteArray(InputStream stream, int size) throws IOException {

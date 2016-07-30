@@ -33,6 +33,7 @@
 
 package org.irmacard.api.web;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -46,7 +47,11 @@ import org.irmacard.credentials.info.*;
 
 @ApplicationPath("/")
 public class ApiApplication extends ResourceConfig {
+    private static URI confPath;
+
     public ApiApplication() {
+        System.out.println("Using configuration path: " + getConfigurationPath().toString());
+
         // register Gson
         register(GsonJerseyProvider.class);
 
@@ -68,18 +73,60 @@ public class ApiApplication extends ResourceConfig {
         register(CORSResponseFilter.class);
 
         try {
-            if (!DescriptionStore.isInitialized() || !IdemixKeyStore.isInitialized()) {
-                URL url = ApiApplication.class.getClassLoader().getResource("/irma_configuration/");
-                if (url == null)
-                    throw new IllegalStateException("irma_configuration not found in src/main/resources. " +
-                            "See README.md for more information.");
-
-                URI CORE_LOCATION = url.toURI();
-                DescriptionStore.initialize(new DescriptionStoreDeserializer(CORE_LOCATION));
-                IdemixKeyStore.initialize(new IdemixKeyStoreDeserializer(CORE_LOCATION));
-            }
-        } catch (URISyntaxException|InfoException e) {
+            URI CORE_LOCATION = getConfigurationPath().resolve("irma_configuration/");
+            DescriptionStore.initialize(new DescriptionStoreDeserializer(CORE_LOCATION));
+            IdemixKeyStore.initialize(new IdemixKeyStoreDeserializer(CORE_LOCATION));
+        } catch (InfoException e) {
             e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static URI getConfigurationPath() throws IllegalStateException {
+        if (confPath != null)
+            return confPath;
+
+        try {
+            URI[] candidates = {
+                    new URI("file:///etc/irma_api_server/"),
+                    new URI("file:///C:/irma_api_server/"),
+                    new File(System.getProperty("user.home")).toURI().resolve("irma_api_server/")
+            };
+
+            // The only way to actually get the resource folder, as opposed to the classes folder,
+            // seems to be to ask for an existing file or directory within the resources. That is,
+            // ApiApplication.class.getClassLoader().getResource("/") or variants thereof
+            // give an incorrect path. This is why we must treat this as a separate case.
+            // Also, to get src/main/resources/irma_configuration one must apparently include a leading
+            // slash, but not when fetching src/test/resources/irma_configuration :(
+
+            URI resourcesCandidate = null;
+            URL url = ApiApplication.class.getClassLoader().getResource(
+                    (ApiConfiguration.testing ? "" : "/") + "irma_configuration/");
+            if (url != null) // Construct an URI of the parent path
+                resourcesCandidate = new URI("file://" + new File(url.getPath()).getParent() + "/");
+
+            if (resourcesCandidate != null) {
+                confPath = new URI("file://" + new File(url.getPath()).getParent() + "/");
+                return confPath;
+            }
+
+            // If we are running tests, only accept src/test/resources
+            if (ApiConfiguration.testing)
+                throw new IllegalStateException("irma_configuration not found in src/test/resources. " +
+                        "(Have you run `git submodule init && git submodule update`?)");
+
+            // Otherwise, check the other candidates
+            for (URI candidate : candidates) {
+                if (new File(candidate.resolve("irma_configuration/")).isDirectory()) {
+                    confPath = candidate;
+                    return confPath;
+                }
+            }
+
+            throw new IllegalStateException("irma_configuration not found in " +
+                    "/etc/irma_api_server or src/main/resources. See README.md for more information.");
+        } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
     }

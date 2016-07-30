@@ -49,7 +49,7 @@ task preTest(type: Exec) {
     }
 }
 
-processResources.dependsOn preTest
+processTestResources.dependsOn preTest
 
 gretty {
     contextConfigFile = file('src/test/resources/jetty-env.xml')

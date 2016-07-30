@@ -48,9 +48,7 @@ public class IssueTest extends JerseyTest {
 
 	@BeforeClass
 	public static void initializeInformation() throws InfoException {
-		URI core = new File(System.getProperty("user.dir")).toURI().resolve("src/main/resources/irma_configuration/");
-		DescriptionStore.initialize(new DescriptionStoreDeserializer(core));
-		IdemixKeyStore.initialize(new IdemixKeyStoreDeserializer(core));
+		ApiConfiguration.testing = true;
 
 		try {
 			String configuration = new String(ApiConfiguration.getResource("config.test.json"));
