@@ -33,18 +33,15 @@
 
 package org.irmacard.api.web;
 
-import java.io.File;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.ArrayList;
-
-import javax.ws.rs.ApplicationPath;
-
 import org.glassfish.jersey.server.ResourceConfig;
 import org.irmacard.credentials.idemix.info.IdemixKeyStore;
 import org.irmacard.credentials.idemix.info.IdemixKeyStoreDeserializer;
-import org.irmacard.credentials.info.*;
+import org.irmacard.credentials.info.DescriptionStore;
+import org.irmacard.credentials.info.DescriptionStoreDeserializer;
+import org.irmacard.credentials.info.InfoException;
+
+import javax.ws.rs.ApplicationPath;
+import java.net.URI;
 
 @ApplicationPath("/")
 public class ApiApplication extends ResourceConfig {

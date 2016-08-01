@@ -279,10 +279,10 @@ public class ApiConfiguration {
 	}
 
 	/**
-	 * If a path was set in the IRMA_CONF_PATH environment variable, return it
+	 * If a path was set in the IRMA_API_CONF environment variable, return it
 	 */
 	public static URI getEnvVariableConfPath() throws URISyntaxException {
-		String envPath = System.getenv("IRMA_CONF_PATH");
+		String envPath = System.getenv("IRMA_API_CONF");
 		if (envPath == null || envPath.length() == 0)
 			return null;
 
@@ -297,7 +297,7 @@ public class ApiConfiguration {
 	/**
 	 * Get the configuration directory.
 	 * @throws IllegalStateException If no suitable configuration directory was found
-	 * @throws IllegalArgumentException If the path from the IRMA_CONF_PATH environment variable was
+	 * @throws IllegalArgumentException If the path from the IRMA_API_CONF environment variable was
 	 *                                  not a valid path
 	 */
 	public static URI getConfigurationPath() throws IllegalStateException, IllegalArgumentException {
@@ -319,7 +319,7 @@ public class ApiConfiguration {
 			}
 
 			// If we're here, we're not running unit tests.
-			// If a path was given in the IRMA_CONF_PATH environment variable, prefer it
+			// If a path was given in the IRMA_API_CONF environment variable, prefer it
 			URI envCandidate = getEnvVariableConfPath();
 			if (envCandidate != null) {
 				if (isConfDirectory(envCandidate)) {
