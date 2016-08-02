@@ -22,15 +22,17 @@ var sprequest = {
 };
 
 var jwtOptions = {
-	algorithm: "RS256",
+	algorithm: "none",
 	issuer: "testsp",
 	subject: "verification_request"
 };
 
-var keyfile = "src/main/resources/verifiers/testsp-sk.pem";
-var token = jwt.sign({sprequest: sprequest}, fs.readFileSync(keyfile), jwtOptions);
+var confpath = process.argv[3] != null ? process.argv[3] : 'src/main/resources';
+
+// var keyfile = confpath + "/verifiers/testsp-sk.pem";
+var token = jwt.sign({sprequest: sprequest}, null, jwtOptions);
 var server = process.argv[2] + "/irma_api_server/api/v2/verification/";
-var publickey = fs.readFileSync('src/main/resources/pk.pem');
+var publickey = fs.readFileSync(confpath + '/pk.pem');
 var result = null;
 
 var options = {
@@ -100,4 +102,3 @@ function poll(token) {
 		}
 	});
 }
-
