@@ -64,7 +64,7 @@ Neither `utils/keygen.sh` nor `utils/preparetest.sh` will overwrite existing fil
 
 # Testing
 
-You can run the included unit tests by running `gradle test`; in this case `src/test/resources` will always be used as the configuration directory (which comes with its own configuration files for this purpose, as well as `irma_configuration` as a git submodule).
+You can run the included unit tests by running `gradle test`; in this case `src/test/resources` will always be used as the configuration directory (which comes with its own configuration files for this purpose, as well as `irma_configuration` as a git submodule. Be sure to run `git submodule init && git submodule update`!).
 
 A test service provider and identity provider, written in node.js, is included; see `utils/testsp.js` and `utils/testip.js` respectively. If you haven't done so already, you should install the dependencies (assuming you already have node.js installed):
 
