@@ -1,10 +1,13 @@
 package org.irmacard.api.web;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwsHeader;
+import io.jsonwebtoken.SigningKeyResolverAdapter;
 import org.irmacard.api.common.*;
 import org.irmacard.api.common.exceptions.ApiError;
 import org.irmacard.api.common.exceptions.ApiException;
 import org.irmacard.api.common.util.GsonUtil;
-import org.irmacard.api.web.sessions.IrmaSession.Status;
+import org.irmacard.api.web.sessions.IrmaSession;
 import org.irmacard.api.web.sessions.IssueSession;
 import org.irmacard.api.web.sessions.Sessions;
 import org.irmacard.credentials.Attributes;
@@ -22,6 +25,7 @@ import org.irmacard.credentials.info.KeyException;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import java.security.Key;
 import java.util.ArrayList;
 
 @Path("issue")
@@ -34,7 +38,7 @@ public class IssueResource {
 	/**
 	 * Entry post for issue sessions creations. This only verifies the authenticity of the JWT; all other handling
 	 * (checking if this issuer is authorized to issue, creating and saving the session, etc) is done by
-	 * {@link #create(IdentityProviderRequest, String)} below.
+	 * {@link #create(IdentityProviderRequest, String, String)} below.
 	 */
 	@POST
 	@Consumes(MediaType.TEXT_PLAIN)
@@ -47,13 +51,22 @@ public class IssueResource {
 		if (!ApiConfiguration.getInstance().isIssuingEnabled())
 			throw new ApiException(ApiError.ISSUING_DISABLED);
 
-		JwtParser<IdentityProviderRequest> parser = new JwtParser<>(
+		JwtParser<IdentityProviderRequest> parser = new JwtParser<>(IdentityProviderRequest.class,
 				ApiConfiguration.getInstance().allowUnsignedIssueRequests(),
-				"issue_request", "iprequest", "issuers", IdentityProviderRequest.class);
+				ApiConfiguration.getInstance().getMaxJwtAge());
+
+		parser.setKeyResolver(new SigningKeyResolverAdapter() {
+			@Override public Key resolveSigningKey(JwsHeader header, Claims claims) {
+				String keyId = (String) header.get("kid");
+				if (keyId == null)
+					keyId = claims.getIssuer();
+				return ApiConfiguration.getInstance().getClientPublicKey("issuers", keyId);
+			}
+		});
 
 		// Parse and verify JWT
 		IdentityProviderRequest request = parser.parseJwt(jwt).getPayload();
-		return create(request, parser.getJwtIssuer());
+		return create(request, parser.getJwtIssuer(), jwt);
 	}
 
 	/**
@@ -63,7 +76,7 @@ public class IssueResource {
 	 *
 	 * @return The session token and protocol version, for the identity provider to forward to the token
 	 */
-	private ClientQr create(IdentityProviderRequest isRequest, String idp) {
+	private ClientQr create(IdentityProviderRequest isRequest, String idp, String jwt) {
 		IssuingRequest request = isRequest.getRequest();
 
 		if (request == null || request.getCredentials() == null || request.getCredentials().size() == 0)
@@ -105,13 +118,14 @@ public class IssueResource {
 		request.setNonceAndContext();
 
 		IssueSession session = new IssueSession(isRequest);
+		session.setJwt(jwt);
 		String token = session.getSessionToken();
 		sessions.addSession(session);
 
 		System.out.println("Received issue session, token: " + token);
 		System.out.println(GsonUtil.getGson().toJson(isRequest));
 
-		return new ClientQr("2.0", token);
+		return new ClientQr("2.0", "2.1", token);
 	}
 
 	@GET
@@ -129,12 +143,29 @@ public class IssueResource {
 		return session.getRequest();
 	}
 
+	@GET
+	@Path("/{sessiontoken}/jwt")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JwtSessionRequest getJwt(@PathParam("sessiontoken") String sessiontoken) {
+		IssueSession session = sessions.getNonNullSession(sessiontoken);
+		if (session.getStatus() != IssueSession.Status.INITIALIZED) {
+			fail(ApiError.UNEXPECTED_REQUEST, session);
+		}
+
+		System.out.println("Received get, token: " + sessiontoken);
+
+		session.setStatusConnected();
+
+		IssuingRequest request = session.getRequest();
+		return new JwtSessionRequest(session.getJwt(), request.getNonce(), request.getContext());
+	}
+
 	@POST
 	@Path("/{sessiontoken}/commitments")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public ArrayList<IssueSignatureMessage> getSignatureMessages(IssueCommitmentMessage commitments,
-			@PathParam("sessiontoken") String sessiontoken) throws WebApplicationException {
+	                                                             @PathParam("sessiontoken") String sessiontoken) throws WebApplicationException {
 		IssueSession session = sessions.getNonNullSession(sessiontoken);
 		if (session.getStatus() != IssueSession.Status.CONNECTED) {
 			fail(ApiError.UNEXPECTED_REQUEST, session);
@@ -224,10 +255,10 @@ public class IssueResource {
 	@GET
 	@Path("/{sessiontoken}/status")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Status getStatus(@PathParam("sessiontoken") String sessiontoken) {
+	public IrmaSession.Status getStatus(@PathParam("sessiontoken") String sessiontoken) {
 		IssueSession session = sessions.getNonNullSession(sessiontoken);
 
-		Status status = session.getStatus();
+		IrmaSession.Status status = session.getStatus();
 		if (status == IssueSession.Status.DONE || status == IssueSession.Status.CANCELLED) {
 			session.close();
 		}

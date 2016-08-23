@@ -12,6 +12,7 @@ public abstract class IrmaSession<T extends ClientRequest<S>, S> {
 	private StatusSocket statusSocket;
 	private Timer timer;
 	private T clientRequest;
+	private String jwt;
 
 	private class RemovalTask extends TimerTask {
 		@Override
@@ -50,6 +51,14 @@ public abstract class IrmaSession<T extends ClientRequest<S>, S> {
 
 	public T getClientRequest() {
 		return clientRequest;
+	}
+
+	public String getJwt() {
+		return jwt;
+	}
+
+	public void setJwt(String jwt) {
+		this.jwt = jwt;
 	}
 
 	public S getRequest() {

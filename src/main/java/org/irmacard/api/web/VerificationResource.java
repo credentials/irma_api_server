@@ -33,9 +33,9 @@
 
 package org.irmacard.api.web;
 
-import io.jsonwebtoken.JwtBuilder;
-import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.*;
 import org.irmacard.api.common.*;
+import org.irmacard.api.common.JwtParser;
 import org.irmacard.api.common.exceptions.ApiError;
 import org.irmacard.api.common.exceptions.ApiException;
 import org.irmacard.api.web.sessions.IrmaSession.Status;
@@ -48,6 +48,7 @@ import org.irmacard.credentials.info.InfoException;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import java.security.Key;
 import java.security.KeyManagementException;
 import java.util.Calendar;
 
@@ -68,15 +69,24 @@ public class VerificationResource {
         if (ApiConfiguration.getInstance().isHotReloadEnabled())
             ApiConfiguration.load();
 
-        JwtParser<ServiceProviderRequest> parser = new JwtParser<>(
+        JwtParser<ServiceProviderRequest> parser = new JwtParser<>(ServiceProviderRequest.class,
                 ApiConfiguration.getInstance().allowUnsignedVerificationRequests(),
-                "verification_request", "sprequest", "verifiers", ServiceProviderRequest.class);
+                ApiConfiguration.getInstance().getMaxJwtAge());
+
+        parser.setKeyResolver(new SigningKeyResolverAdapter() {
+            @Override public Key resolveSigningKey(JwsHeader header, Claims claims) {
+                String keyId = (String) header.get("kid");
+                if (keyId == null)
+                    keyId = claims.getIssuer();
+                return ApiConfiguration.getInstance().getClientPublicKey("verifiers", keyId);
+            }
+        });
 
         ServiceProviderRequest request = parser.parseJwt(jwt).getPayload();
-        return create(request, parser.getJwtIssuer());
+        return create(request, parser.getJwtIssuer(), jwt);
     }
 
-    public ClientQr create(ServiceProviderRequest spRequest, String verifier) {
+    public ClientQr create(ServiceProviderRequest spRequest, String verifier, String jwt) {
         DisclosureProofRequest request = spRequest.getRequest();
 
         if (request == null || request.getContent() == null || request.getContent().size() == 0)
@@ -100,13 +110,14 @@ public class VerificationResource {
         request.setNonceAndContext();
 
         VerificationSession session = new VerificationSession(spRequest);
+        session.setJwt(jwt);
         String token = session.getSessionToken();
         sessions.addSession(session);
 
         System.out.println("Received session, token: " + token);
         System.out.println(request.toString());
 
-        return new ClientQr("2.0", token);
+        return new ClientQr("2.0", "2.1", token);
     }
 
     @GET
@@ -118,6 +129,19 @@ public class VerificationResource {
         session.setStatusConnected();
 
         return session.getRequest();
+    }
+
+    @GET
+    @Path("/{sessiontoken}/jwt")
+    @Produces(MediaType.APPLICATION_JSON)
+    public JwtSessionRequest getJwt(@PathParam("sessiontoken") String sessiontoken) {
+        System.out.println("Received get, token: " + sessiontoken);
+        VerificationSession session = sessions.getNonNullSession(sessiontoken);
+        session.setStatusConnected();
+
+        DisclosureProofRequest request = session.getRequest();
+
+        return new JwtSessionRequest(session.getJwt(), request.getNonce(), request.getContext());
     }
 
     @GET
