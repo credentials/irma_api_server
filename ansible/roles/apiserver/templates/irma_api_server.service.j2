@@ -1,0 +1,12 @@
+[Unit]
+Description=irma_api_server
+After=network-online.target
+
+[Service]
+User=irma_api_server
+ExecStart=/usr/bin/irma_api_server
+ExecStop={{ install_path }}/stop.sh
+ExecReload={{ install_path }}/restart.sh
+
+[Install]
+WantedBy=multi-user.target

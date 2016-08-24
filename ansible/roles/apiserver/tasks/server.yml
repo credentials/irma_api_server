@@ -1,0 +1,51 @@
+- name: Ensure installation directory exists
+  file:
+    path: "{{ base_install_path }}"
+    state: directory
+
+- name: Download irma_api_server release
+  get_url:
+    url: "{{ server_url }}"
+    dest: "/tmp/irma_api_server-{{ server_version }}.zip"
+
+- name: Ensure the API server is extracted
+  unarchive:
+    src: "/tmp/irma_api_server-{{ server_version }}.zip"
+    dest: "{{ base_install_path }}"
+    creates: "{{ install_path }}/webapps/irma_api_server-{{ server_version }}.war"
+    copy: no
+
+- name: Ensure irma_api_server user and group exists
+  user:
+    name: irma_api_server
+    shell: /bin/false
+    system: yes
+
+- name: Ensure the API server has the correct group and permission
+  file:
+    path: "{{ install_path }}"
+    group: irma_api_server
+    mode: g+w
+    recurse: yes
+
+- name: Ensure the API server is executable
+  file:
+    path: "{{ install_path }}/{{ item }}"
+    mode: g+x,o+x
+  with_items:
+    - start.sh
+    - restart.sh
+    - run.sh
+    - stop.sh
+
+- name: Ensure main executable exists
+  template:
+    src: irma_api_server.j2
+    dest: /usr/bin/irma_api_server
+    mode: 0755
+
+- name: Ensure systemd service exists
+  template:
+    src: irma_api_server.service.j2
+    dest: /etc/systemd/system/irma_api_server.service
+    mode: 0400

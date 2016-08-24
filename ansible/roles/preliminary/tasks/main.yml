@@ -1,0 +1,7 @@
+- name: Ensure that Java and other necessary packages are installed
+  yum: name={{ item }} state=present
+  with_items:
+    - java-1.8.0-openjdk-devel.x86_64
+    - unzip
+    - git
+  become: yes

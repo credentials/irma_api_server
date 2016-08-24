@@ -1,0 +1,5 @@
+- include: server.yml
+  become: yes
+
+- include: config.yml
+  become: yes

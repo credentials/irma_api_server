@@ -1,0 +1,5 @@
+.vagrant/
+ansible.cfg
+inventory.cfg
+play
+Vagrantfile

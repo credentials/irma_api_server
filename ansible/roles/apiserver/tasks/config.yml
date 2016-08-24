@@ -1,0 +1,35 @@
+- name: Ensure that the server configuration dir exists
+  file:
+    path: "{{ conf_path }}"
+    state: directory
+    group: irma_api_server
+    mode: 02750 # 0 indicates octal; 2 is setgid bit so that contained files get the same group
+
+- name: Ensure that IRMA key and credential configuration is present
+  git:
+    repo: https://github.com/credentials/irma_configuration
+    dest: "{{ conf_path }}/irma_configuration"
+    version: combined # this is our branch
+
+- name: Download JWT key generation script
+  get_url:
+    url: https://raw.githubusercontent.com/credentials/irma_api_server/master/utils/keygen.sh
+    dest: /tmp/irma-keygen.sh
+    mode: 0750
+
+- name: Ensure that JWT keys are generated
+  command: /tmp/irma-keygen.sh sk pk
+  args:
+    chdir: "{{ conf_path }}"
+    creates: "{{ conf_path }}/sk.der"
+
+- name: Remove unnecessary JWT .pem key
+  file:
+    path: "{{ conf_path }}/sk.pem"
+    state: absent
+
+- name: Ensure main configuration file is present
+  template:
+    src: config.json.j2
+    dest: "{{ conf_path }}/config.json"
+    group: irma_api_server
