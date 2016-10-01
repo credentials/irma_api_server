@@ -43,9 +43,11 @@
     src: irma_api_server.j2
     dest: /usr/bin/irma_api_server
     mode: 0755
+  notify: restart apiserver
 
 - name: Ensure systemd service exists
   template:
     src: irma_api_server.service.j2
     dest: /etc/systemd/system/irma_api_server.service
     mode: 0400
+  notify: restart apiserver

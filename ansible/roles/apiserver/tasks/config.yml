@@ -10,6 +10,7 @@
     repo: https://github.com/credentials/irma_configuration
     dest: "{{ conf_path }}/irma_configuration"
     version: combined # this is our branch
+  notify: restart apiserver
 
 - name: Download JWT key generation script
   get_url:
@@ -33,3 +34,4 @@
     src: config.json.j2
     dest: "{{ conf_path }}/config.json"
     group: irma_api_server
+  notify: restart apiserver
