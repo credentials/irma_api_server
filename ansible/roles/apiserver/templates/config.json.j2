@@ -1,9 +1,11 @@
 {
-    "enable_issuing": true,
-    "allow_unsigned_issue_requests": false,
-    "allow_unsigned_verification_requests": false,
+    "enable_issuing": {{ enable_issuing }},
+    "allow_unsigned_issue_requests": {{ allow_unsigned_issue_requests }},
+    "allow_unsigned_verification_requests": {{ allow_unsigned_verification_requests }},
     "authorized_idps": {
+        {{ authorized_idps }}
     },
     "authorized_sps": {
+        {{ authorized_sps }}
     }
 }

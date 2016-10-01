@@ -5,3 +5,9 @@ base_install_path: /opt
 install_path: /opt/irma_api_server
 http_port: 8081
 https_port: 8444
+
+enable_issuing: "true"
+allow_unsigned_issue_requests: "false"
+allow_unsigned_verification_requests: "false"
+authorized_sps:
+authorized_idps:
