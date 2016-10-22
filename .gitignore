@@ -8,7 +8,7 @@ bin
 *.iml
 node_modules/
 *.der
-*.pem
+src/**/*.pem
 src/*/config.json
 src/main/webapp/bower_components/
 src/main/webapp/client/

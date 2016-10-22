@@ -1,0 +1,36 @@
+- name: Install nginx
+  yum: name={{ item }} state=present
+  with_items:
+    - epel-release
+    - nginx
+
+- name: Put nginx.conf
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+  notify: restart nginx
+
+- name: Put /etc/nginx/dhparams.pem
+  copy:
+    src: dhparams.pem
+    dest: /etc/nginx/dhparams.pem
+  notify: restart nginx
+
+- name: Put proxy cert for {{ component_name }}
+  copy:
+    content: '{{ proxy_certificate }}'
+    dest: '/etc/nginx/proxy_{{ component_name }}.crt'
+  notify: restart nginx
+
+- name: Put proxy key for {{ component_name }}
+  copy:
+    content: '{{ proxy_key }}'
+    dest: '/etc/nginx/proxy_{{ component_name }}.key'
+    mode: 0400
+  notify: restart nginx
+
+- name: Put proxy.conf for {{ vhost_name }}
+  template:
+    src: proxy.conf.j2
+    dest: '/etc/nginx/conf.d/proxy_{{ vhost_name }}.conf'
+  notify: restart nginx
