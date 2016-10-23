@@ -1,0 +1,2 @@
+[apiserver]
+vagrant ansible_host=localhost ansible_port=2223 ansible_user=vagrant ansible_private_key_file=.vagrant/machines/default/virtualbox/private_key

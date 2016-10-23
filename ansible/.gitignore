@@ -1,5 +1,3 @@
 .vagrant/
-ansible.cfg
-inventory.cfg
-play
-Vagrantfile
+inventories/*
+!inventories/dev/

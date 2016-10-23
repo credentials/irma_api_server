@@ -1,8 +1,10 @@
+- name: Install epel-release
+  yum: name=epel-release state=present
+
+# We have to install these two separately like this, because epel-release needs
+# to be present before nginx can be installed.
 - name: Install nginx
-  yum: name={{ item }} state=present
-  with_items:
-    - epel-release
-    - nginx
+  yum: name=nginx state=present
 
 - name: Put nginx.conf
   template:
@@ -16,21 +18,21 @@
     dest: /etc/nginx/dhparams.pem
   notify: restart nginx
 
-- name: Put proxy cert for {{ component_name }}
+- name: Put proxy cert for apiserver
   copy:
     content: '{{ proxy_certificate }}'
-    dest: '/etc/nginx/proxy_{{ component_name }}.crt'
+    dest: '/etc/nginx/proxy_apiserver.crt'
   notify: restart nginx
 
-- name: Put proxy key for {{ component_name }}
+- name: Put proxy key for apiserver
   copy:
     content: '{{ proxy_key }}'
-    dest: '/etc/nginx/proxy_{{ component_name }}.key'
+    dest: '/etc/nginx/proxy_apiserver.key'
     mode: 0400
   notify: restart nginx
 
-- name: Put proxy.conf for {{ vhost_name }}
+- name: Put proxy.conf for {{ proxy_vhost_name }}
   template:
     src: proxy.conf.j2
-    dest: '/etc/nginx/conf.d/proxy_{{ vhost_name }}.conf'
+    dest: '/etc/nginx/conf.d/proxy_{{ proxy_vhost_name }}.conf'
   notify: restart nginx

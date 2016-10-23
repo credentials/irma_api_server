@@ -5,3 +5,7 @@
     - unzip
     - git
   become: yes
+
+- name: Disable SELinux policy
+  selinux: state=disabled
+  become: yes

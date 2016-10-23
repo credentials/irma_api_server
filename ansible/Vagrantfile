@@ -1,0 +1,14 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+  ## Box configuration
+  config.vm.box = "centos/7"
+
+  config.vm.provider "virtualbox" do |v|
+    v.memory = 4096
+  end
+
+  config.vm.network :private_network, ip: "192.168.111.223"
+  config.vm.network :forwarded_port, guest: 22, host: 2223, id: "ssh"
+end

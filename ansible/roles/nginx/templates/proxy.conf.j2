@@ -2,11 +2,11 @@ server {
     # Listen to 433 both IPv4 and IPv6
     listen 443;
     listen [::]:443;
-    server_name {{ vhost_name }};
+    server_name {{ proxy_vhost_name }};
 
     ssl on;
-    ssl_certificate     /etc/nginx/proxy_{{ component_name }}.crt;
-    ssl_certificate_key /etc/nginx/proxy_{{ component_name }}.key;
+    ssl_certificate     /etc/nginx/proxy_apiserver.crt;
+    ssl_certificate_key /etc/nginx/proxy_apiserver.key;
 
     ssl_session_timeout  60m;
     ssl_session_cache    shared:SSL:10m;
@@ -21,8 +21,8 @@ server {
 
     add_header Strict-Transport-Security max-age=31556952;
 
-    access_log /var/log/nginx/proxy_{{ component_name }}_access.log;
-    error_log /var/log/nginx/proxy_{{ component_name }}_error.log;
+    access_log /var/log/nginx/proxy_apiserver_access.log;
+    error_log /var/log/nginx/proxy_apiserver_error.log;
 
     location ~ {
         # By default nginx replaces the Host header with $proxy_host. This the value of

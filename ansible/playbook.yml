@@ -1,5 +1,4 @@
 - hosts: apiserver
-  remote_user: vagrant
   roles:
     - { role: preliminary, tags: ['all', 'setup', 'preliminary'] }
     - { role: apiserver,   tags: ['all', 'setup', 'apiserver'] }
