@@ -22,6 +22,7 @@
   copy:
     content: '{{ proxy_certificate }}'
     dest: '/etc/nginx/proxy_apiserver.crt'
+  when: proxy_certificate is defined
   notify: restart nginx
 
 - name: Put proxy key for apiserver
@@ -29,10 +30,11 @@
     content: '{{ proxy_key }}'
     dest: '/etc/nginx/proxy_apiserver.key'
     mode: 0400
+  when: proxy_key is defined
   notify: restart nginx
 
 - name: Put proxy.conf for {{ proxy_vhost_name }}
   template:
     src: proxy.conf.j2
-    dest: '/etc/nginx/conf.d/proxy_{{ proxy_vhost_name }}.conf'
+    dest: '/etc/nginx/conf.d/proxy.conf'
   notify: restart nginx

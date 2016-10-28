@@ -1,0 +1,21 @@
+- name: Ensure certbot is installed
+  yum:
+    name: certbot
+    state: latest
+
+- name: Ensure /var/www/acme is present
+  file: path=/var/www/acme state=directory
+
+- name: Put acme.conf in nginx configuration dir
+  copy:
+    src: acme.conf
+    dest: /etc/nginx/conf.d/acme.conf
+  notify: restart nginx
+
+# --agree-tos prevents an interactive screen coming up asking for our permissions
+# --noninteractive prevents any such screen from popping up, taking the default choice
+# --keep: if there already exist a certificate that is not about to expire, don't do anything
+# --webroot: enables the webroot plugin, i.e., the following -w flag
+- name: Ensure Let's Encrypt TLS certs are requested and installed
+  command: /usr/bin/certbot certonly --agree-tos --noninteractive --keep -m {{ letsencrypt_email }} --webroot -w /var/www/acme -d {{ letsencrypt_domain }}
+  when: letsencrypt_domain is defined

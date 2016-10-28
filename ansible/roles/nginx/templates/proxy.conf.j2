@@ -5,8 +5,8 @@ server {
     server_name {{ proxy_vhost_name }};
 
     ssl on;
-    ssl_certificate     /etc/nginx/proxy_apiserver.crt;
-    ssl_certificate_key /etc/nginx/proxy_apiserver.key;
+    ssl_certificate     {{ proxy_certificate_file }};
+    ssl_certificate_key {{ proxy_key_file }};
 
     ssl_session_timeout  60m;
     ssl_session_cache    shared:SSL:10m;
