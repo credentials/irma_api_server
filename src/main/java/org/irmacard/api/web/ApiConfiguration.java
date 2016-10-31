@@ -93,13 +93,7 @@ public class ApiConfiguration {
 	}
 
 	public boolean canVerifyAttribute(String sp, AttributeIdentifier attribute) {
-		/* If allow_unsigned_verification_requests is true, then the service provider's
-		 * name might be unknown (see VerificationResource#newSession()), so it makes
-		 * no sense to insist here that it is present in the list of authorized verifiers. */
-		if (allow_unsigned_verification_requests)
-			return true;
-
-		if (!authorized_sps.containsKey(sp))
+		if (!allow_unsigned_verification_requests && !authorized_sps.containsKey(sp))
 			return false;
 
 		ArrayList<String> attributes = authorized_sps.get(sp);
