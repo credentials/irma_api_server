@@ -18,4 +18,6 @@
 # --webroot: enables the webroot plugin, i.e., the following -w flag
 - name: Ensure Let's Encrypt TLS certs are requested and installed
   command: /usr/bin/certbot certonly --agree-tos --noninteractive --keep -m {{ letsencrypt_email }} --webroot -w /var/www/acme -d {{ letsencrypt_domain }}
+  args:
+    creates: {{ letsencrypt_dir }}/{{ letsencrypt_domain }}/privkey.pem
   when: letsencrypt_domain is defined
