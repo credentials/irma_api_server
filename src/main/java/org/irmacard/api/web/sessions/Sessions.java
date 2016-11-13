@@ -44,6 +44,7 @@ import java.util.Map.Entry;
 public class Sessions<T extends IrmaSession> {
     private static Sessions<VerificationSession> vs = null;
     private static Sessions<IssueSession> is = null;
+    private static Sessions<SignatureSession> ss = null;
     private static final int SESSION_TOKEN_LENGTH = 33;
     private static SecureRandom rnd = new SecureRandom();
 
@@ -61,6 +62,14 @@ public class Sessions<T extends IrmaSession> {
         return is;
     }
 
+    public static Sessions<SignatureSession> getSignatureSessions() {
+        if (ss == null) {
+            ss = new Sessions<>();
+        }
+        return ss;
+    }
+
+
     private HashMap<String, T> sessions;
 
     public Sessions() {
@@ -69,6 +78,10 @@ public class Sessions<T extends IrmaSession> {
 
     public static IrmaSession findAnySession(String sessiontoken) {
         IrmaSession session = getVerificationSessions().getSession(sessiontoken);
+        if (session != null)
+            return session;
+
+        session = getSignatureSessions().getSession(sessiontoken);
         if (session != null)
             return session;
 

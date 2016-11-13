@@ -2,7 +2,7 @@ apply plugin: 'war'
 apply plugin: 'org.akhikhl.gretty'
 apply plugin: 'eclipse-wtp'
 
-version = "1.1.1"
+version = "1.2.0"
 
 import org.gradle.internal.os.OperatingSystem;
 
@@ -34,7 +34,7 @@ dependencies {
 
     providedCompile 'javax.servlet:javax.servlet-api:3.1.0'
 
-    compile 'org.irmacard.api:irma_api_common:0.6.1'
+    compile 'org.irmacard.api:irma_api_common:0.7.0'
 
     testCompile "junit:junit:4.11"
     testCompile 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-jetty:2.19'
