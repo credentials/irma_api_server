@@ -65,6 +65,7 @@ public class SignatureResource {
 	@Inject
 	public SignatureResource() {}
 
+	// TODO jwt
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -77,6 +78,8 @@ public class SignatureResource {
 		// Check if the requested attributes match the DescriptionStore
 		if (!request.attributesMatchStore())
 			throw new ApiException(ApiError.ATTRIBUTES_WRONG);
+
+		// TODO check attributes against ApiConfiguration
 
 		if (clientRequest.getValidity() == 0)
 			clientRequest.setValidity(DEFAULT_TOKEN_VALIDITY);
@@ -178,32 +181,25 @@ public class SignatureResource {
 	public SignatureProofResult.Status checkSignature(SignatureProofResult result) {
 		Map<String, Object> resultMap = result.getAsMap();
 		try {
-			BigInteger nonce = (BigInteger) resultMap.get("nonce");
-			BigInteger context = (BigInteger) resultMap.get("context");
-			String message = (String) resultMap.get("message");
-			String signatureString = (String) resultMap.get("signature");
-			String messageType = (String) resultMap.get("messageType");
-			ProofList signature = GsonUtil.getGson().fromJson(signatureString, ProofList.class);
+			AttributeBasedSignature signature = result.getSignature();
+			BigInteger nonce = signature.getNonce();
+			BigInteger context = signature.getContext();
+			ProofList proofs = signature.getProofs();
+			String message = result.getMessage();
+			SignatureProofRequest.MessageType messageType = result.getMessageType();
 
-			String conditionString = (String) resultMap.get("conditions");
-			AttributeDisjunctionList conditions;
-			if (conditionString == null) {
-				conditions = new AttributeDisjunctionList();
-			} else {
-				conditions = GsonUtil.getGson().fromJson(conditionString, AttributeDisjunctionList.class);
-			}
 
-			if (!messageType.equals(SignatureProofRequest.MessageType.STRING.toString())
-					|| nonce == null || context == null || message == null || signature == null) {
+			if (messageType != SignatureProofRequest.MessageType.STRING
+					|| nonce == null || context == null || message == null) {
 				System.out.println("ERROR IN CONTENT");
 				return SignatureProofResult.Status.INVALID;
 			}
-			signature.populatePublicKeyArray();
-			signature.setSig(true); // This value isn't stored in the serialized signature
+			proofs.populatePublicKeyArray();
+			proofs.setSig(true); // This value isn't stored in the serialized signature
 
 			SignatureProofRequest resultReq = new SignatureProofRequest(nonce, context,
-					conditions, message, SignatureProofRequest.MessageType.STRING);
-			return resultReq.verify(signature).getStatus();
+					new AttributeDisjunctionList(), message, SignatureProofRequest.MessageType.STRING);
+			return resultReq.verify(proofs).getStatus();
 		} catch (ClassCastException | InfoException | KeyException e ) {
 			System.out.println("ERROR IN EXPECTION!!");
 			return SignatureProofResult.Status.INVALID;

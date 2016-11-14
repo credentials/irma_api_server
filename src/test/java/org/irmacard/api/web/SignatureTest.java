@@ -119,7 +119,7 @@ public class SignatureTest extends JerseyTest {
 	}
 
 	public void doSession(IdemixCredential cred, List<Integer> disclosed,
-	                      String session, Status expectedResult, boolean isSig)
+	                      String session, Status expectedPostResult, Status expectedVerificationResult, boolean isSig)
 			throws InfoException, KeyException, KeyManagementException {
 		SignatureProofRequest request = target("/signature/" + session).request(MediaType.APPLICATION_JSON)
 				.get(SignatureProofRequest.class);
@@ -131,14 +131,7 @@ public class SignatureTest extends JerseyTest {
 		Status status = target("/signature/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
 				.post(Entity.entity(proofs, MediaType.APPLICATION_JSON), Status.class);
 
-		assert(status == expectedResult);
-
-		// Fetch the JSON web token containing the attributes
-		String jwt = target("/signature/" + session + "/getproof").request(MediaType.TEXT_PLAIN).get(String.class);
-
-		// Verify the token itself, and that the credential was valid
-		PublicKey pk = ApiConfiguration.getInstance().getJwtPublicKey();
-		Claims body = Jwts.parser().setSigningKey(pk).parseClaimsJws(jwt).getBody();
+		assert(status == expectedPostResult);
 
 		// Check if the unsigned proof/signature verifies if we post it to the api
 		// (Note: a SP is not required to do this, just for us to test)
@@ -146,30 +139,29 @@ public class SignatureTest extends JerseyTest {
 				.get(SignatureProofResult.class);
 		Status verifyResult = target("/signature/checksignature").request(MediaType.APPLICATION_JSON)
 				.post(Entity.entity(result, MediaType.APPLICATION_JSON), Status.class);
-		assert(verifyResult.equals(expectedResult));
+		assert(verifyResult == expectedVerificationResult);
 
 		// If status is valid, verify signature in the JSON response
 		// (Note: a SP is not required to do this, just for us to test)
-		if (expectedResult.equals(Status.VALID)) {
-			ProofList signature = GsonUtil.getGson().fromJson((String) body.get("signature"), ProofList.class);
-			signature.populatePublicKeyArray();
-			signature.setSig(true); // This value isn't stored in the serialized signature
+		if (expectedPostResult.equals(Status.VALID)) {
+			AttributeBasedSignature signature = result.getSignature();
+			proofs = signature.getProofs();
+			proofs.populatePublicKeyArray();
+			proofs.setSig(true); // This value isn't stored in the serialized signature
 
 			// Verify signature separately without checking attributes/conditions
-			assert signature.verify(request.getContext(), request.getChallenge(), true);
+			assert proofs.verify(request.getContext(), request.getChallenge(), true);
 
 			// Verify signature using the enclosed nonce, context and message data by constructing a new request
-			BigInteger nonce = (BigInteger) body.get("nonce");
-			BigInteger context = (BigInteger) body.get("context");
-			String message = (String) body.get("message");
-			String conditionString = (String) body.get("conditions");
-			AttributeDisjunctionList conditions = GsonUtil.getGson().fromJson(conditionString, AttributeDisjunctionList.class);
+			BigInteger nonce = signature.getNonce();
+			BigInteger context = signature.getContext();
+			String message = (String) result.getMessage();
 
-			assert (body.get("messageType")).equals(MessageType.STRING.toString());
+			assert (result.getMessageType() == MessageType.STRING);
 
 			SignatureProofRequest resultReq = new SignatureProofRequest(nonce, context,
-					conditions, message, MessageType.STRING);
-			SignatureProofResult result2 = resultReq.verify(signature);
+					new AttributeDisjunctionList(), message, MessageType.STRING);
+			SignatureProofResult result2 = resultReq.verify(proofs);
 			assert result2.getStatus().equals(Status.VALID);
 
 			// Verify signature by posting result object to the checksignature method/api
@@ -177,29 +169,27 @@ public class SignatureTest extends JerseyTest {
 					.post(Entity.entity(result2, MediaType.APPLICATION_JSON), Status.class);
 			assert status2.equals(Status.VALID);
 		}
-
-		assert body.get("status").toString().equals(expectedResult.name());
 	}
 
 	@Test
 	public void validSessionTest() throws InfoException, KeyException, KeyManagementException {
 		IdemixCredential cred = VerificationTest.getAgeLowerCredential();
 		String session = createSession(null);
-		doSession(cred, Arrays.asList(1, 2), session, Status.VALID, true);
+		doSession(cred, Arrays.asList(1, 2), session, Status.VALID, Status.VALID, true);
 	}
 
 	@Test
 	public void verifySigAsDisclosureProofTest() throws InfoException, KeyException, KeyManagementException {
 		IdemixCredential cred = VerificationTest.getAgeLowerCredential();
 		String session = createSession(null);
-		doSession(cred, Arrays.asList(1, 2), session, Status.INVALID, false);
+		doSession(cred, Arrays.asList(1, 2), session, Status.INVALID, Status.INVALID, false);
 	}
 
 	@Test
 	public void validSessionWithConditionTest() throws InfoException, KeyException, KeyManagementException {
 		IdemixCredential cred = VerificationTest.getAgeLowerCredential();
 		String session = createSession("yes");
-		doSession(cred, Arrays.asList(1, 2), session, Status.VALID, true);
+		doSession(cred, Arrays.asList(1, 2), session, Status.VALID, Status.VALID, true);
 	}
 
 	/**
@@ -209,7 +199,7 @@ public class SignatureTest extends JerseyTest {
 	public void validSessionWithInvalidConditionTest() throws InfoException, KeyException, KeyManagementException {
 		IdemixCredential cred = VerificationTest.getAgeLowerCredential();
 		String session = createSession("this is an invalid condition");
-		doSession(cred, Arrays.asList(1, 2), session, Status.MISSING_ATTRIBUTES, true);
+		doSession(cred, Arrays.asList(1, 2), session, Status.MISSING_ATTRIBUTES, Status.VALID, true);
 	}
 
 }
