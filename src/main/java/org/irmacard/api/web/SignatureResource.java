@@ -179,29 +179,18 @@ public class SignatureResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public SignatureProofResult.Status checkSignature(SignatureProofResult result) {
-		Map<String, Object> resultMap = result.getAsMap();
 		try {
 			AttributeBasedSignature signature = result.getSignature();
-			BigInteger nonce = signature.getNonce();
-			BigInteger context = signature.getContext();
-			ProofList proofs = signature.getProofs();
-			String message = result.getMessage();
-			SignatureProofRequest.MessageType messageType = result.getMessageType();
-
-
-			if (messageType != SignatureProofRequest.MessageType.STRING
-					|| nonce == null || context == null || message == null) {
-				System.out.println("ERROR IN CONTENT");
+			if (result.getMessageType() != SignatureProofRequest.MessageType.STRING || result.getMessage() == null
+					|| signature == null || signature.getNonce() == null || signature.getContext() == null) {
+				System.out.println("Error in signature verification request");
 				return SignatureProofResult.Status.INVALID;
 			}
-			proofs.populatePublicKeyArray();
-			proofs.setSig(true); // This value isn't stored in the serialized signature
 
-			SignatureProofRequest resultReq = new SignatureProofRequest(nonce, context,
-					new AttributeDisjunctionList(), message, SignatureProofRequest.MessageType.STRING);
-			return resultReq.verify(proofs).getStatus();
+			return result.getSignature().verify(result.getMessage()).getStatus();
 		} catch (ClassCastException | InfoException | KeyException e ) {
-			System.out.println("ERROR IN EXPECTION!!");
+			System.out.println("Error verifying proof: ");
+			e.printStackTrace();;
 			return SignatureProofResult.Status.INVALID;
 		}
 	}
