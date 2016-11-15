@@ -33,12 +33,9 @@
 
 package org.irmacard.api.web;
 
-import io.jsonwebtoken.JwtBuilder;
-import io.jsonwebtoken.Jwts;
 import org.irmacard.api.common.*;
 import org.irmacard.api.common.exceptions.ApiError;
 import org.irmacard.api.common.exceptions.ApiException;
-import org.irmacard.api.common.util.GsonUtil;
 import org.irmacard.api.web.sessions.IrmaSession.Status;
 import org.irmacard.api.web.sessions.Sessions;
 import org.irmacard.api.web.sessions.SignatureSession;
@@ -49,10 +46,6 @@ import org.irmacard.credentials.info.KeyException;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import java.math.BigInteger;
-import java.security.KeyManagementException;
-import java.util.Calendar;
-import java.util.Map;
 
 // TODO: make generic and merge with VerificationResource into BaseResource or something like that?
 
@@ -193,37 +186,6 @@ public class SignatureResource {
 			e.printStackTrace();;
 			return SignatureProofResult.Status.INVALID;
 		}
-	}
-
-	// TODO: This seems to also return (signed) data even if the proof does not
-	// verify, maybe we want to refuse this method if that is the case, need to
-	// change workflow to allow this.
-	@GET
-	@Path("/{sessiontoken}/getproof")
-	@Produces(MediaType.TEXT_PLAIN)
-	public String gettoken(@PathParam("sessiontoken") String sessiontoken) throws KeyManagementException {
-		System.out.println("Retrieving signed signature proof");
-		SignatureSession session = sessions.getNonNullSession(sessiontoken);
-		SignatureProofResult result = getproof(sessiontoken);
-
-		Calendar now = Calendar.getInstance();
-		Calendar expiry = Calendar.getInstance();
-		expiry.add(Calendar.SECOND, session.getClientRequest().getValidity());
-
-		JwtBuilder builder = Jwts.builder()
-				.setClaims(result.getAsMap())
-				.setIssuedAt(now.getTime())
-				.setExpiration(expiry.getTime())
-				.setSubject("signature_result");
-
-		String jwt_issuer = ApiConfiguration.getInstance().getJwtIssuer();
-		if (jwt_issuer != null)
-			builder = builder.setIssuer(jwt_issuer);
-
-		return builder
-				.signWith(ApiConfiguration.getInstance().getJwtAlgorithm(),
-						ApiConfiguration.getInstance().getJwtPrivateKey())
-				.compact();
 	}
 
 	@DELETE
