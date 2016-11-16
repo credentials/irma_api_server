@@ -1,4 +1,4 @@
-package org.irmacard.api.web;
+package org.irmacard.api.web.resources;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwsHeader;
@@ -7,6 +7,7 @@ import org.irmacard.api.common.*;
 import org.irmacard.api.common.exceptions.ApiError;
 import org.irmacard.api.common.exceptions.ApiException;
 import org.irmacard.api.common.util.GsonUtil;
+import org.irmacard.api.web.ApiConfiguration;
 import org.irmacard.api.web.sessions.IrmaSession;
 import org.irmacard.api.web.sessions.IssueSession;
 import org.irmacard.api.web.sessions.Sessions;

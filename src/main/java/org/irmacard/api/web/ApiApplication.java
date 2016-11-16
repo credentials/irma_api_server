@@ -34,6 +34,9 @@
 package org.irmacard.api.web;
 
 import org.glassfish.jersey.server.ResourceConfig;
+import org.irmacard.api.web.resources.IssueResource;
+import org.irmacard.api.web.resources.SignatureResource;
+import org.irmacard.api.web.resources.VerificationResource;
 import org.irmacard.credentials.idemix.info.IdemixKeyStore;
 import org.irmacard.credentials.idemix.info.IdemixKeyStoreDeserializer;
 import org.irmacard.credentials.info.DescriptionStore;
