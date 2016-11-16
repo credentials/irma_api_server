@@ -317,6 +317,12 @@ public class VerificationTest extends JerseyTest {
 		createSession(System.currentTimeMillis() / 1000, null);
 	}
 
+	@Test
+	public void unnecessarilySignedJwt() throws KeyManagementException {
+		ApiConfiguration.instance.allow_unsigned_verification_requests = true;
+		createSession();
+	}
+
 	@Test(expected=NotAuthorizedException.class)
 	public void oldJwtTest() throws KeyManagementException {
 		ApiConfiguration.getInstance().allow_unsigned_verification_requests = false;
