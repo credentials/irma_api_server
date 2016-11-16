@@ -34,10 +34,9 @@
 package org.irmacard.api.web.sessions;
 
 
-import org.irmacard.api.common.ServiceProviderRequest;
-import org.irmacard.api.common.SignatureClientRequest;
-import org.irmacard.api.common.SignatureProofRequest;
-import org.irmacard.api.common.SignatureProofResult;
+import org.irmacard.api.common.signatures.SignatureClientRequest;
+import org.irmacard.api.common.signatures.SignatureProofRequest;
+import org.irmacard.api.common.signatures.SignatureProofResult;
 
 public class SignatureSession extends IrmaSession<SignatureClientRequest, SignatureProofRequest> {
 	private SignatureProofResult result;

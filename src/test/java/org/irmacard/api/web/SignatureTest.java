@@ -33,17 +33,21 @@
 
 package org.irmacard.api.web;
 
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.glassfish.jersey.test.TestProperties;
 import org.glassfish.jersey.test.jetty.JettyTestContainerFactory;
-import org.irmacard.api.common.*;
-import org.irmacard.api.common.DisclosureProofResult.Status;
-import org.irmacard.api.common.SignatureProofRequest.MessageType;
+import org.irmacard.api.common.AttributeBasedSignature;
+import org.irmacard.api.common.AttributeDisjunction;
+import org.irmacard.api.common.AttributeDisjunctionList;
+import org.irmacard.api.common.ClientQr;
+import org.irmacard.api.common.disclosure.DisclosureProofResult.Status;
+import org.irmacard.api.common.signatures.SignatureClientRequest;
+import org.irmacard.api.common.signatures.SignatureProofRequest;
+import org.irmacard.api.common.signatures.SignatureProofRequest.MessageType;
+import org.irmacard.api.common.signatures.SignatureProofResult;
 import org.irmacard.api.common.util.GsonUtil;
 import org.irmacard.credentials.idemix.IdemixCredential;
 import org.irmacard.credentials.idemix.proofs.ProofList;
@@ -58,9 +62,7 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.security.Key;
 import java.security.KeyManagementException;
-import java.security.PublicKey;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -111,7 +113,7 @@ public class SignatureTest extends JerseyTest {
 		AttributeDisjunctionList attrs = new AttributeDisjunctionList(1);
 		attrs.add(d);
 		SignatureProofRequest request = new SignatureProofRequest(null, null, attrs, "to be signed", SignatureProofRequest.MessageType.STRING);
-		SignClientRequest spRequest = new SignClientRequest("testrequest", request, 60);
+		SignatureClientRequest spRequest = new SignatureClientRequest("testrequest", request, 60);
 
 		Map<String, Object> claims = new HashMap<>();
 		claims.put("absrequest", spRequest);

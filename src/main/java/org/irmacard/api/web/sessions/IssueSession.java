@@ -1,8 +1,8 @@
 package org.irmacard.api.web.sessions;
 
-import org.irmacard.api.common.IssuingRequest;
+import org.irmacard.api.common.issuing.IdentityProviderRequest;
+import org.irmacard.api.common.issuing.IssuingRequest;
 import org.irmacard.credentials.idemix.messages.IssueCommitmentMessage;
-import org.irmacard.api.common.IdentityProviderRequest;
 
 public class IssueSession extends IrmaSession<IdentityProviderRequest, IssuingRequest> {
 	private IssueCommitmentMessage commitments;

@@ -33,10 +33,10 @@
 
 package org.irmacard.api.web.sessions;
 
+import org.irmacard.api.common.disclosure.DisclosureProofRequest;
+import org.irmacard.api.common.disclosure.DisclosureProofResult;
+import org.irmacard.api.common.disclosure.ServiceProviderRequest;
 import org.irmacard.credentials.idemix.proofs.ProofD;
-import org.irmacard.api.common.DisclosureProofRequest;
-import org.irmacard.api.common.DisclosureProofResult;
-import org.irmacard.api.common.ServiceProviderRequest;
 
 public class VerificationSession extends IrmaSession<ServiceProviderRequest, DisclosureProofRequest> {
     private DisclosureProofResult result;
