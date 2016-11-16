@@ -35,18 +35,18 @@ package org.irmacard.api.web.sessions;
 
 
 import org.irmacard.api.common.ServiceProviderRequest;
-import org.irmacard.api.common.SignClientRequest;
+import org.irmacard.api.common.SignatureClientRequest;
 import org.irmacard.api.common.SignatureProofRequest;
 import org.irmacard.api.common.SignatureProofResult;
 
-public class SignatureSession extends IrmaSession<SignClientRequest, SignatureProofRequest> {
+public class SignatureSession extends IrmaSession<SignatureClientRequest, SignatureProofRequest> {
 	private SignatureProofResult result;
 	/**
 	 * Construct a new session for the specified client (IdP or SP) request.
 	 *
 	 * @param clientRequest The request that started this session
 	 */
-	public SignatureSession(SignClientRequest clientRequest) {
+	public SignatureSession(SignatureClientRequest clientRequest) {
 		super(clientRequest);
 	}
 

@@ -40,10 +40,13 @@ public class ApiConfiguration {
 	private String jwt_issuer = null;
 
 	boolean enable_issuing = false;
+	boolean enable_signing = false;
+
 	boolean reject_unfloored_validity_timestamps = true;
 
 	boolean allow_unsigned_issue_requests = false;
 	boolean allow_unsigned_verification_requests = false;
+	boolean allow_unsigned_signature_requests = false;
 
 	int max_jwt_age = 60;
 	int token_response_timeout = 10 * 60;
@@ -52,6 +55,7 @@ public class ApiConfiguration {
 
 	HashMap<String, ArrayList<String>> authorized_idps = new HashMap<>();
 	HashMap<String, ArrayList<String>> authorized_sps = new HashMap<>();
+	HashMap<String, ArrayList<String>> authorized_sigclients = new HashMap<>();
 
 	/* Transient members for convenience */
 	private transient PrivateKey jwtPrivateKey;
@@ -92,11 +96,24 @@ public class ApiConfiguration {
 		return enable_issuing;
 	}
 
+	public boolean isSigningEnabled() {
+		return enable_signing;
+	}
+
+	public boolean canRequestSignatureWithAttribute(String sigclient, AttributeIdentifier attribute) {
+		return canRequestAttribute(sigclient, attribute, authorized_sigclients);
+	}
+
 	public boolean canVerifyAttribute(String sp, AttributeIdentifier attribute) {
-		if (!authorized_sps.containsKey(sp))
+		return canRequestAttribute(sp, attribute, authorized_sps);
+	}
+
+	private boolean canRequestAttribute(String client, AttributeIdentifier attribute,
+	                                    HashMap<String, ArrayList<String>> authorizedClients) {
+		if (!authorizedClients.containsKey(client))
 			return false;
 
-		ArrayList<String> attributes = authorized_sps.get(sp);
+		ArrayList<String> attributes = authorizedClients.get(client);
 
 		// This SP can verify anything
 		return attributes.contains("*")
@@ -140,6 +157,10 @@ public class ApiConfiguration {
 
 	public boolean allowUnsignedVerificationRequests() {
 		return allow_unsigned_verification_requests;
+	}
+
+	public boolean allowUnsignedSignatureRequests() {
+		return allow_unsigned_signature_requests;
 	}
 
 	public boolean isHotReloadEnabled() {

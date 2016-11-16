@@ -33,6 +33,9 @@
 
 package org.irmacard.api.web.resources;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwsHeader;
+import io.jsonwebtoken.SigningKeyResolverAdapter;
 import org.irmacard.api.common.*;
 import org.irmacard.api.common.exceptions.ApiError;
 import org.irmacard.api.common.exceptions.ApiException;
@@ -40,13 +43,16 @@ import org.irmacard.api.web.ApiConfiguration;
 import org.irmacard.api.web.sessions.IrmaSession.Status;
 import org.irmacard.api.web.sessions.Sessions;
 import org.irmacard.api.web.sessions.SignatureSession;
+import org.irmacard.api.web.sessions.VerificationSession;
 import org.irmacard.credentials.idemix.proofs.ProofList;
+import org.irmacard.credentials.info.AttributeIdentifier;
 import org.irmacard.credentials.info.InfoException;
 import org.irmacard.credentials.info.KeyException;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import java.security.Key;
 
 // TODO: make generic and merge with VerificationResource into BaseResource or something like that?
 
@@ -59,11 +65,31 @@ public class SignatureResource {
 	@Inject
 	public SignatureResource() {}
 
-	// TODO jwt
 	@POST
-	@Consumes(MediaType.APPLICATION_JSON)
+	@Consumes({MediaType.TEXT_PLAIN,MediaType.APPLICATION_JSON})
 	@Produces(MediaType.APPLICATION_JSON)
-	public ClientQr create(SignClientRequest clientRequest) {
+	public ClientQr newSession(String jwt) {
+		if (ApiConfiguration.getInstance().isHotReloadEnabled())
+			ApiConfiguration.load();
+
+		JwtParser<SignatureClientRequest> parser = new JwtParser<>(SignatureClientRequest.class,
+				ApiConfiguration.getInstance().allowUnsignedSignatureRequests(),
+				ApiConfiguration.getInstance().getMaxJwtAge());
+
+		parser.setKeyResolver(new SigningKeyResolverAdapter() {
+			@Override public Key resolveSigningKey(JwsHeader header, Claims claims) {
+				String keyId = (String) header.get("kid");
+				if (keyId == null)
+					keyId = claims.getIssuer();
+				return ApiConfiguration.getInstance().getClientPublicKey("sigclients", keyId);
+			}
+		});
+
+		SignatureClientRequest request = parser.parseJwt(jwt).getPayload();
+		return create(request, parser.getJwtIssuer(), jwt);
+	}
+
+	private ClientQr create(SignatureClientRequest clientRequest, String verifier, String jwt) {
 		SignatureProofRequest request = clientRequest.getRequest();
 		if (request == null || request.getContent() == null ||
 				request.getContent().size() == 0 || request.getMessage() == null)
@@ -73,7 +99,11 @@ public class SignatureResource {
 		if (!request.attributesMatchStore())
 			throw new ApiException(ApiError.ATTRIBUTES_WRONG);
 
-		// TODO check attributes against ApiConfiguration
+		// Check if this client is authorized to verify these attributes
+		for (AttributeDisjunction disjunction : request.getContent())
+			for (AttributeIdentifier identifier : disjunction)
+				if (!ApiConfiguration.getInstance().canRequestSignatureWithAttribute(verifier, identifier))
+					throw new ApiException(ApiError.UNAUTHORIZED, identifier.toString());
 
 		if (clientRequest.getValidity() == 0)
 			clientRequest.setValidity(DEFAULT_TOKEN_VALIDITY);
@@ -83,13 +113,14 @@ public class SignatureResource {
 		request.setNonceAndContext();
 
 		SignatureSession session = new SignatureSession(clientRequest);
+		session.setJwt(jwt);
 		String token = session.getSessionToken();
 		sessions.addSession(session);
 
 		System.out.println("Received session, token: " + token);
 		System.out.println(request.toString());
 
-		return new ClientQr("2.0", token);
+		return new ClientQr("2.0", "2.1", token);
 	}
 
 	@GET
@@ -101,6 +132,19 @@ public class SignatureResource {
 		session.setStatusConnected();
 
 		return session.getRequest();
+	}
+
+	@GET
+	@Path("/{sessiontoken}/jwt")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JwtSessionRequest getJwt(@PathParam("sessiontoken") String sessiontoken) {
+		System.out.println("Received get, token: " + sessiontoken);
+		SignatureSession session = sessions.getNonNullSession(sessiontoken);
+		session.setStatusConnected();
+
+		SignatureProofRequest request = session.getRequest();
+
+		return new JwtSessionRequest(session.getJwt(), request.getNonce(), request.getContext());
 	}
 
 	@GET

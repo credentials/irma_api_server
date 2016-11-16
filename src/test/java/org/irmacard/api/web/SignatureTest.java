@@ -34,7 +34,9 @@
 package org.irmacard.api.web;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.glassfish.jersey.test.TestProperties;
@@ -56,10 +58,13 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.security.Key;
 import java.security.KeyManagementException;
 import java.security.PublicKey;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Test class for signature createtion and verification
@@ -71,9 +76,6 @@ public class SignatureTest extends JerseyTest {
 
 	public SignatureTest() {
 		super(new JettyTestContainerFactory());
-
-		ApiConfiguration.instance = GsonUtil.getGson().fromJson(configuration, ApiConfiguration.class);
-		ApiConfiguration.instance.hot_reload_configuration = false;
 	}
 
 	@BeforeClass
@@ -82,6 +84,8 @@ public class SignatureTest extends JerseyTest {
 
 		try {
 			configuration = new String(ApiConfiguration.getResource("config.test.json"));
+			ApiConfiguration.instance = GsonUtil.getGson().fromJson(configuration, ApiConfiguration.class);
+			ApiConfiguration.instance.hot_reload_configuration = false;
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -109,8 +113,17 @@ public class SignatureTest extends JerseyTest {
 		SignatureProofRequest request = new SignatureProofRequest(null, null, attrs, "to be signed", SignatureProofRequest.MessageType.STRING);
 		SignClientRequest spRequest = new SignClientRequest("testrequest", request, 60);
 
+		Map<String, Object> claims = new HashMap<>();
+		claims.put("absrequest", spRequest);
+		claims.put("iss", "testsigclient");
+		claims.put("sub", "signature_request");
+		claims.put("iat", System.currentTimeMillis() / 1000);
+
+		JwtBuilder builder = Jwts.builder().setPayload(GsonUtil.getGson().toJson(claims));
+		String jwt = builder.compact();
+
 		ClientQr qr = target("/signature/").request(MediaType.APPLICATION_JSON)
-				.post(Entity.entity(spRequest, MediaType.APPLICATION_JSON), ClientQr.class);
+				.post(Entity.entity(jwt, MediaType.TEXT_PLAIN), ClientQr.class);
 
 		String sessiontoken = qr.getUrl();
 

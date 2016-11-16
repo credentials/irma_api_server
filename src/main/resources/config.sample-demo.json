@@ -22,6 +22,9 @@
     // Completely enable or disable issuing.
     "enable_issuing": true,
 
+    // Completely enable or disable attribute-based signatures
+    "enable_signing": true,
+
     // In order to prevent linkability, the timestamps of all issued credentials must fall exactly on an
     // epoch bondary. If this is set to true and the IdP requests a validity for a credential which does
     // not fall on such a boundary, we reject the request. If set to true, we accept the request and
@@ -34,6 +37,9 @@
 
     // Same as above for verification requests
     "allow_unsigned_verification_requests": true,
+
+    // Same as above for signature requests
+    "allow_unsigned_signature_requests": true,
 
     // Maximum age (in seconds) of incoming JSON web tokens for issuing or verification.
     "max_jwt_age": 60,
@@ -72,5 +78,12 @@
     // .der public keys of authorized verifiers are expected at the path src/main/resources/verifiers.
     "authorized_sps": {
         "testsp": [ "*" ]
+    },
+
+    // A list of authorized signature clients and what they may verify. Structure is the same as above.
+    "authorized_sigclients": {
+        "testsigclient": [
+            "*"
+        ]
     }
 }

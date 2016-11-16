@@ -61,7 +61,12 @@ public class ApiApplication extends ResourceConfig {
         register(VerificationResource.class);
 
         // register signature application
-        register(SignatureResource.class);
+        if (ApiConfiguration.getInstance().isSigningEnabled()) {
+            System.out.println("Enabling signing");
+            register(SignatureResource.class);
+        } else {
+            System.out.println("Disabling signing");
+        }
 
         // register issuing application, if applicable
         if (ApiConfiguration.getInstance().isIssuingEnabled()) {
