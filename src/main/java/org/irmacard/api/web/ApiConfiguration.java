@@ -93,7 +93,7 @@ public class ApiConfiguration {
 	}
 
 	public boolean canVerifyAttribute(String sp, AttributeIdentifier attribute) {
-		if (!allow_unsigned_verification_requests && !authorized_sps.containsKey(sp))
+		if (!authorized_sps.containsKey(sp))
 			return false;
 
 		ArrayList<String> attributes = authorized_sps.get(sp);
