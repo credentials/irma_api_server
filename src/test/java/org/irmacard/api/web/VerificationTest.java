@@ -315,6 +315,7 @@ public class VerificationTest extends JerseyTest {
 
 	@Test(expected=NotAuthorizedException.class)
 	public void oldJwtTest() throws KeyManagementException {
+		ApiConfiguration.getInstance().allow_unsigned_verification_requests = false;
 		createSession(1, ApiConfiguration.getInstance().getPrivateKey("test-sk.der"));
 	}
 
@@ -327,6 +328,7 @@ public class VerificationTest extends JerseyTest {
 
 	@Test
 	public void authorizedVerifierTest() throws KeyManagementException {
+		ApiConfiguration.getInstance().allow_unsigned_verification_requests = false;
 		ApiConfiguration.instance.authorized_sps.put("testsp", new ArrayList<String>());
 		try {
 			createSession();
