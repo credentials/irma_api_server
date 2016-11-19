@@ -33,12 +33,16 @@
 
 package org.irmacard.api.web.resources;
 
+
 import com.google.api.client.http.*;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import io.jsonwebtoken.*;
+
+import io.jsonwebtoken.JwtBuilder;
+import io.jsonwebtoken.Jwts;
+
 import org.irmacard.api.common.AttributeDisjunction;
 import org.irmacard.api.common.ClientQr;
-import org.irmacard.api.common.JwtParser;
 import org.irmacard.api.common.JwtSessionRequest;
 import org.irmacard.api.common.disclosure.DisclosureProofRequest;
 import org.irmacard.api.common.disclosure.DisclosureProofResult;
@@ -56,49 +60,64 @@ import org.irmacard.credentials.info.InfoException;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.Key;
+
 import java.security.KeyManagementException;
 import java.util.Calendar;
 
 
 @Path("verification")
-public class VerificationResource {
-    private Sessions<VerificationSession> sessions = Sessions.getVerificationSessions();
-
+public class VerificationResource extends BaseResource
+        <DisclosureProofRequest, ServiceProviderRequest, VerificationSession> {
     private static final int DEFAULT_TOKEN_VALIDITY = 60 * 60; // 1 hour
 
     @Inject
-    public VerificationResource() {}
+    public VerificationResource() {
+        super(Action.DISCLOSING, Sessions.getVerificationSessions());
+    }
 
     @POST
     @Consumes({MediaType.TEXT_PLAIN,MediaType.APPLICATION_JSON})
     @Produces(MediaType.APPLICATION_JSON)
+    @Override
     public ClientQr newSession(String jwt) {
-        if (ApiConfiguration.getInstance().isHotReloadEnabled())
-            ApiConfiguration.load();
-
-        JwtParser<ServiceProviderRequest> parser = new JwtParser<>(ServiceProviderRequest.class,
-                ApiConfiguration.getInstance().allowUnsignedVerificationRequests(),
-                ApiConfiguration.getInstance().getMaxJwtAge());
-
-        parser.setKeyResolver(new SigningKeyResolverAdapter() {
-            @Override public Key resolveSigningKey(JwsHeader header, Claims claims) {
-                String keyId = (String) header.get("kid");
-                if (keyId == null)
-                    keyId = claims.getIssuer();
-                return ApiConfiguration.getInstance().getClientPublicKey("verifiers", keyId);
-            }
-        });
-
-        ServiceProviderRequest request = parser.parseJwt(jwt).getPayload();
-        return create(request, parser.getJwtIssuer(), jwt);
+        return super.newSession(jwt);
     }
 
+    @GET @Path("/{sessiontoken}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Override
+    public DisclosureProofRequest get(@PathParam("sessiontoken") String sessiontoken) {
+        return super.get(sessiontoken);
+    }
+
+    @GET @Path("/{sessiontoken}/jwt")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Override
+    public JwtSessionRequest getJwt(@PathParam("sessiontoken") String sessiontoken) {
+       return super.getJwt(sessiontoken);
+    }
+
+    @GET @Path("/{sessiontoken}/status")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Override
+    public Status getStatus(@PathParam("sessiontoken") String sessiontoken) {
+        return super.getStatus(sessiontoken);
+    }
+
+    @DELETE @Path("/{sessiontoken}")
+    @Override
+    public void delete(@PathParam("sessiontoken") String sessiontoken) {
+        super.delete(sessiontoken);
+    }
+
+    @Override
     public ClientQr create(ServiceProviderRequest spRequest, String verifier, String jwt) {
         DisclosureProofRequest request = spRequest.getRequest();
 
@@ -117,64 +136,12 @@ public class VerificationResource {
 
         if (spRequest.getValidity() == 0)
             spRequest.setValidity(DEFAULT_TOKEN_VALIDITY);
-        if (spRequest.getTimeout() == 0)
-            spRequest.setTimeout(ApiConfiguration.getInstance().getTokenGetTimeout());
 
-        request.setNonceAndContext();
-
-        VerificationSession session = new VerificationSession(spRequest);
-        session.setJwt(jwt);
-        String token = session.getSessionToken();
-        sessions.addSession(session);
-
-        System.out.println("Received session, token: " + token);
-        System.out.println(request.toString());
-
-        return new ClientQr("2.0", "2.1", token);
+        VerificationSession session = new VerificationSession();
+        return super.create(session, spRequest, jwt);
     }
 
-    @GET
-    @Path("/{sessiontoken}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public DisclosureProofRequest get(@PathParam("sessiontoken") String sessiontoken) {
-        System.out.println("Received get, token: " + sessiontoken);
-        VerificationSession session = sessions.getNonNullSession(sessiontoken);
-        session.setStatusConnected();
-
-        return session.getRequest();
-    }
-
-    @GET
-    @Path("/{sessiontoken}/jwt")
-    @Produces(MediaType.APPLICATION_JSON)
-    public JwtSessionRequest getJwt(@PathParam("sessiontoken") String sessiontoken) {
-        System.out.println("Received get, token: " + sessiontoken);
-        VerificationSession session = sessions.getNonNullSession(sessiontoken);
-        session.setStatusConnected();
-
-        DisclosureProofRequest request = session.getRequest();
-
-        return new JwtSessionRequest(session.getJwt(), request.getNonce(), request.getContext());
-    }
-
-    @GET
-    @Path("/{sessiontoken}/status")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Status getStatus(
-            @PathParam("sessiontoken") String sessiontoken) {
-        VerificationSession session = sessions.getNonNullSession(sessiontoken);
-        Status status = session.getStatus();
-
-        // Remove the session if this session is cancelled
-        if (status == Status.CANCELLED) {
-            session.close();
-        }
-
-        return status;
-    }
-
-    @POST
-    @Path("/{sessiontoken}/proofs")
+    @POST @Path("/{sessiontoken}/proofs")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public DisclosureProofResult.Status proofs(ProofList proofs, @PathParam("sessiontoken") String sessiontoken)
@@ -212,8 +179,7 @@ public class VerificationResource {
         return result.getStatus();
     }
 
-    @GET
-    @Path("/{sessiontoken}/getunsignedproof")
+    @GET @Path("/{sessiontoken}/getunsignedproof")
     @Produces(MediaType.APPLICATION_JSON)
     public DisclosureProofResult getproof(@PathParam("sessiontoken") String sessiontoken) {
         VerificationSession session = sessions.getNonNullSession(sessiontoken);
@@ -233,8 +199,7 @@ public class VerificationResource {
     // TODO: This seems to also return (signed) data even if the proof does not
     // verify, maybe we want to refuse this method if that is the case, need to
     // change workflow to allow this.
-    @GET
-    @Path("/{sessiontoken}/getproof")
+    @GET @Path("/{sessiontoken}/getproof")
     @Produces(MediaType.TEXT_PLAIN)
     public String gettoken(@PathParam("sessiontoken") String sessiontoken) throws KeyManagementException {
         VerificationSession session = sessions.getNonNullSession(sessiontoken);
@@ -281,28 +246,5 @@ public class VerificationResource {
 
             }
         }.start();
-    }
-
-    @DELETE
-    @Path("/{sessiontoken}")
-    public void delete(@PathParam("sessiontoken") String sessiontoken) {
-        VerificationSession session = sessions.getNonNullSession(sessiontoken);
-
-        System.out.println("Received delete, token: " + sessiontoken);
-        if (session.getStatus() == Status.CONNECTED) {
-            // We have connected clients, we need to inform listeners of cancel
-            session.setStatusCancelled();
-
-            // If status socket is still active then the update has been sent, so we
-            // can remove the session immediately. Otherwise we wait until the
-            // status has been polled.
-            if (session.isStatusSocketConnected()) {
-                session.close();
-            }
-        } else {
-            // In all other cases INITIALIZED, CANCELLED, DONE all parties
-            // are already informed, we can close the session
-            session.close();
-        }
     }
 }

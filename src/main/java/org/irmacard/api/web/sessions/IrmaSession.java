@@ -30,14 +30,17 @@ public abstract class IrmaSession<T extends ClientRequest<S>, S> {
 		INITIALIZED, CONNECTED, CANCELLED, DONE
 	}
 
+	public IrmaSession() {
+		this.sessionToken = Sessions.generateSessionToken();
+	}
+
 	/**
 	 * Construct a new session for the specified client (IdP or SP) request.
 	 * @param clientRequest The request that started this session
 	 */
 	public IrmaSession(T clientRequest) {
-		this.sessionToken = Sessions.generateSessionToken();
-		this.clientRequest = clientRequest;
-		delayRemoval(clientRequest.getTimeout());
+		this();
+		setClientRequest(clientRequest);
 	}
 
 	private void delayRemoval(int timeout) {
@@ -51,6 +54,11 @@ public abstract class IrmaSession<T extends ClientRequest<S>, S> {
 
 	public T getClientRequest() {
 		return clientRequest;
+	}
+
+	public void setClientRequest(T clientRequest) {
+		this.clientRequest = clientRequest;
+		delayRemoval(clientRequest.getTimeout());
 	}
 
 	public String getJwt() {

@@ -42,6 +42,10 @@ public class VerificationSession extends IrmaSession<ServiceProviderRequest, Dis
     private DisclosureProofResult result;
     private ProofD proof;
 
+    public VerificationSession() {
+        super();
+    }
+
     public VerificationSession(ServiceProviderRequest spRequest) {
         super(spRequest);
     }

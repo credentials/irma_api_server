@@ -3,6 +3,7 @@ package org.irmacard.api.web;
 import com.google.gson.JsonSyntaxException;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.irmacard.api.common.util.GsonUtil;
+import org.irmacard.api.web.resources.BaseResource;
 import org.irmacard.credentials.info.AttributeIdentifier;
 import org.irmacard.credentials.info.CredentialIdentifier;
 
@@ -163,6 +164,16 @@ public class ApiConfiguration {
 		return allow_unsigned_signature_requests;
 	}
 
+	public boolean allowUnsignedRequests(BaseResource.Action action) {
+		switch (action) {
+			case ISSUING: return allow_unsigned_issue_requests;
+			case DISCLOSING: return allow_unsigned_verification_requests;
+			case SIGNING: return allow_unsigned_signature_requests;
+		}
+
+		throw new RuntimeException("Not implemented for action " + action);
+	}
+
 	public boolean isHotReloadEnabled() {
 		return hot_reload_configuration;
 	}
@@ -186,6 +197,16 @@ public class ApiConfiguration {
 			throw new WebApplicationException("No public key for identity provider " + name,
 					Response.Status.UNAUTHORIZED);
 		}
+	}
+
+	public PublicKey getClientPublicKey(BaseResource.Action action, String name) {
+		switch (action) {
+			case ISSUING: return getClientPublicKey("issuers", name);
+			case DISCLOSING: return getClientPublicKey("verifiers", name);
+			case SIGNING: return getClientPublicKey("sigclients", name);
+		}
+
+		throw new RuntimeException("Not implemented for action " + action);
 	}
 
 	public PrivateKey getPrivateKey(String filename) throws KeyManagementException {

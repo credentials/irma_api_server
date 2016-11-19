@@ -142,5 +142,6 @@ public class Sessions<T extends IrmaSession> {
     public static void removeSession(String session) {
         getVerificationSessions().sessions.remove(session);
         getIssuingSessions().sessions.remove(session);
+        getSignatureSessions().sessions.remove(session);
     }
 }

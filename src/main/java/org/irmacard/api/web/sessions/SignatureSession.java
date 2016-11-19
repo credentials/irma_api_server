@@ -49,6 +49,10 @@ public class SignatureSession extends IrmaSession<SignatureClientRequest, Signat
 		super(clientRequest);
 	}
 
+	public SignatureSession() {
+		super();
+	}
+
 	public SignatureProofResult getResult() {
 		return result;
 	}

@@ -1,11 +1,7 @@
 package org.irmacard.api.web.resources;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwsHeader;
-import io.jsonwebtoken.SigningKeyResolverAdapter;
 import org.irmacard.api.common.ClientQr;
 import org.irmacard.api.common.CredentialRequest;
-import org.irmacard.api.common.JwtParser;
 import org.irmacard.api.common.JwtSessionRequest;
 import org.irmacard.api.common.disclosure.DisclosureProofRequest;
 import org.irmacard.api.common.disclosure.DisclosureProofResult;
@@ -13,7 +9,6 @@ import org.irmacard.api.common.exceptions.ApiError;
 import org.irmacard.api.common.exceptions.ApiException;
 import org.irmacard.api.common.issuing.IdentityProviderRequest;
 import org.irmacard.api.common.issuing.IssuingRequest;
-import org.irmacard.api.common.util.GsonUtil;
 import org.irmacard.api.web.ApiConfiguration;
 import org.irmacard.api.web.sessions.IrmaSession;
 import org.irmacard.api.web.sessions.IssueSession;
@@ -33,48 +28,50 @@ import org.irmacard.credentials.info.KeyException;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import java.security.Key;
 import java.util.ArrayList;
 
 @Path("issue")
-public class IssueResource {
-	private Sessions<IssueSession> sessions = Sessions.getIssuingSessions();
+public class IssueResource extends BaseResource
+		<IssuingRequest, IdentityProviderRequest, IssueSession> {
 
 	@Inject
-	public IssueResource() {}
+	public IssueResource() {
+		super(Action.ISSUING, Sessions.getIssuingSessions());
+	}
 
-	/**
-	 * Entry post for issue sessions creations. This only verifies the authenticity of the JWT; all other handling
-	 * (checking if this issuer is authorized to issue, creating and saving the session, etc) is done by
-	 * {@link #create(IdentityProviderRequest, String, String)} below.
-	 */
 	@POST
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Produces(MediaType.APPLICATION_JSON)
+	@Override
 	public ClientQr newSession(String jwt) {
-		if (ApiConfiguration.getInstance().isHotReloadEnabled())
-			ApiConfiguration.load();
+		return super.newSession(jwt);
+	}
 
-		// The entire issuing application should not be loaded if the following is false, but just to be sure
-		if (!ApiConfiguration.getInstance().isIssuingEnabled())
-			throw new ApiException(ApiError.ISSUING_DISABLED);
+	@GET @Path("/{sessiontoken}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Override
+	public IssuingRequest get(@PathParam("sessiontoken") String sessiontoken) {
+		return super.get(sessiontoken);
+	}
 
-		JwtParser<IdentityProviderRequest> parser = new JwtParser<>(IdentityProviderRequest.class,
-				ApiConfiguration.getInstance().allowUnsignedIssueRequests(),
-				ApiConfiguration.getInstance().getMaxJwtAge());
+	@GET @Path("/{sessiontoken}/jwt")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Override
+	public JwtSessionRequest getJwt(@PathParam("sessiontoken") String sessiontoken) {
+		return super.getJwt(sessiontoken);
+	}
 
-		parser.setKeyResolver(new SigningKeyResolverAdapter() {
-			@Override public Key resolveSigningKey(JwsHeader header, Claims claims) {
-				String keyId = (String) header.get("kid");
-				if (keyId == null)
-					keyId = claims.getIssuer();
-				return ApiConfiguration.getInstance().getClientPublicKey("issuers", keyId);
-			}
-		});
+	@GET @Path("/{sessiontoken}/status")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Override
+	public IrmaSession.Status getStatus(@PathParam("sessiontoken") String sessiontoken) {
+		return super.getStatus(sessiontoken);
+	}
 
-		// Parse and verify JWT
-		IdentityProviderRequest request = parser.parseJwt(jwt).getPayload();
-		return create(request, parser.getJwtIssuer(), jwt);
+	@DELETE @Path("/{sessiontoken}")
+	@Override
+	public void delete(@PathParam("sessiontoken") String sessiontoken) {
+		super.delete(sessiontoken);
 	}
 
 	/**
@@ -84,14 +81,11 @@ public class IssueResource {
 	 *
 	 * @return The session token and protocol version, for the identity provider to forward to the token
 	 */
-	private ClientQr create(IdentityProviderRequest isRequest, String idp, String jwt) {
+	public ClientQr create(IdentityProviderRequest isRequest, String idp, String jwt) {
 		IssuingRequest request = isRequest.getRequest();
 
 		if (request == null || request.getCredentials() == null || request.getCredentials().size() == 0)
 			throw new ApiException(ApiError.MALFORMED_ISSUER_REQUEST);
-
-		if (isRequest.getTimeout() == 0)
-			isRequest.setTimeout(ApiConfiguration.getInstance().getTokenGetTimeout());
 
 		for (CredentialRequest cred : request.getCredentials()) {
 			if (!ApiConfiguration.getInstance().canIssueCredential(idp, cred.getIdentifier()))
@@ -123,53 +117,11 @@ public class IssueResource {
 							"Epoch length: " + Attributes.EXPIRY_FACTOR);
 		}
 
-		request.setNonceAndContext();
-
-		IssueSession session = new IssueSession(isRequest);
-		session.setJwt(jwt);
-		String token = session.getSessionToken();
-		sessions.addSession(session);
-
-		System.out.println("Received issue session, token: " + token);
-		System.out.println(GsonUtil.getGson().toJson(isRequest));
-
-		return new ClientQr("2.0", "2.1", token);
+		IssueSession session = new IssueSession();
+		return super.create(session, isRequest, jwt);
 	}
 
-	@GET
-	@Path("/{sessiontoken}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public IssuingRequest get(@PathParam("sessiontoken") String sessiontoken) {
-		IssueSession session = sessions.getNonNullSession(sessiontoken);
-		if (session.getStatus() != IssueSession.Status.INITIALIZED) {
-			fail(ApiError.UNEXPECTED_REQUEST, session);
-		}
-
-		System.out.println("Received get, token: " + sessiontoken);
-
-		session.setStatusConnected();
-		return session.getRequest();
-	}
-
-	@GET
-	@Path("/{sessiontoken}/jwt")
-	@Produces(MediaType.APPLICATION_JSON)
-	public JwtSessionRequest getJwt(@PathParam("sessiontoken") String sessiontoken) {
-		IssueSession session = sessions.getNonNullSession(sessiontoken);
-		if (session.getStatus() != IssueSession.Status.INITIALIZED) {
-			fail(ApiError.UNEXPECTED_REQUEST, session);
-		}
-
-		System.out.println("Received get, token: " + sessiontoken);
-
-		session.setStatusConnected();
-
-		IssuingRequest request = session.getRequest();
-		return new JwtSessionRequest(session.getJwt(), request.getNonce(), request.getContext());
-	}
-
-	@POST
-	@Path("/{sessiontoken}/commitments")
+	@POST @Path("/{sessiontoken}/commitments")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public ArrayList<IssueSignatureMessage> getSignatureMessages(IssueCommitmentMessage commitments,
@@ -244,42 +196,5 @@ public class IssueResource {
 			fail(ApiError.UNKNOWN_PUBLIC_KEY, session);
 			return null;
 		}
-	}
-
-	@DELETE
-	@Path("/{sessiontoken}")
-	public void delete(@PathParam("sessiontoken") String sessiontoken) {
-		IssueSession session = sessions.getNonNullSession(sessiontoken);
-
-		// Allow DELETEs only after the initial GET and before the credentials are issued
-		if (session.getStatus() != IssueSession.Status.CONNECTED) {
-			throw new ApiException(ApiError.UNEXPECTED_REQUEST);
-		}
-		System.out.println("Received delete, token: " + sessiontoken);
-
-		session.setStatusCancelled();
-	}
-
-	@GET
-	@Path("/{sessiontoken}/status")
-	@Produces(MediaType.APPLICATION_JSON)
-	public IrmaSession.Status getStatus(@PathParam("sessiontoken") String sessiontoken) {
-		IssueSession session = sessions.getNonNullSession(sessiontoken);
-
-		IrmaSession.Status status = session.getStatus();
-		if (status == IssueSession.Status.DONE || status == IssueSession.Status.CANCELLED) {
-			session.close();
-		}
-
-		return status;
-	}
-
-	/**
-	 * Removes the session, informs the identity provider, and throws an exception to notify the token.
-	 * @throws ApiException The specified exception
-	 */
-	private void fail(ApiError error, IssueSession session) throws ApiException {
-		session.setStatusCancelled();
-		throw new ApiException(error);
 	}
 }

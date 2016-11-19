@@ -37,8 +37,10 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.SigningKeyResolverAdapter;
 import org.irmacard.api.common.*;
+import org.irmacard.api.common.disclosure.DisclosureProofRequest;
 import org.irmacard.api.common.exceptions.ApiError;
 import org.irmacard.api.common.exceptions.ApiException;
+import org.irmacard.api.common.issuing.IdentityProviderRequest;
 import org.irmacard.api.common.signatures.SignatureClientRequest;
 import org.irmacard.api.common.signatures.SignatureProofRequest;
 import org.irmacard.api.common.signatures.SignatureProofResult;
@@ -56,42 +58,53 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.security.Key;
 
-// TODO: make generic and merge with VerificationResource into BaseResource or something like that?
-
 @Path("signature")
-public class SignatureResource {
-	private Sessions<SignatureSession> sessions = Sessions.getSignatureSessions();
-
+public class SignatureResource extends BaseResource
+		<SignatureProofRequest, SignatureClientRequest, SignatureSession>{
 	private static final int DEFAULT_TOKEN_VALIDITY = 60 * 60; // 1 hour
 
 	@Inject
-	public SignatureResource() {}
+	public SignatureResource() {
+		super(Action.SIGNING, Sessions.getSignatureSessions());
+	}
+
 
 	@POST
 	@Consumes({MediaType.TEXT_PLAIN,MediaType.APPLICATION_JSON})
 	@Produces(MediaType.APPLICATION_JSON)
+	@Override
 	public ClientQr newSession(String jwt) {
-		if (ApiConfiguration.getInstance().isHotReloadEnabled())
-			ApiConfiguration.load();
-
-		JwtParser<SignatureClientRequest> parser = new JwtParser<>(SignatureClientRequest.class,
-				ApiConfiguration.getInstance().allowUnsignedSignatureRequests(),
-				ApiConfiguration.getInstance().getMaxJwtAge());
-
-		parser.setKeyResolver(new SigningKeyResolverAdapter() {
-			@Override public Key resolveSigningKey(JwsHeader header, Claims claims) {
-				String keyId = (String) header.get("kid");
-				if (keyId == null)
-					keyId = claims.getIssuer();
-				return ApiConfiguration.getInstance().getClientPublicKey("sigclients", keyId);
-			}
-		});
-
-		SignatureClientRequest request = parser.parseJwt(jwt).getPayload();
-		return create(request, parser.getJwtIssuer(), jwt);
+		return super.newSession(jwt);
 	}
 
-	private ClientQr create(SignatureClientRequest clientRequest, String verifier, String jwt) {
+	@GET @Path("/{sessiontoken}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Override
+	public SignatureProofRequest get(@PathParam("sessiontoken") String sessiontoken) {
+		return super.get(sessiontoken);
+	}
+
+	@GET @Path("/{sessiontoken}/jwt")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Override
+	public JwtSessionRequest getJwt(@PathParam("sessiontoken") String sessiontoken) {
+		return super.getJwt(sessiontoken);
+	}
+
+	@GET @Path("/{sessiontoken}/status")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Override
+	public Status getStatus(@PathParam("sessiontoken") String sessiontoken) {
+		return super.getStatus(sessiontoken);
+	}
+
+	@DELETE @Path("/{sessiontoken}")
+	@Override
+	public void delete(@PathParam("sessiontoken") String sessiontoken) {
+		super.delete(sessiontoken);
+	}
+
+	public ClientQr create(SignatureClientRequest clientRequest, String verifier, String jwt) {
 		SignatureProofRequest request = clientRequest.getRequest();
 		if (request == null || request.getContent() == null ||
 				request.getContent().size() == 0 || request.getMessage() == null)
@@ -109,64 +122,12 @@ public class SignatureResource {
 
 		if (clientRequest.getValidity() == 0)
 			clientRequest.setValidity(DEFAULT_TOKEN_VALIDITY);
-		if (clientRequest.getTimeout() == 0)
-			clientRequest.setTimeout(ApiConfiguration.getInstance().getTokenGetTimeout());
 
-		request.setNonceAndContext();
-
-		SignatureSession session = new SignatureSession(clientRequest);
-		session.setJwt(jwt);
-		String token = session.getSessionToken();
-		sessions.addSession(session);
-
-		System.out.println("Received session, token: " + token);
-		System.out.println(request.toString());
-
-		return new ClientQr("2.0", "2.1", token);
+		SignatureSession session = new SignatureSession();
+		return super.create(session, clientRequest, jwt);
 	}
 
-	@GET
-	@Path("/{sessiontoken}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public SignatureProofRequest get(@PathParam("sessiontoken") String sessiontoken) {
-		System.out.println("Received get, token: " + sessiontoken);
-		SignatureSession session = sessions.getNonNullSession(sessiontoken);
-		session.setStatusConnected();
-
-		return session.getRequest();
-	}
-
-	@GET
-	@Path("/{sessiontoken}/jwt")
-	@Produces(MediaType.APPLICATION_JSON)
-	public JwtSessionRequest getJwt(@PathParam("sessiontoken") String sessiontoken) {
-		System.out.println("Received get, token: " + sessiontoken);
-		SignatureSession session = sessions.getNonNullSession(sessiontoken);
-		session.setStatusConnected();
-
-		SignatureProofRequest request = session.getRequest();
-
-		return new JwtSessionRequest(session.getJwt(), request.getSignatureNonce(), request.getContext());
-	}
-
-	@GET
-	@Path("/{sessiontoken}/status")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Status getStatus(
-			@PathParam("sessiontoken") String sessiontoken) {
-		SignatureSession session = sessions.getNonNullSession(sessiontoken);
-		Status status = session.getStatus();
-
-		// Remove the session if this session is cancelled
-		if (status == Status.CANCELLED) {
-			session.close();
-		}
-
-		return status;
-	}
-
-	@POST
-	@Path("/{sessiontoken}/proofs")
+	@POST @Path("/{sessiontoken}/proofs")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public SignatureProofResult.Status proofs(ProofList proofs, @PathParam("sessiontoken") String sessiontoken)
@@ -190,8 +151,7 @@ public class SignatureResource {
 		return result.getStatus();
 	}
 
-	@GET
-	@Path("/{sessiontoken}/getunsignedproof")
+	@GET @Path("/{sessiontoken}/getunsignedproof")
 	@Produces(MediaType.APPLICATION_JSON)
 	public SignatureProofResult getproof(@PathParam("sessiontoken") String sessiontoken) {
 		SignatureSession session = sessions.getNonNullSession(sessiontoken);
@@ -214,8 +174,7 @@ public class SignatureResource {
 	 * @param result
 	 * @return
 	 */
-	@POST
-	@Path("/checksignature")
+	@POST @Path("/checksignature")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public SignatureProofResult.Status checkSignature(SignatureProofResult result) {
@@ -232,29 +191,6 @@ public class SignatureResource {
 			System.out.println("Error verifying proof: ");
 			e.printStackTrace();;
 			return SignatureProofResult.Status.INVALID;
-		}
-	}
-
-	@DELETE
-	@Path("/{sessiontoken}")
-	public void delete(@PathParam("sessiontoken") String sessiontoken) {
-		SignatureSession session = sessions.getNonNullSession(sessiontoken);
-
-		System.out.println("Received delete, token: " + sessiontoken);
-		if (session.getStatus() == Status.CONNECTED) {
-			// We have connected clients, we need to inform listeners of cancel
-			session.setStatusCancelled();
-
-			// If status socket is still active then the update has been sent, so we
-			// can remove the session immediately. Otherwise we wait until the
-			// status has been polled.
-			if (session.isStatusSocketConnected()) {
-				session.close();
-			}
-		} else {
-			// In all other cases INITIALIZED, CANCELLED, DONE all parties
-			// are already informed, we can close the session
-			session.close();
 		}
 	}
 }

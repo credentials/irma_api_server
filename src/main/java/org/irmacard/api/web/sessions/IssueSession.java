@@ -7,6 +7,10 @@ import org.irmacard.credentials.idemix.messages.IssueCommitmentMessage;
 public class IssueSession extends IrmaSession<IdentityProviderRequest, IssuingRequest> {
 	private IssueCommitmentMessage commitments;
 
+	public IssueSession() {
+		super();
+	}
+
 	public IssueSession(IdentityProviderRequest ipRequest) {
 		super(ipRequest);
 	}
