@@ -146,7 +146,7 @@ public class SignatureResource {
 
 		SignatureProofRequest request = session.getRequest();
 
-		return new JwtSessionRequest(session.getJwt(), request.getNonce(), request.getContext());
+		return new JwtSessionRequest(session.getJwt(), request.getSignatureNonce(), request.getContext());
 	}
 
 	@GET

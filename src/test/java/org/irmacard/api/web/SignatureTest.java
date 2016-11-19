@@ -140,7 +140,7 @@ public class SignatureTest extends JerseyTest {
 				.get(SignatureProofRequest.class);
 
 		// Create the proof and post it
-		ProofList proofs = new ProofListBuilder(request.getContext(), request.getChallenge(), isSig)
+		ProofList proofs = new ProofListBuilder(request.getContext(), request.getNonce(), isSig)
 				.addProofD(cred, disclosed)
 				.build();
 		Status status = target("/signature/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
@@ -165,7 +165,7 @@ public class SignatureTest extends JerseyTest {
 			proofs.setSig(true); // This value isn't stored in the serialized signature
 
 			// Verify signature separately without checking attributes/conditions
-			assert proofs.verify(request.getContext(), request.getChallenge(), true);
+			assert proofs.verify(request.getContext(), request.getNonce(), true);
 
 			// Verify signature using the enclosed nonce, context and message data by constructing a new request
 			BigInteger nonce = signature.getNonce();
