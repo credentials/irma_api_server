@@ -11,6 +11,9 @@
     // Name of the JWT issuer that signs the JWT's
     "jwt_issuer": "irma_api_server",
 
+    // Completely enable or disable verification.
+    "enable_verification": true,
+
     // Completely enable or disable issuing.
     "enable_issuing": false,
 

@@ -104,7 +104,7 @@ public class SignatureResource extends BaseResource
 		super.delete(sessiontoken);
 	}
 
-	public ClientQr create(SignatureClientRequest clientRequest, String verifier, String jwt) {
+	protected ClientQr create(SignatureClientRequest clientRequest, String verifier, String jwt) {
 		SignatureProofRequest request = clientRequest.getRequest();
 		if (request == null || request.getContent() == null ||
 				request.getContent().size() == 0 || request.getMessage() == null)

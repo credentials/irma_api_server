@@ -44,6 +44,7 @@ import org.irmacard.credentials.info.DescriptionStoreDeserializer;
 import org.irmacard.credentials.info.InfoException;
 
 import javax.ws.rs.ApplicationPath;
+import javax.ws.rs.Path;
 import java.net.URI;
 
 @ApplicationPath("/")
@@ -57,23 +58,21 @@ public class ApiApplication extends ResourceConfig {
         // register exception handler, for converting and then returning exceptions as JSON output
         register(ApiExceptionMapper.class);
 
-        // register verification application
-        register(VerificationResource.class);
+        Class[] resources = {
+                IssueResource.class,
+                VerificationResource.class,
+                SignatureResource.class
+        };
 
-        // register signature application
-        if (ApiConfiguration.getInstance().isSigningEnabled()) {
-            System.out.println("Enabling signing");
-            register(SignatureResource.class);
-        } else {
-            System.out.println("Disabling signing");
-        }
-
-        // register issuing application, if applicable
-        if (ApiConfiguration.getInstance().isIssuingEnabled()) {
-            System.out.println("Enabling issuing");
-            register(IssueResource.class);
-        } else {
-            System.out.println("Disabling issuing");
+        for (Class resource : resources) {
+            // register verification application
+            if (ApiConfiguration.getInstance().isEnabled(resource)) {
+                System.out.println("Enabling " + resource.getSimpleName()
+                        + " at /" + ((Path)resource.getAnnotation(Path.class)).value());
+                register(resource);
+            } else {
+                System.out.println("Disabling " + resource.getSimpleName());
+            }
         }
 
         // register CORS filter

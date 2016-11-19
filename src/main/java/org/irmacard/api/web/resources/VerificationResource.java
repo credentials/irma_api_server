@@ -118,7 +118,7 @@ public class VerificationResource extends BaseResource
     }
 
     @Override
-    public ClientQr create(ServiceProviderRequest spRequest, String verifier, String jwt) {
+    protected ClientQr create(ServiceProviderRequest spRequest, String verifier, String jwt) {
         DisclosureProofRequest request = spRequest.getRequest();
 
         if (request == null || request.getContent() == null || request.getContent().size() == 0)

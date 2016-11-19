@@ -81,7 +81,7 @@ public class IssueResource extends BaseResource
 	 *
 	 * @return The session token and protocol version, for the identity provider to forward to the token
 	 */
-	public ClientQr create(IdentityProviderRequest isRequest, String idp, String jwt) {
+	protected ClientQr create(IdentityProviderRequest isRequest, String idp, String jwt) {
 		IssuingRequest request = isRequest.getRequest();
 
 		if (request == null || request.getCredentials() == null || request.getCredentials().size() == 0)

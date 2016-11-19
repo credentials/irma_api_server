@@ -4,6 +4,9 @@ import com.google.gson.JsonSyntaxException;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.irmacard.api.common.util.GsonUtil;
 import org.irmacard.api.web.resources.BaseResource;
+import org.irmacard.api.web.resources.IssueResource;
+import org.irmacard.api.web.resources.SignatureResource;
+import org.irmacard.api.web.resources.VerificationResource;
 import org.irmacard.credentials.info.AttributeIdentifier;
 import org.irmacard.credentials.info.CredentialIdentifier;
 
@@ -40,6 +43,7 @@ public class ApiConfiguration {
 	private String jwt_publickey = "pk.der";
 	private String jwt_issuer = null;
 
+	boolean enable_verification = true;
 	boolean enable_issuing = false;
 	boolean enable_signing = false;
 
@@ -93,12 +97,12 @@ public class ApiConfiguration {
 		return SignatureAlgorithm.RS256;
 	}
 
-	public boolean isIssuingEnabled() {
-		return enable_issuing;
-	}
+	public boolean isEnabled(Class clazz) {
+		if (clazz == IssueResource.class) return enable_issuing;
+		if (clazz == VerificationResource.class) return enable_verification;
+		if (clazz == SignatureResource.class) return enable_signing;
 
-	public boolean isSigningEnabled() {
-		return enable_signing;
+		throw new IllegalArgumentException("Unknown resource " + clazz.getName());
 	}
 
 	public boolean canRequestSignatureWithAttribute(String sigclient, AttributeIdentifier attribute) {

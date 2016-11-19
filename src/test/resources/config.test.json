@@ -1,5 +1,6 @@
 {
     // Configuration file for unit tests, not used for anything else
+    "enable_verification": true,
     "enable_issuing": true,
     "enable_signing": true,
     "allow_unsigned_issue_requests": false,

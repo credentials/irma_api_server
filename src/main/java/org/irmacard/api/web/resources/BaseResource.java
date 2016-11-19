@@ -23,9 +23,14 @@ public abstract class BaseResource
 		SessionClass extends IrmaSession<ClientClass, RequestClass>> {
 
 	/* Template boilerplate to keep the type system happy. Getting rather crazy here,
-	 * but the code deduplication is worth it. (Would be entirely unnecessary if Java
-	 * didn't have runtime type erasure...) */
+	 * but the code deduplication is worth it, I deem. The following enum works around
+	 * Java's generic type erasure. */
 
+	/**
+	 * For each of the main three actions of verification, signing and issuing,
+	 * this enum keeps track of the .class objects of the three template arguments
+	 * given to this {@link BaseResource}.
+	 */
 	public enum Action {
 		DISCLOSING(SignatureProofRequest.class, ServiceProviderRequest.class, VerificationSession.class),
 		SIGNING(SignatureProofRequest.class, SignatureClientRequest.class, SignatureSession.class),
@@ -76,9 +81,9 @@ public abstract class BaseResource
 		return create(request, parser.getJwtIssuer(), jwt);
 	}
 
-	public abstract ClientQr create(ClientClass clientRequest, String issuer, String jwt);
+	protected abstract ClientQr create(ClientClass clientRequest, String issuer, String jwt);
 
-	public ClientQr create(SessionClass session, ClientClass clientRequest, String jwt) {
+	protected ClientQr create(SessionClass session, ClientClass clientRequest, String jwt) {
 		if (clientRequest.getTimeout() == 0)
 			clientRequest.setTimeout(ApiConfiguration.getInstance().getTokenGetTimeout());
 		session.setClientRequest(clientRequest);
