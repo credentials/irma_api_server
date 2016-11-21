@@ -320,6 +320,7 @@ public class VerificationTest extends JerseyTest {
 
 	@Test(expected=NotAuthorizedException.class)
 	public void wrongJwtKeyTest() throws KeyManagementException {
+		ApiConfiguration.getInstance().allow_unsigned_verification_requests = false;
 		createSession(System.currentTimeMillis() / 1000,
 				ApiConfiguration.instance.getPrivateKey("sk.der"));
 	}
