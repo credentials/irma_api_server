@@ -255,9 +255,9 @@ public class VerificationResource {
     }
 
     // TODO: move to some kind of 'util class'?
-    private static void sendProofResult(URL url, String jwt) {
-        HttpTransport transport = new NetHttpTransport.Builder().build();
-        HttpContent content = new ByteArrayContent("text/plain", jwt.getBytes());
+    private static void sendProofResult(final URL url, String jwt) {
+        final HttpTransport transport = new NetHttpTransport.Builder().build();
+        final HttpContent content = new ByteArrayContent("text/plain", jwt.getBytes());
 
         new Thread() {
             @Override
