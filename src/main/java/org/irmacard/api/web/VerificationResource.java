@@ -33,6 +33,8 @@
 
 package org.irmacard.api.web;
 
+import com.google.api.client.http.*;
+import com.google.api.client.http.javanet.NetHttpTransport;
 import io.jsonwebtoken.*;
 import org.irmacard.api.common.*;
 import org.irmacard.api.common.JwtParser;
@@ -48,6 +50,11 @@ import org.irmacard.credentials.info.InfoException;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.Key;
 import java.security.KeyManagementException;
 import java.util.Calendar;
@@ -182,6 +189,20 @@ public class VerificationResource {
 
         System.out.println("Received proofs, token: " + sessiontoken);
 
+        // If a callback url is supplied, call it
+        if (session.getClientRequest().getCallbackUrl() != null) {
+            String callbackUrl = session.getClientRequest().getCallbackUrl() + "/" + sessiontoken;
+            System.out.println("Posting proof to: " + callbackUrl);
+
+            try {
+                sendProofResult(new URL(callbackUrl), gettoken(sessiontoken));
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (KeyManagementException e) {
+                e.printStackTrace();
+            }
+        }
+
         return result.getStatus();
     }
 
@@ -231,6 +252,29 @@ public class VerificationResource {
                 .signWith(ApiConfiguration.getInstance().getJwtAlgorithm(),
                         ApiConfiguration.getInstance().getJwtPrivateKey())
                 .compact();
+    }
+
+    // TODO: move to some kind of 'util class'?
+    private static void sendProofResult(URL url, String jwt) {
+        HttpTransport transport = new NetHttpTransport.Builder().build();
+        HttpContent content = new ByteArrayContent("application/json", ("{ \"proof\": \"" + jwt + "\" }").getBytes());
+
+        new Thread() {
+            @Override
+            public void run() {
+                try {
+                    HttpRequest proofResultRequest = transport.createRequestFactory().buildPostRequest(new GenericUrl(url), content);
+                    HttpResponse response = proofResultRequest.execute();
+                    System.out.println("Proof sent to callbackURL, result: " + new BufferedReader(new InputStreamReader(response.getContent())).readLine());
+                } catch (HttpResponseException e) {
+                    System.out.println("Sending proof failed!");
+                    System.out.println(e.getMessage());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }.start();
     }
 
     @DELETE
