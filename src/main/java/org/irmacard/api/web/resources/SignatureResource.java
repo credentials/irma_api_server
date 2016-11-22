@@ -33,14 +33,12 @@
 
 package org.irmacard.api.web.resources;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwsHeader;
-import io.jsonwebtoken.SigningKeyResolverAdapter;
-import org.irmacard.api.common.*;
-import org.irmacard.api.common.disclosure.DisclosureProofRequest;
+import org.irmacard.api.common.AttributeBasedSignature;
+import org.irmacard.api.common.AttributeDisjunction;
+import org.irmacard.api.common.ClientQr;
+import org.irmacard.api.common.JwtSessionRequest;
 import org.irmacard.api.common.exceptions.ApiError;
 import org.irmacard.api.common.exceptions.ApiException;
-import org.irmacard.api.common.issuing.IdentityProviderRequest;
 import org.irmacard.api.common.signatures.SignatureClientRequest;
 import org.irmacard.api.common.signatures.SignatureProofRequest;
 import org.irmacard.api.common.signatures.SignatureProofResult;
@@ -56,7 +54,6 @@ import org.irmacard.credentials.info.KeyException;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import java.security.Key;
 
 @Path("signature")
 public class SignatureResource extends BaseResource
@@ -151,7 +148,7 @@ public class SignatureResource extends BaseResource
 		return result.getStatus();
 	}
 
-	@GET @Path("/{sessiontoken}/getunsignedproof")
+	@GET @Path("/{sessiontoken}/getsignature")
 	@Produces(MediaType.APPLICATION_JSON)
 	public SignatureProofResult getproof(@PathParam("sessiontoken") String sessiontoken) {
 		SignatureSession session = sessions.getNonNullSession(sessiontoken);
@@ -170,9 +167,6 @@ public class SignatureResource extends BaseResource
 
 	/**
 	 * Checks if an IRMA signature if valid, can be used by the SP to check a certain signature
-	 * TODO: this is unsigned yet, how are we going to sign this?
-	 * @param result
-	 * @return
 	 */
 	@POST @Path("/checksignature")
 	@Consumes(MediaType.APPLICATION_JSON)

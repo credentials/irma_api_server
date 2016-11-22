@@ -73,7 +73,7 @@ request(options, function (error, response, body) {
 
 function poll(token) {
 	var pollOptions = {
-		uri: server + token + "/getunsignedproof",
+		uri: server + token + "/getsignature",
 		method: 'GET'
 	};
 

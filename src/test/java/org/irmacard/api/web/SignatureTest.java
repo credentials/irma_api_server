@@ -150,7 +150,7 @@ public class SignatureTest extends JerseyTest {
 
 		// Check if the unsigned proof/signature verifies if we post it to the api
 		// (Note: a SP is not required to do this, just for us to test)
-		SignatureProofResult result = target("/signature/" + session  +"/getunsignedproof").request(MediaType.APPLICATION_JSON)
+		SignatureProofResult result = target("/signature/" + session  +"/getsignature").request(MediaType.APPLICATION_JSON)
 				.get(SignatureProofResult.class);
 		Status verifyResult = target("/signature/checksignature").request(MediaType.APPLICATION_JSON)
 				.post(Entity.entity(result, MediaType.APPLICATION_JSON), Status.class);
