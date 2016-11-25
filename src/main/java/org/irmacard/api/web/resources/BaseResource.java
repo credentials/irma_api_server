@@ -98,7 +98,7 @@ public abstract class BaseResource
 		System.out.println("Received session, token: " + token);
 		System.out.println(request.toString());
 
-		return new ClientQr("2.0", "2.1", token);
+		return new ClientQr("2.0", "2.1", token, action.name().toLowerCase());
 	}
 
 	public RequestClass get(String sessiontoken) {
