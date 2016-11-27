@@ -33,6 +33,7 @@
 
 package org.irmacard.api.web.resources;
 
+import io.jsonwebtoken.Jwts;
 import org.irmacard.api.common.AttributeBasedSignature;
 import org.irmacard.api.common.AttributeDisjunction;
 import org.irmacard.api.common.ClientQr;
@@ -42,6 +43,7 @@ import org.irmacard.api.common.exceptions.ApiException;
 import org.irmacard.api.common.signatures.SignatureClientRequest;
 import org.irmacard.api.common.signatures.SignatureProofRequest;
 import org.irmacard.api.common.signatures.SignatureProofResult;
+import org.irmacard.api.common.util.GsonUtil;
 import org.irmacard.api.web.ApiConfiguration;
 import org.irmacard.api.web.sessions.IrmaSession.Status;
 import org.irmacard.api.web.sessions.Sessions;
@@ -55,8 +57,10 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.DatatypeConverter;
+import java.security.KeyManagementException;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Map;
 
 @Path("signature")
 public class SignatureResource extends BaseResource
@@ -152,8 +156,8 @@ public class SignatureResource extends BaseResource
 	}
 
 	@GET @Path("/{sessiontoken}/getsignature")
-	@Produces(MediaType.APPLICATION_JSON)
-	public SignatureProofResult getproof(@PathParam("sessiontoken") String sessiontoken) {
+	@Produces(MediaType.TEXT_PLAIN)
+	public String getproof(@PathParam("sessiontoken") String sessiontoken) throws KeyManagementException {
 		SignatureSession session = sessions.getNonNullSession(sessiontoken);
 		SignatureProofResult result = session.getResult();
 
@@ -165,25 +169,26 @@ public class SignatureResource extends BaseResource
 		}
 
 		result.setServiceProviderData(session.getClientRequest().getData());
-		return result;
+		return sign(result, session.getClientRequest().getValidity());
 	}
 
 	@POST @Path("/checksignature")
 	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	public SignatureProofResult checkSignature(SignatureProofResult result) {
+	@Produces(MediaType.TEXT_PLAIN)
+	public String checkSignature(SignatureProofResult result) throws KeyManagementException {
 		return checkSignature(result, Calendar.getInstance().getTime(), true);
 	}
 
 	@POST @Path("/checksignature/{date}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	public SignatureProofResult checkSignature(SignatureProofResult result,
-	                                           @PathParam("date") String expiryDate) {
+	@Produces(MediaType.TEXT_PLAIN)
+	public String checkSignature(SignatureProofResult result, @PathParam("date") String expiryDate)
+	throws KeyManagementException {
 		return checkSignature(result, DatatypeConverter.parseDateTime(expiryDate).getTime(), false);
 	}
 
-	private SignatureProofResult checkSignature(SignatureProofResult result, Date expiryDate, boolean allowExpired) {
+	private String checkSignature(SignatureProofResult result, Date expiryDate, boolean allowExpired)
+	throws KeyManagementException {
 		try {
 			AttributeBasedSignature signature = result.getSignature();
 			if (result.getMessageType() != SignatureProofRequest.MessageType.STRING || result.getMessage() == null
@@ -192,11 +197,30 @@ public class SignatureResource extends BaseResource
 				throw new ApiException(ApiError.MALFORMED_INPUT);
 			}
 
-			return signature.verify(result.getMessage(), expiryDate, allowExpired);
+			return sign(signature.verify(result.getMessage(), expiryDate, allowExpired), DEFAULT_TOKEN_VALIDITY);
 		} catch (ClassCastException | InfoException | KeyException e ) {
 			System.out.println("Error verifying proof: ");
 			e.printStackTrace();
 			throw new ApiException(ApiError.EXCEPTION, e.getMessage());
 		}
+	}
+
+	private String sign(SignatureProofResult result, int validity) throws KeyManagementException {
+		Calendar now = Calendar.getInstance();
+		Calendar expiry = Calendar.getInstance();
+		expiry.add(Calendar.SECOND, validity);
+
+		Map<String, Object> map = result.getAsMap();
+		map.put("iat", now.getTimeInMillis()/1000);
+		map.put("exp", expiry.getTimeInMillis()/1000);
+		map.put("sub", "abs_result");
+		String jwt_issuer = ApiConfiguration.getInstance().getJwtIssuer();
+		if (jwt_issuer != null) map.put("iss", jwt_issuer);
+
+		return Jwts.builder()
+				.setPayload(GsonUtil.getGson().toJson(map))
+				.signWith(ApiConfiguration.getInstance().getJwtAlgorithm(),
+						ApiConfiguration.getInstance().getJwtPrivateKey())
+				.compact();
 	}
 }

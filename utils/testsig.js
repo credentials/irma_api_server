@@ -29,6 +29,8 @@ var jwtOptions = {
 	subject: "signature_request"
 };
 var token = jwt.sign({absrequest: sigrequest}, null, jwtOptions);
+var confpath = process.argv[3] != null ? process.argv[3] : 'src/main/resources';
+var publickey = fs.readFileSync(confpath + '/pk.pem');
 
 var server = process.argv[2] + "/irma_api_server/api/v2/signature/";
 var options = {
@@ -81,7 +83,7 @@ function poll(token) {
 		process.stdout.write(".");
 
 		try {
-			var r = JSON.parse(body);
+			var r = jwt.verify(body, publickey, {algorithms: ["RS256"]});
 			if (r.status != "WAITING") {
 				result = r;
 				console.log();
@@ -89,14 +91,16 @@ function poll(token) {
 
 				if (r.status != "VALID") {
 					throw "Proof was invalid";
-					return;
 				}
 
+				// Base64-decode the middle part of the JWT
+				var sigresult = new Buffer(body.split('.')[1], 'base64').toString('ascii');
 				var checkoptions = {
 					uri: server + "checksignature",
 					method: 'POST',
 					headers: {'Content-Type': 'application/json'},
-					body: body};
+					body: sigresult
+				};
 				request(checkoptions, function (err2, response2, body2) {
 					if (err2 || response2.statusCode != 200) {
 						console.log("\nError in signature verification: " + response2.statusCode);

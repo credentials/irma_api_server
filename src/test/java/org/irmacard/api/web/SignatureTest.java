@@ -33,6 +33,7 @@
 
 package org.irmacard.api.web;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import org.glassfish.jersey.client.ClientConfig;
@@ -76,7 +77,6 @@ import java.util.*;
 
 /**
  * Test class for signature createtion and verification
- * TODO Lots of code is copied from VerificationTest, maybe merge this into something like "DisclosureTest" ?
  */
 public class SignatureTest extends JerseyTest {
 	public static final String schemeManager = "irma-demo";
@@ -139,6 +139,17 @@ public class SignatureTest extends JerseyTest {
 		return sessiontoken;
 	}
 
+	private SignatureProofResult parseJwt(String jwt) throws KeyManagementException {
+		Claims claims = Jwts.parser()
+				.requireSubject("abs_result")
+				.setSigningKey(ApiConfiguration.getInstance().getJwtPublicKey())
+				.parseClaimsJws(jwt)
+				.getBody();
+
+		String json = GsonUtil.getGson().toJson(claims);
+		return GsonUtil.getGson().fromJson(json, SignatureProofResult.class);
+	}
+
 	public void doSession(IdemixCredential cred, List<Integer> disclosed,
 	                      String session, Status expectedPostResult, Status expectedVerificationResult, boolean isSig)
 			throws InfoException, KeyException, KeyManagementException {
@@ -154,12 +165,15 @@ public class SignatureTest extends JerseyTest {
 
 		assert(status == expectedPostResult);
 
-		// Check if the unsigned proof/signature verifies if we post it to the api
-		// (Note: a SP is not required to do this, just for us to test)
-		SignatureProofResult result = target("/signature/" + session  +"/getsignature").request(MediaType.APPLICATION_JSON)
-				.get(SignatureProofResult.class);
-		result = target("/signature/checksignature").request(MediaType.APPLICATION_JSON)
-				.post(Entity.entity(result, MediaType.APPLICATION_JSON), SignatureProofResult.class);
+
+		// Verify the token itself, and that the credential was valid
+		String jwt = target("/signature/" + session  +"/getsignature").request(MediaType.TEXT_PLAIN)
+				.get(String.class);
+		SignatureProofResult result = parseJwt(jwt);
+
+		jwt = target("/signature/checksignature").request(MediaType.TEXT_PLAIN)
+				.post(Entity.entity(result, MediaType.APPLICATION_JSON), String.class);
+		result = parseJwt(jwt);
 		assert(result.getStatus() == expectedVerificationResult);
 
 		// If status is valid, verify signature in the JSON response
@@ -176,7 +190,7 @@ public class SignatureTest extends JerseyTest {
 			// Verify signature using the enclosed nonce, context and message data by constructing a new request
 			BigInteger nonce = signature.getNonce();
 			BigInteger context = signature.getContext();
-			String message = (String) result.getMessage();
+			String message = result.getMessage();
 
 			assert (result.getMessageType() == MessageType.STRING);
 
@@ -222,10 +236,10 @@ public class SignatureTest extends JerseyTest {
 		// Meta info
 		IssuerIdentifier issuerId = new IssuerIdentifier(schemeManager + ".MijnOverheid");
 		CredentialIdentifier credId = new CredentialIdentifier(issuerId, "ageLower");
-		IdemixPublicKey pk = IdemixKeyStore.getInstance().getLatestPublicKey(issuerId);
-		IdemixSecretKey sk = IdemixKeyStore.getInstance().getLatestSecretKey(issuerId);
 
 		// Crypto parameters
+		IdemixPublicKey pk = IdemixKeyStore.getInstance().getLatestPublicKey(issuerId);
+		IdemixSecretKey sk = IdemixKeyStore.getInstance().getLatestSecretKey(issuerId);
 		Random rnd = new Random();
 		IdemixSystemParameters params = pk.getSystemParameters();
 		BigInteger context = new BigInteger(params.get_l_h(), rnd);
@@ -235,7 +249,7 @@ public class SignatureTest extends JerseyTest {
 		// Compute metadata attribute and generate random attributes
 		Attributes attrs = new Attributes();
 		attrs.setCredentialIdentifier(credId);
-		List<BigInteger> attrInts = new ArrayList<BigInteger>(Arrays.asList(secret, new BigInteger(attrs.get(Attributes.META_DATA_FIELD))));
+		List<BigInteger> attrInts = new ArrayList<>(Arrays.asList(secret, new BigInteger(attrs.get(Attributes.META_DATA_FIELD))));
 		for (int i=0; i<4; ++i)
 			attrInts.add(new BigInteger(params.get_l_m(), rnd));
 		attrs = new Attributes(attrInts);
@@ -270,31 +284,29 @@ public class SignatureTest extends JerseyTest {
 		Calendar exp = Calendar.getInstance();
 		exp.add(Calendar.YEAR, -2);
 
-		IdemixCredential cred = issue(exp.getTime());
-		String session = createSession(null);
-		List<Integer> disclosed = Arrays.asList(1, 2);
-
 		SignatureProofRequest request = new SignatureProofRequest(
 				BigInteger.TEN, BigInteger.ONE, null, "foo", MessageType.STRING);
 		ProofList proofs = new ProofListBuilder(BigInteger.ONE, request.getNonce(), true)
-				.addProofD(cred, disclosed)
+				.addProofD(issue(exp.getTime()), Arrays.asList(1, 2))
 				.build();
 
 		SignatureProofResult sigMessage = new SignatureProofResult(proofs, request);
 
 		if (verificationDate == null) {
-			SignatureProofResult verifyResult = target("/signature/checksignature")
-					.request(MediaType.APPLICATION_JSON)
-					.post(Entity.entity(sigMessage, MediaType.APPLICATION_JSON), SignatureProofResult.class);
+			String jwt = target("/signature/checksignature")
+					.request(MediaType.TEXT_PLAIN)
+					.post(Entity.entity(sigMessage, MediaType.APPLICATION_JSON), String.class);
+			SignatureProofResult verifyResult = parseJwt(jwt);
 			assert (verifyResult.getStatus() == Status.EXPIRED);
 		} else {
 			DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 			df.setTimeZone(TimeZone.getTimeZone("UTC"));
 			String isoDate = df.format(verificationDate);
 
-			SignatureProofResult verifyResult = target("/signature/checksignature/" + isoDate)
-					.request(MediaType.APPLICATION_JSON)
-					.post(Entity.entity(sigMessage, MediaType.APPLICATION_JSON), SignatureProofResult.class);
+			String jwt = target("/signature/checksignature/" + isoDate)
+					.request(MediaType.TEXT_PLAIN)
+					.post(Entity.entity(sigMessage, MediaType.APPLICATION_JSON), String.class);
+			SignatureProofResult verifyResult = parseJwt(jwt);
 			assert (verifyResult.getStatus() == Status.VALID);
 		}
 	}
