@@ -54,6 +54,9 @@ import org.irmacard.credentials.info.KeyException;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.xml.bind.DatatypeConverter;
+import java.util.Calendar;
+import java.util.Date;
 
 @Path("signature")
 public class SignatureResource extends BaseResource
@@ -134,7 +137,7 @@ public class SignatureResource extends BaseResource
 		SignatureProofResult result;
 		try {
 			proofs.populatePublicKeyArray();
-			result = session.getRequest().verify(proofs);
+			result = session.getRequest().verify(proofs, false); // Don't allow expired attributes here
 		} catch (Exception e) {
 			// Everything in the verification has to be exactly right; if not, we don't accept the proofs as valid
 			e.printStackTrace();
@@ -165,26 +168,35 @@ public class SignatureResource extends BaseResource
 		return result;
 	}
 
-	/**
-	 * Checks if an IRMA signature if valid, can be used by the SP to check a certain signature
-	 */
 	@POST @Path("/checksignature")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public SignatureProofResult.Status checkSignature(SignatureProofResult result) {
+	public SignatureProofResult checkSignature(SignatureProofResult result) {
+		return checkSignature(result, Calendar.getInstance().getTime(), true);
+	}
+
+	@POST @Path("/checksignature/{date}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public SignatureProofResult checkSignature(SignatureProofResult result,
+	                                           @PathParam("date") String expiryDate) {
+		return checkSignature(result, DatatypeConverter.parseDateTime(expiryDate).getTime(), false);
+	}
+
+	private SignatureProofResult checkSignature(SignatureProofResult result, Date expiryDate, boolean allowExpired) {
 		try {
 			AttributeBasedSignature signature = result.getSignature();
 			if (result.getMessageType() != SignatureProofRequest.MessageType.STRING || result.getMessage() == null
 					|| signature == null || signature.getNonce() == null || signature.getContext() == null) {
 				System.out.println("Error in signature verification request");
-				return SignatureProofResult.Status.INVALID;
+				throw new ApiException(ApiError.MALFORMED_INPUT);
 			}
 
-			return result.getSignature().verify(result.getMessage()).getStatus();
+			return signature.verify(result.getMessage(), expiryDate, allowExpired);
 		} catch (ClassCastException | InfoException | KeyException e ) {
 			System.out.println("Error verifying proof: ");
-			e.printStackTrace();;
-			return SignatureProofResult.Status.INVALID;
+			e.printStackTrace();
+			throw new ApiException(ApiError.EXCEPTION, e.getMessage());
 		}
 	}
 }

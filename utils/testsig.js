@@ -84,7 +84,6 @@ function poll(token) {
 			var r = JSON.parse(body);
 			if (r.status != "WAITING") {
 				result = r;
-				// r.signature = null; // Don't log it, it's too big
 				console.log();
 				console.log(r);
 
@@ -99,7 +98,10 @@ function poll(token) {
 					headers: {'Content-Type': 'application/json'},
 					body: body};
 				request(checkoptions, function (err2, response2, body2) {
-					console.log(body2);
+					if (err2 || response2.statusCode != 200) {
+						console.log("\nError in signature verification: " + response2.statusCode);
+						console.log(err2)
+					}
 				});
 			}
 		} catch(err) {

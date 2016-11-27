@@ -49,10 +49,17 @@ import org.irmacard.api.common.signatures.SignatureProofRequest;
 import org.irmacard.api.common.signatures.SignatureProofRequest.MessageType;
 import org.irmacard.api.common.signatures.SignatureProofResult;
 import org.irmacard.api.common.util.GsonUtil;
-import org.irmacard.credentials.idemix.IdemixCredential;
+import org.irmacard.credentials.Attributes;
+import org.irmacard.credentials.CredentialsException;
+import org.irmacard.credentials.idemix.*;
+import org.irmacard.credentials.idemix.info.IdemixKeyStore;
+import org.irmacard.credentials.idemix.messages.IssueCommitmentMessage;
+import org.irmacard.credentials.idemix.messages.IssueSignatureMessage;
 import org.irmacard.credentials.idemix.proofs.ProofList;
 import org.irmacard.credentials.idemix.proofs.ProofListBuilder;
+import org.irmacard.credentials.info.CredentialIdentifier;
 import org.irmacard.credentials.info.InfoException;
+import org.irmacard.credentials.info.IssuerIdentifier;
 import org.irmacard.credentials.info.KeyException;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -63,10 +70,9 @@ import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.KeyManagementException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * Test class for signature createtion and verification
@@ -152,9 +158,9 @@ public class SignatureTest extends JerseyTest {
 		// (Note: a SP is not required to do this, just for us to test)
 		SignatureProofResult result = target("/signature/" + session  +"/getsignature").request(MediaType.APPLICATION_JSON)
 				.get(SignatureProofResult.class);
-		Status verifyResult = target("/signature/checksignature").request(MediaType.APPLICATION_JSON)
-				.post(Entity.entity(result, MediaType.APPLICATION_JSON), Status.class);
-		assert(verifyResult == expectedVerificationResult);
+		result = target("/signature/checksignature").request(MediaType.APPLICATION_JSON)
+				.post(Entity.entity(result, MediaType.APPLICATION_JSON), SignatureProofResult.class);
+		assert(result.getStatus() == expectedVerificationResult);
 
 		// If status is valid, verify signature in the JSON response
 		// (Note: a SP is not required to do this, just for us to test)
@@ -176,13 +182,8 @@ public class SignatureTest extends JerseyTest {
 
 			SignatureProofRequest resultReq = new SignatureProofRequest(nonce, context,
 					new AttributeDisjunctionList(), message, MessageType.STRING);
-			SignatureProofResult result2 = resultReq.verify(proofs);
-			assert result2.getStatus().equals(Status.VALID);
-
-			// Verify signature by posting result object to the checksignature method/api
-			Status status2 = target("/signature/checksignature").request(MediaType.APPLICATION_JSON)
-					.post(Entity.entity(result2, MediaType.APPLICATION_JSON), Status.class);
-			assert status2.equals(Status.VALID);
+			result = resultReq.verify(proofs, false);
+			assert result.getStatus().equals(Status.VALID);
 		}
 	}
 
@@ -215,6 +216,87 @@ public class SignatureTest extends JerseyTest {
 		IdemixCredential cred = VerificationTest.getAgeLowerCredential();
 		String session = createSession("this is an invalid condition");
 		doSession(cred, Arrays.asList(1, 2), session, Status.MISSING_ATTRIBUTES, Status.VALID, true);
+	}
+
+	public IdemixCredential issue(Date signDate) throws KeyException, InfoException, CredentialsException {
+		// Meta info
+		IssuerIdentifier issuerId = new IssuerIdentifier(schemeManager + ".MijnOverheid");
+		CredentialIdentifier credId = new CredentialIdentifier(issuerId, "ageLower");
+		IdemixPublicKey pk = IdemixKeyStore.getInstance().getLatestPublicKey(issuerId);
+		IdemixSecretKey sk = IdemixKeyStore.getInstance().getLatestSecretKey(issuerId);
+
+		// Crypto parameters
+		Random rnd = new Random();
+		IdemixSystemParameters params = pk.getSystemParameters();
+		BigInteger context = new BigInteger(params.get_l_h(), rnd);
+		BigInteger n_1 = new BigInteger(params.get_l_statzk(), rnd);
+		BigInteger secret = new BigInteger(params.get_l_m(), rnd);
+
+		// Compute metadata attribute and generate random attributes
+		Attributes attrs = new Attributes();
+		attrs.setCredentialIdentifier(credId);
+		List<BigInteger> attrInts = new ArrayList<BigInteger>(Arrays.asList(secret, new BigInteger(attrs.get(Attributes.META_DATA_FIELD))));
+		for (int i=0; i<4; ++i)
+			attrInts.add(new BigInteger(params.get_l_m(), rnd));
+		attrs = new Attributes(attrInts);
+		attrs.setSigningDate(signDate);
+		attrInts = attrs.toBigIntegers();
+
+		// Do the issuing
+		IdemixIssuer issuer = new IdemixIssuer(pk, sk, context);
+		CredentialBuilder cb = new CredentialBuilder(pk, attrInts, context);
+		IssueCommitmentMessage commit_msg = cb.commitToSecretAndProve(secret, n_1);
+		IssueSignatureMessage msg = issuer.issueSignature(commit_msg, attrInts, n_1);
+
+		return cb.constructCredential(msg);
+	}
+
+	@Test
+	public void expiredAttributeSession()
+	throws InfoException, KeyException, KeyManagementException, CredentialsException {
+		oldAttributesTest(null);
+	}
+
+	@Test
+	public void oldSignatureSession()
+	throws InfoException, KeyException, KeyManagementException, CredentialsException {
+		Calendar exp = Calendar.getInstance();
+		exp.add(Calendar.MONTH, -18);
+		oldAttributesTest(exp.getTime());
+	}
+
+	private void oldAttributesTest(Date verificationDate)
+	throws InfoException, KeyException, KeyManagementException, CredentialsException {
+		Calendar exp = Calendar.getInstance();
+		exp.add(Calendar.YEAR, -2);
+
+		IdemixCredential cred = issue(exp.getTime());
+		String session = createSession(null);
+		List<Integer> disclosed = Arrays.asList(1, 2);
+
+		SignatureProofRequest request = new SignatureProofRequest(
+				BigInteger.TEN, BigInteger.ONE, null, "foo", MessageType.STRING);
+		ProofList proofs = new ProofListBuilder(BigInteger.ONE, request.getNonce(), true)
+				.addProofD(cred, disclosed)
+				.build();
+
+		SignatureProofResult sigMessage = new SignatureProofResult(proofs, request);
+
+		if (verificationDate == null) {
+			SignatureProofResult verifyResult = target("/signature/checksignature")
+					.request(MediaType.APPLICATION_JSON)
+					.post(Entity.entity(sigMessage, MediaType.APPLICATION_JSON), SignatureProofResult.class);
+			assert (verifyResult.getStatus() == Status.EXPIRED);
+		} else {
+			DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+			df.setTimeZone(TimeZone.getTimeZone("UTC"));
+			String isoDate = df.format(verificationDate);
+
+			SignatureProofResult verifyResult = target("/signature/checksignature/" + isoDate)
+					.request(MediaType.APPLICATION_JSON)
+					.post(Entity.entity(sigMessage, MediaType.APPLICATION_JSON), SignatureProofResult.class);
+			assert (verifyResult.getStatus() == Status.VALID);
+		}
 	}
 
 }
