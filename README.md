@@ -62,6 +62,26 @@ The server uses [JSON web tokens (JWT's)](https://en.wikipedia.org/wiki/JSON_Web
 
 Neither `utils/keygen.sh` nor `utils/preparetest.sh` will overwrite existing files.
 
+## Config via environment variables
+
+All config entries in `config.json`, as well as all the jwt keys (i.e. sk/pk.der) can also be defined as environment variables. In this way, `irma_configuration` is the only extra directory/set of files that is needed to run the server. All entries in `config.json` can be 'converted' to an environment variable by converting the entry to upper case and prepending it with `IRMA_API_CONF_`. For instance the config entry `"enable_verification": true,`, would be set with an environment variable as follows:
+
+    export IRMA_API_CONF_ENABLE_VERIFICATION="true"
+
+Config entries that are set via an environment variable always take priority over entries in the config file. For the config entries that require a json list (i.e. the entry `authorized_idps`), you can use raw json as a value for the environment variable.
+
+JWT keys can also be set via environment variables, but since these key files are binary, they first must be converted to base64 in order to be stored in an environment variable. To store the `irma_api_server` jwt private key in an environment variable, you should use the following set of commands:
+
+    cat sk.der | base64 -w0
+    export IRMA_API_CONF_BASE64_JWT_PRIVATEKEY="<OUTPUT OF COMMAND ABOVE>"
+
+Public keys for issuers/verifiers can also be set via environment variables. If you want for instance to set the key for the issuer 'MijnOverheid' (file: issuers/MijnOverheid.der), you can use the following environment variable/set of commands:
+
+    cat issuers/MijnOverheid.der | base64 -w0
+    export IRMA_API_CONF_BASE64_JWT_ISSUERS_MIJNOVERHEID="<OUTPUT OF COMMAND ABOVE>"
+
+Like with the config entries, keys that are set via environment variables are prioritized over keys that are located in files.
+
 # Testing
 
 You can run the included unit tests by running `gradle test`; in this case `src/test/resources` will always be used as the configuration directory (which comes with its own configuration files for this purpose, as well as `irma_configuration` as a git submodule. Be sure to run `git submodule init && git submodule update`!).
