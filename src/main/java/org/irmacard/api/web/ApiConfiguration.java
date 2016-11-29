@@ -264,7 +264,7 @@ public class ApiConfiguration {
 
 	public PublicKey getJwtPublicKey() throws KeyManagementException {
 		if (jwtPublicKey == null) {
-			byte[] env = getBase64ResourceByEnv("BASE64_JWT_PRIVATEKEY");
+			byte[] env = getBase64ResourceByEnv("BASE64_JWT_PUBLICKEY");
 			if (env != null) {
 				jwtPublicKey = getPublicKey(env);
 			} else {
