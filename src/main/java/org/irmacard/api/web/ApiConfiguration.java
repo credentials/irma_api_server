@@ -19,7 +19,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
-import java.util.Base64;
+import org.apache.commons.codec.binary.Base64;
 import java.util.HashMap;
 
 // TODO: sanity check on configuration values
@@ -323,7 +323,7 @@ public class ApiConfiguration {
 		if (env == null || env.length() == 0) {
 			return null;
 		}
-		return Base64.getDecoder().decode(env.getBytes());
+		return Base64.decodeBase64(env.getBytes());
 	}
 
 	public static byte[] convertSteamToByteArray(InputStream stream, int size) throws IOException {
