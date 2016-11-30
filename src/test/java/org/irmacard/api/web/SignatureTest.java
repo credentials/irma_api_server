@@ -275,7 +275,7 @@ public class SignatureTest extends JerseyTest {
 	public void oldSignatureSession()
 	throws InfoException, KeyException, KeyManagementException, CredentialsException {
 		Calendar exp = Calendar.getInstance();
-		exp.add(Calendar.MONTH, -18);
+		exp.add(Calendar.MONTH, -21);
 		oldAttributesTest(exp.getTime());
 	}
 
