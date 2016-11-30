@@ -56,7 +56,6 @@ import org.irmacard.credentials.info.KeyException;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import javax.xml.bind.DatatypeConverter;
 import java.security.KeyManagementException;
 import java.util.Calendar;
 import java.util.Date;
@@ -182,9 +181,9 @@ public class SignatureResource extends BaseResource
 	@POST @Path("/checksignature/{date}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.TEXT_PLAIN)
-	public String checkSignature(SignatureProofResult result, @PathParam("date") String expiryDate)
+	public String checkSignature(SignatureProofResult result, @PathParam("date") Long expiryDate)
 	throws KeyManagementException {
-		return checkSignature(result, DatatypeConverter.parseDateTime(expiryDate).getTime(), false);
+		return checkSignature(result, new Date(expiryDate * 1000), false);
 	}
 
 	private String checkSignature(SignatureProofResult result, Date expiryDate, boolean allowExpired)

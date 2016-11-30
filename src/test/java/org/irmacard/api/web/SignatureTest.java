@@ -299,11 +299,7 @@ public class SignatureTest extends JerseyTest {
 			SignatureProofResult verifyResult = parseJwt(jwt);
 			assert (verifyResult.getStatus() == Status.EXPIRED);
 		} else {
-			DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-			df.setTimeZone(TimeZone.getTimeZone("UTC"));
-			String isoDate = df.format(verificationDate);
-
-			String jwt = target("/signature/checksignature/" + isoDate)
+			String jwt = target("/signature/checksignature/" + verificationDate.getTime()/1000)
 					.request(MediaType.TEXT_PLAIN)
 					.post(Entity.entity(sigMessage, MediaType.APPLICATION_JSON), String.class);
 			SignatureProofResult verifyResult = parseJwt(jwt);
