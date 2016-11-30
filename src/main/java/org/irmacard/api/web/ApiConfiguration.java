@@ -9,6 +9,8 @@ import org.irmacard.credentials.info.CredentialIdentifier;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import java.io.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -17,6 +19,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
+import org.apache.commons.codec.binary.Base64;
 import java.util.HashMap;
 
 // TODO: sanity check on configuration values
@@ -28,6 +31,7 @@ public class ApiConfiguration {
 	/* The 'private' modifier is purposefully absent for some of these members so that
 	 * the unit tests from the same package can modify them. */
 	static final String filename = "config.json";
+	static final String envPrefix = "IRMA_API_CONF_";
 	static ApiConfiguration instance;
 
 	public static transient boolean testing = false;
@@ -69,9 +73,10 @@ public class ApiConfiguration {
 			String json = new String(getResource(filename));
 			instance = GsonUtil.getGson().fromJson(json, ApiConfiguration.class);
 		} catch (IOException|JsonSyntaxException e) {
-			System.out.println("WARNING: could not load configuration file. Using default values");
+			System.out.println("WARNING: could not load configuration file. Using default values or environment vars");
 			instance = new ApiConfiguration();
 		}
+		instance.loadEnvVars();
 
 		System.out.println("Configuration:");
 		System.out.println(instance.toString());
@@ -82,6 +87,71 @@ public class ApiConfiguration {
 			load();
 
 		return instance;
+	}
+
+	/**
+	 * Override configuration with environment variables, if set
+	 * Uses reflection to set variables, because otherwise it would be impossible to set all variable at once in a loop
+	 */
+	public void loadEnvVars() {
+			for (Field f : this.getClass().getDeclaredFields()) {
+				if ( Modifier.isTransient(f.getModifiers()) || Modifier.isStatic(f.getModifiers())) {
+					// Skip transient and static fields
+					continue;
+				}
+
+				Object envValue = getEnv(envPrefix + f.getName(), f.getType());
+				if (envValue != null) {
+					try {
+						f.set(this, envValue);
+					} catch (IllegalAccessException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+	}
+
+	/**
+	 * Obtain an environment variable and parse it to the right type
+	 * @param confEntry name of environment variable
+	 * @param cls class to be parsed into (either Integer, Boolean, String, HashMap)
+	 * @param <T> type of the variable
+	 * @return a parsed variable in the right type (T) or null if environment variable isn't set
+	 */
+	public static <T> T getEnv(String confEntry, Class<T> cls) {
+		confEntry = confEntry.toUpperCase();
+		String env = System.getenv(confEntry);
+		if (env== null || env.length() == 0) {
+			return null;
+		}
+
+		T overrideValue;
+		if (cls == int.class) {
+			try {
+				Integer parsed = Integer.parseInt(env);
+				overrideValue = (T) parsed;
+			} catch (NumberFormatException e) {
+				System.out.println("WARNING: Could not parse config entry as int: " + confEntry + " with value: " + env);
+				return null;
+			}
+		} else if (cls == boolean.class) {
+			Boolean parsed = Boolean.parseBoolean(env);
+			overrideValue = (T) parsed;
+		} else if (cls == String.class) {
+			overrideValue = cls.cast(env);
+		} else if (cls == HashMap.class){ // Try to parse as hashmap for authorized_??? entries
+			try {
+				overrideValue = cls.cast(GsonUtil.getGson().fromJson(env, cls));
+			} catch (JsonSyntaxException e) {
+				System.out.println("WARNING: Could not parse config entry as json: " + confEntry + " with value: " + env);
+				return null;
+			}
+		} else {
+			throw new IllegalArgumentException("Invalid class specified, must be one of: Integer, Boolean, String, HashMap");
+		}
+
+		System.out.println("Overriding config entry " + confEntry + " with value: " + env);
+		return overrideValue;
 	}
 
 	public SignatureAlgorithm getJwtAlgorithm() {
@@ -159,7 +229,11 @@ public class ApiConfiguration {
 	}
 
 	public PublicKey getClientPublicKey(String path, String name) {
+		byte[] env = getBase64ResourceByEnv("BASE64_JWT_" + path + "_" + name);
 		try {
+			if (env != null) {
+				return getPublicKey(env);
+			}
 			return getPublicKey(path + "/" + name + ".der");
 		} catch (KeyManagementException e) {
 			throw new WebApplicationException("No public key for identity provider " + name,
@@ -169,28 +243,46 @@ public class ApiConfiguration {
 
 	public PrivateKey getPrivateKey(String filename) throws KeyManagementException {
 		try {
-			byte[] bytes = ApiConfiguration.getResource(filename);
+			return getPrivateKey(ApiConfiguration.getResource(filename));
+		} catch (IOException e) {
+			throw new KeyManagementException(e);
+		}
+	}
+
+	public PrivateKey getPrivateKey(byte[] bytes) throws KeyManagementException {
+		try {
 			if (bytes == null || bytes.length == 0)
 				throw new KeyManagementException("Could not read private key");
 
 			PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(bytes);
 
 			return KeyFactory.getInstance("RSA").generatePrivate(spec);
-		} catch (IOException|NoSuchAlgorithmException|InvalidKeySpecException e) {
+		} catch (NoSuchAlgorithmException|InvalidKeySpecException e) {
 			throw new KeyManagementException(e);
 		}
 	}
 
 	public PublicKey getJwtPublicKey() throws KeyManagementException {
-		if (jwtPublicKey == null)
-			jwtPublicKey = getPublicKey(jwt_publickey);
+		if (jwtPublicKey == null) {
+			byte[] env = getBase64ResourceByEnv("BASE64_JWT_PUBLICKEY");
+			if (env != null) {
+				jwtPublicKey = getPublicKey(env);
+			} else {
+				jwtPublicKey = getPublicKey(jwt_publickey);
+			}
+		}
 
 		return jwtPublicKey;
 	}
 
 	public PrivateKey getJwtPrivateKey() throws KeyManagementException {
 		if (jwtPrivateKey == null) {
-			jwtPrivateKey = getPrivateKey(jwt_privatekey);
+			byte[] env = getBase64ResourceByEnv("BASE64_JWT_PRIVATEKEY");
+			if (env != null) {
+				jwtPrivateKey = getPrivateKey(env);
+			} else {
+				jwtPrivateKey = getPrivateKey(jwt_privatekey);
+			}
 		}
 
 		return jwtPrivateKey;
@@ -202,14 +294,21 @@ public class ApiConfiguration {
 
 	private PublicKey getPublicKey(String filename) throws KeyManagementException {
 		try {
-			byte[] bytes = ApiConfiguration.getResource(filename);
+			return getPublicKey(ApiConfiguration.getResource(filename));
+		} catch (IOException e) {
+			throw new KeyManagementException(e);
+		}
+	}
+
+	private PublicKey getPublicKey(byte[] bytes) throws KeyManagementException {
+		try {
 			if (bytes == null || bytes.length == 0)
 				throw new KeyManagementException("Could not read public key");
 
 			X509EncodedKeySpec spec = new X509EncodedKeySpec(bytes);
 
 			return KeyFactory.getInstance("RSA").generatePublic(spec);
-		} catch (IOException|NoSuchAlgorithmException|InvalidKeySpecException e) {
+		} catch (NoSuchAlgorithmException|InvalidKeySpecException e) {
 			throw new KeyManagementException(e);
 		}
 	}
@@ -217,6 +316,14 @@ public class ApiConfiguration {
 	public static byte[] getResource(String filename) throws IOException {
 		File file = new File(getConfigurationPath().resolve(filename));
 		return convertSteamToByteArray(new FileInputStream(file), 2048);
+	}
+
+	public static byte[] getBase64ResourceByEnv(String envName) {
+		String env = System.getenv(envPrefix + envName.toUpperCase());
+		if (env == null || env.length() == 0) {
+			return null;
+		}
+		return Base64.decodeBase64(env.getBytes());
 	}
 
 	public static byte[] convertSteamToByteArray(InputStream stream, int size) throws IOException {
@@ -267,7 +374,7 @@ public class ApiConfiguration {
 		URL url = ApiApplication.class.getClassLoader().getResource(
 				(ApiConfiguration.testing ? "" : "/") + "irma_configuration/");
 		if (url != null) // Construct an URI of the parent path
-			return  new URI("file://" + new File(url.getPath()).getParent() + "/");
+			return new URI("file://" + new File(url.getPath()).getParent() + "/");
 		else
 			return null;
 	}
