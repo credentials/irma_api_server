@@ -169,7 +169,7 @@ public class SignatureResource extends BaseResource
 		}
 
 		result.setServiceProviderData(session.getClientRequest().getData());
-		return sign(result, session.getClientRequest().getValidity());
+		return jwtSign(result, session.getClientRequest().getValidity());
 	}
 
 	@POST @Path("/checksignature")
@@ -197,7 +197,7 @@ public class SignatureResource extends BaseResource
 				throw new ApiException(ApiError.MALFORMED_INPUT);
 			}
 
-			return sign(signature.verify(result.getMessage(), expiryDate, allowExpired), DEFAULT_TOKEN_VALIDITY);
+			return jwtSign(signature.verify(result.getMessage(), expiryDate, allowExpired), DEFAULT_TOKEN_VALIDITY);
 		} catch (ClassCastException | InfoException | KeyException e ) {
 			System.out.println("Error verifying proof: ");
 			e.printStackTrace();
@@ -205,7 +205,7 @@ public class SignatureResource extends BaseResource
 		}
 	}
 
-	private String sign(SignatureProofResult result, int validity) throws KeyManagementException {
+	private String jwtSign(SignatureProofResult result, int validity) throws KeyManagementException {
 		Calendar now = Calendar.getInstance();
 		Calendar expiry = Calendar.getInstance();
 		expiry.add(Calendar.SECOND, validity);
