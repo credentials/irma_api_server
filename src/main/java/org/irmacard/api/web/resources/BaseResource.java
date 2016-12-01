@@ -13,9 +13,11 @@ import org.irmacard.api.common.signatures.SignatureClientRequest;
 import org.irmacard.api.common.signatures.SignatureProofRequest;
 import org.irmacard.api.web.ApiConfiguration;
 import org.irmacard.api.web.sessions.*;
+import org.irmacard.credentials.info.IssuerIdentifier;
 
 import java.math.BigInteger;
 import java.security.Key;
+import java.util.HashMap;
 
 public abstract class BaseResource
 		<RequestClass extends SessionRequest,
@@ -125,7 +127,12 @@ public abstract class BaseResource
 		if (action == Action.SIGNING)
 			nonce = ((SignatureProofRequest) request).getSignatureNonce();
 
-		return new JwtSessionRequest(session.getJwt(), nonce, request.getContext());
+		// Only relevant for issuing
+		HashMap<IssuerIdentifier, Integer> pks = null;
+		if (action == Action.ISSUING)
+			pks = request.getPublicKeyList();
+
+		return new JwtSessionRequest(session.getJwt(), nonce, request.getContext(), pks);
 	}
 
 	public IrmaSession.Status getStatus(String sessiontoken) {
