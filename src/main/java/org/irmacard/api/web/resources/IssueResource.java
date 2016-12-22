@@ -16,11 +16,15 @@ import org.irmacard.api.web.sessions.Sessions;
 import org.irmacard.credentials.Attributes;
 import org.irmacard.credentials.CredentialsException;
 import org.irmacard.credentials.idemix.IdemixIssuer;
+import org.irmacard.credentials.idemix.IdemixPublicKey;
 import org.irmacard.credentials.idemix.IdemixSecretKey;
 import org.irmacard.credentials.idemix.info.IdemixKeyStore;
 import org.irmacard.credentials.idemix.messages.IssueCommitmentMessage;
 import org.irmacard.credentials.idemix.messages.IssueSignatureMessage;
+import org.irmacard.credentials.idemix.proofs.Proof;
 import org.irmacard.credentials.idemix.proofs.ProofList;
+import org.irmacard.credentials.idemix.proofs.ProofP;
+import org.irmacard.credentials.info.DescriptionStore;
 import org.irmacard.credentials.info.InfoException;
 import org.irmacard.credentials.info.IssuerIdentifier;
 import org.irmacard.credentials.info.KeyException;
@@ -141,13 +145,24 @@ public class IssueResource extends BaseResource
 		}
 
 		try {
+			ProofP proofP = commitments.getProofP();
+			boolean isDistributed = DescriptionStore.getInstance()
+					.getSchemeManager(request.getCredentials().get(0).getIdentifier().getSchemeManagerName())
+					.hasKeyshareServer();
+			if (isDistributed && proofP == null) {
+				fail(ApiError.KEYSHARE_PROOF_MISSING, session);
+			}
+
 			// Lookup the public keys of all ProofU's in the proof list. We have to do this before we can compute the CL
 			// sigatures below, because that also verifies the proofs, which needs these keys.
 			proofs.populatePublicKeyArray();
 			int disclosureCount = proofs.getProofDCount();
-			for (int i = 0; i < credcount; i++) {
-				CredentialRequest cred = request.getCredentials().get(i);
-				proofs.setPublicKey(disclosureCount + i, cred.getPublicKey());
+			for (int i = 0; i < proofs.size(); i++) {
+				IdemixPublicKey pk = request.getCredentials().get(i).getPublicKey();
+				if (i >= disclosureCount) // Skip the disclosure proofs at the beginning of the list
+					proofs.setPublicKey(disclosureCount + i, pk);
+				if (proofP != null) // Do this for all proofs
+					proofs.get(i).mergeProofP(proofP, pk);
 			}
 
 			// If any disclosures are required before we give the credentials, verify that they are present and correct
