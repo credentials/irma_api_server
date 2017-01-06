@@ -183,12 +183,12 @@ public class IssueTest extends JerseyTest {
 	}
 
 	public IdentityProviderRequest getAgeLowerIPrequest() {
-		String json = "{\"data\":\"foobar\",\"timeout\":60,\"request\":{\"credentials\":[{\"credential\":\"irma-demo.MijnOverheid.ageLower\",\"validity\":1482969600,\"attributes\":{\"over12\":\"yes\",\"over16\":\"yes\",\"over18\":\"yes\",\"over21\":\"no\"}}]}}";
+		String json = "{\"data\":\"foobar\",\"timeout\":60,\"request\":{\"credentials\":[{\"credential\":\"irma-demo.MijnOverheid.ageLower\",\"validity\":1893024000,\"attributes\":{\"over12\":\"yes\",\"over16\":\"yes\",\"over18\":\"yes\",\"over21\":\"no\"}}]}}";
 		return GsonUtil.getGson().fromJson(json, IdentityProviderRequest.class);
 	}
 
 	public IdentityProviderRequest getBoundIPrequest(String toDisclose) {
-		String json = "{\"data\": \"foobar\",\"timeout\": 60,\"request\": {\"credentials\": [{\"credential\": \"irma-demo.MijnOverheid.ageLower\",\"validity\": 1482969600,\"attributes\": {\"over12\": \"yes\",\"over16\": \"yes\",\"over18\": \"yes\",\"over21\": \"no\"}}],\"disclose\": [{\"label\": \"Age (lower)\",\"attributes\": {"
+		String json = "{\"data\": \"foobar\",\"timeout\": 60,\"request\": {\"credentials\": [{\"credential\": \"irma-demo.MijnOverheid.ageLower\",\"validity\": 1893024000,\"attributes\": {\"over12\": \"yes\",\"over16\": \"yes\",\"over18\": \"yes\",\"over21\": \"no\"}}],\"disclose\": [{\"label\": \"Age (lower)\",\"attributes\": {"
 		+ toDisclose + "}}]}}";
 		return GsonUtil.getGson().fromJson(json, IdentityProviderRequest.class);
 	}
