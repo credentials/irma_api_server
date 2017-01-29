@@ -2,6 +2,7 @@ package org.irmacard.api.web;
 
 import com.google.gson.JsonSyntaxException;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.apache.commons.codec.binary.Base64;
 import org.irmacard.api.common.util.GsonUtil;
 import org.irmacard.api.web.resources.BaseResource;
 import org.irmacard.api.web.resources.IssueResource;
@@ -23,7 +24,6 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
-import org.apache.commons.codec.binary.Base64;
 import java.util.HashMap;
 
 // TODO: sanity check on configuration values
@@ -285,6 +285,17 @@ public class ApiConfiguration {
 		}
 
 		throw new RuntimeException("Not implemented for action " + action);
+	}
+
+	/**
+	 * Gets the public key of the keyshare server of the specified scheme manager
+	 */
+	public PublicKey getKssPublicKey(String schemeManager) {
+		try {
+			return getPublicKey(schemeManager + "-kss.der");
+		} catch (KeyManagementException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	public PrivateKey getPrivateKey(String filename) throws KeyManagementException {

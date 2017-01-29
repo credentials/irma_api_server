@@ -1,7 +1,12 @@
 package org.irmacard.api.web.resources;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwsHeader;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.SigningKeyResolverAdapter;
 import org.irmacard.api.common.ClientQr;
 import org.irmacard.api.common.CredentialRequest;
+import org.irmacard.api.common.JwtParser;
 import org.irmacard.api.common.JwtSessionRequest;
 import org.irmacard.api.common.disclosure.DisclosureProofRequest;
 import org.irmacard.api.common.disclosure.DisclosureProofResult;
@@ -21,7 +26,6 @@ import org.irmacard.credentials.idemix.IdemixSecretKey;
 import org.irmacard.credentials.idemix.info.IdemixKeyStore;
 import org.irmacard.credentials.idemix.messages.IssueCommitmentMessage;
 import org.irmacard.credentials.idemix.messages.IssueSignatureMessage;
-import org.irmacard.credentials.idemix.proofs.Proof;
 import org.irmacard.credentials.idemix.proofs.ProofList;
 import org.irmacard.credentials.idemix.proofs.ProofP;
 import org.irmacard.credentials.info.DescriptionStore;
@@ -32,6 +36,7 @@ import org.irmacard.credentials.info.KeyException;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import java.security.Key;
 import java.util.ArrayList;
 
 @Path("issue")
@@ -145,12 +150,24 @@ public class IssueResource extends BaseResource
 		}
 
 		try {
-			ProofP proofP = commitments.getProofP();
+			// Assumption made here: all credentials in the request are from the same scheme manager!
+			// TODO: fix
+			final String schemeManager = request.getCredentials().get(0)
+					.getIdentifier().getSchemeManagerName();
 			boolean isDistributed = DescriptionStore.getInstance()
-					.getSchemeManager(request.getCredentials().get(0).getIdentifier().getSchemeManagerName())
-					.hasKeyshareServer();
-			if (isDistributed && proofP == null) {
-				fail(ApiError.KEYSHARE_PROOF_MISSING, session);
+					.getSchemeManager(schemeManager).hasKeyshareServer();
+			String jwt = commitments.getProofPJwt();
+			ProofP proofP = null; // Will extract this from the JWT
+
+			// If the scheme mamanger uses a keyshare server, the JWT has to be present and valid
+			// If it is not, jwtParser.parseJwt() throws an exception that we catch below.
+			if (isDistributed) {
+				if (jwt == null)
+					fail(ApiError.KEYSHARE_PROOF_MISSING, session);
+
+				JwtParser<ProofP> jwtParser = new JwtParser<ProofP>(ProofP.class, false, 60*1000, "ProofP", "ProofP");
+				jwtParser.setSigningKey(ApiConfiguration.getInstance().getKssPublicKey(schemeManager));
+				proofP = jwtParser.parseJwt(jwt).getPayload();
 			}
 
 			// Lookup the public keys of all ProofU's in the proof list. We have to do this before we can compute the CL
@@ -161,7 +178,7 @@ public class IssueResource extends BaseResource
 				IdemixPublicKey pk = request.getCredentials().get(i).getPublicKey();
 				if (i >= disclosureCount) // Skip the disclosure proofs at the beginning of the list
 					proofs.setPublicKey(disclosureCount + i, pk);
-				if (proofP != null) // Do this for all proofs
+				if (isDistributed) // Do this for all proofs
 					proofs.get(i).mergeProofP(proofP, pk);
 			}
 
@@ -209,6 +226,9 @@ public class IssueResource extends BaseResource
 			return null;
 		} catch (KeyException e) {
 			fail(ApiError.UNKNOWN_PUBLIC_KEY, session);
+			return null;
+		} catch (JwtException|IllegalArgumentException e) {
+			fail(ApiError.JWT_INVALID, session);
 			return null;
 		}
 	}
