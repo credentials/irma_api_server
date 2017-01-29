@@ -175,9 +175,14 @@ public class IssueResource extends BaseResource
 			proofs.populatePublicKeyArray();
 			int disclosureCount = proofs.getProofDCount();
 			for (int i = 0; i < proofs.size(); i++) {
-				IdemixPublicKey pk = request.getCredentials().get(i).getPublicKey();
-				if (i >= disclosureCount) // Skip the disclosure proofs at the beginning of the list
-					proofs.setPublicKey(disclosureCount + i, pk);
+				IdemixPublicKey pk = null;
+				if (i < disclosureCount) {
+					// This is a disclosure proof, so we get the public key from the metadata attribute
+					pk = proofs.get(i).extractPublicKey();
+				} else {
+					pk = request.getCredentials().get(i - disclosureCount).getPublicKey();
+					proofs.setPublicKey(i, pk);
+				}
 				if (isDistributed) // Do this for all proofs
 					proofs.get(i).mergeProofP(proofP, pk);
 			}
