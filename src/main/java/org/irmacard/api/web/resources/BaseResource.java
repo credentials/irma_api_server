@@ -1,9 +1,10 @@
 package org.irmacard.api.web.resources;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwsHeader;
-import io.jsonwebtoken.SigningKeyResolverAdapter;
+import com.google.api.client.http.*;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import io.jsonwebtoken.*;
 import org.irmacard.api.common.*;
+import org.irmacard.api.common.JwtParser;
 import org.irmacard.api.common.disclosure.ServiceProviderRequest;
 import org.irmacard.api.common.exceptions.ApiError;
 import org.irmacard.api.common.exceptions.ApiException;
@@ -15,8 +16,15 @@ import org.irmacard.api.web.ApiConfiguration;
 import org.irmacard.api.web.sessions.*;
 import org.irmacard.credentials.info.IssuerIdentifier;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.math.BigInteger;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.Key;
+import java.security.KeyManagementException;
+import java.util.Calendar;
 import java.util.HashMap;
 
 public abstract class BaseResource
@@ -147,6 +155,40 @@ public abstract class BaseResource
 		return status;
 	}
 
+	/**
+	 * Obtain a signed JWT containing the Irma session status
+	 * @param sessiontoken
+	 * @return
+	 * @throws KeyManagementException
+	 */
+	public String getStatusJwt(String sessiontoken) throws KeyManagementException {
+		Calendar now = Calendar.getInstance();
+		Calendar expiry = Calendar.getInstance();
+
+		// Using client_get_timeout as default validity for sending result to callback
+		int validity = ApiConfiguration.getInstance().getClientGetTimeout();
+
+		expiry.add(Calendar.SECOND, validity);
+
+		HashMap<String, Object> claims = new HashMap<>(3);
+		claims.put("status", getStatus(sessiontoken).toString());
+
+		JwtBuilder builder = Jwts.builder()
+				.setClaims(claims)
+				.setIssuedAt(now.getTime())
+				.setExpiration(expiry.getTime())
+				.setSubject("irma_status");
+
+		String jwt_issuer = ApiConfiguration.getInstance().getJwtIssuer();
+		if (jwt_issuer != null)
+			builder = builder.setIssuer(jwt_issuer);
+
+		return builder
+				.signWith(ApiConfiguration.getInstance().getJwtAlgorithm(),
+						ApiConfiguration.getInstance().getJwtPrivateKey())
+				.compact();
+	}
+
 	public void delete(String sessiontoken) {
 		SessionClass session = sessions.getNonNullSession(sessiontoken);
 
@@ -168,12 +210,53 @@ public abstract class BaseResource
 		}
 	}
 
+	protected static void sendProofResult(final String stringUrl , final String jwt) {
+		final URL url;
+		try {
+			url = new URL(stringUrl);
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+			return;
+		}
+
+		final HttpTransport transport = new NetHttpTransport.Builder().build();
+		final HttpContent content = new ByteArrayContent("text/plain", jwt.getBytes());
+
+		new Thread() {
+			@Override
+			public void run() {
+				try {
+					HttpRequest proofResultRequest = transport.createRequestFactory().buildPostRequest(new GenericUrl(url), content);
+					HttpResponse response = proofResultRequest.execute();
+					System.out.println("Result sent to callbackURL, result: " + new BufferedReader(new InputStreamReader(response.getContent())).readLine());
+				} catch (HttpResponseException e) {
+					System.out.println("Sending to callbackURL failed!");
+					System.out.println(e.getMessage());
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+			}
+		}.start();
+	}
+
 	/**
 	 * Removes the session, informs the identity provider, and throws an exception to notify the token.
 	 * @throws ApiException The specified exception
 	 */
 	protected void fail(ApiError error, SessionClass session) throws ApiException {
+		String sessiontoken = session.getSessionToken();
 		session.setStatusCancelled();
+		if (session.getClientRequest().getCallbackUrl() != null) {
+			String callbackUrl = session.getClientRequest().getCallbackUrl() + "/" + sessiontoken;
+			System.out.println("Posting failure status to: " + callbackUrl);
+
+			try {
+				sendProofResult(callbackUrl, getStatusJwt(sessiontoken));
+			} catch (KeyManagementException e) {
+				e.printStackTrace();
+			}
+		}
 		throw new ApiException(error);
 	}
 }
