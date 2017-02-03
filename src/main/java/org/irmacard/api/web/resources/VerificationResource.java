@@ -151,17 +151,7 @@ public class VerificationResource extends BaseResource
 
         System.out.println("Received proofs, token: " + sessiontoken);
 
-        // If a callback url is supplied, call it
-        if (session.getClientRequest().getCallbackUrl() != null) {
-            String callbackUrl = session.getClientRequest().getCallbackUrl() + "/" + sessiontoken;
-            System.out.println("Posting proof to: " + callbackUrl);
-
-            try {
-                sendProofResult(callbackUrl, gettoken(sessiontoken));
-            } catch (KeyManagementException e) {
-                e.printStackTrace();
-            }
-        }
+        sendStatusToCallback(session);
 
         return result.getStatus();
     }

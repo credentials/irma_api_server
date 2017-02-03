@@ -151,6 +151,8 @@ public class SignatureResource extends BaseResource
 
 		System.out.println("Received proofs, token: " + sessiontoken);
 
+		sendStatusToCallback(session);
+
 		return result.getStatus();
 	}
 

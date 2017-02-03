@@ -28,7 +28,6 @@ import org.irmacard.credentials.info.KeyException;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import java.security.KeyManagementException;
 import java.util.ArrayList;
 
 @Path("issue")
@@ -122,17 +121,6 @@ public class IssueResource extends BaseResource
 		return super.create(session, isRequest, jwt);
 	}
 
-	private void sendIssuestatus(String callbackUrl, String sessiontoken) {
-		if (callbackUrl != null) {
-			System.out.println("Posting status to: " + callbackUrl);
-			try {
-				sendProofResult(callbackUrl, getStatusJwt(sessiontoken));
-			} catch (KeyManagementException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
 	@POST @Path("/{sessiontoken}/commitments")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -152,13 +140,7 @@ public class IssueResource extends BaseResource
 			fail(ApiError.ATTRIBUTES_MISSING, session);
 		}
 
-		String callbackUrl = session.getClientRequest().getCallbackUrl();
-
-		if (callbackUrl != null) {
-			callbackUrl += "/" + sessiontoken;
-		}
-
-		sendIssuestatus(callbackUrl, sessiontoken);
+		sendStatusToCallback(session);
 
 		try {
 			// Lookup the public keys of all ProofU's in the proof list. We have to do this before we can compute the CL
@@ -205,7 +187,7 @@ public class IssueResource extends BaseResource
 			}
 
 			session.setStatusDone();
-			sendIssuestatus(callbackUrl, sessiontoken);
+			sendStatusToCallback(session);
 
 			return sigs;
 		} catch (InfoException e) {

@@ -157,11 +157,10 @@ public abstract class BaseResource
 
 	/**
 	 * Obtain a signed JWT containing the Irma session status
-	 * @param sessiontoken
-	 * @return
+	 * @param status The status to sign
 	 * @throws KeyManagementException
 	 */
-	public String getStatusJwt(String sessiontoken) throws KeyManagementException {
+	private static String getStatusJwt(IrmaSession.Status status) throws KeyManagementException {
 		Calendar now = Calendar.getInstance();
 		Calendar expiry = Calendar.getInstance();
 
@@ -171,7 +170,7 @@ public abstract class BaseResource
 		expiry.add(Calendar.SECOND, validity);
 
 		HashMap<String, Object> claims = new HashMap<>(3);
-		claims.put("status", getStatus(sessiontoken).toString());
+		claims.put("status", status.toString());
 
 		JwtBuilder builder = Jwts.builder()
 				.setClaims(claims)
@@ -210,7 +209,25 @@ public abstract class BaseResource
 		}
 	}
 
-	protected static void sendProofResult(final String stringUrl , final String jwt) {
+	/**
+	 * If the client provided a callback url, send the current session status to it.
+	 */
+	public void sendStatusToCallback(SessionClass session) {
+		String callbackUrl = session.getClientRequest().getCallbackUrl();
+		if (callbackUrl == null)
+			return; // Nothing to do
+
+		String sessiontoken = session.getSessionToken();
+		callbackUrl += "/" + sessiontoken;
+		System.out.println("Posting status to: " + callbackUrl);
+		try {
+			sendStatus(callbackUrl, getStatusJwt(getStatus(sessiontoken)));
+		} catch (KeyManagementException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private static void sendStatus(final String stringUrl, final String jwt) {
 		final URL url;
 		try {
 			url = new URL(stringUrl);
@@ -241,22 +258,12 @@ public abstract class BaseResource
 	}
 
 	/**
-	 * Removes the session, informs the identity provider, and throws an exception to notify the token.
+	 * Removes the session, informs the client, and throws an exception to notify the token.
 	 * @throws ApiException The specified exception
 	 */
 	protected void fail(ApiError error, SessionClass session) throws ApiException {
-		String sessiontoken = session.getSessionToken();
 		session.setStatusCancelled();
-		if (session.getClientRequest().getCallbackUrl() != null) {
-			String callbackUrl = session.getClientRequest().getCallbackUrl() + "/" + sessiontoken;
-			System.out.println("Posting failure status to: " + callbackUrl);
-
-			try {
-				sendProofResult(callbackUrl, getStatusJwt(sessiontoken));
-			} catch (KeyManagementException e) {
-				e.printStackTrace();
-			}
-		}
+		sendStatusToCallback(session);
 		throw new ApiException(error);
 	}
 }
