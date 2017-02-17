@@ -136,15 +136,9 @@ public abstract class BaseResource
 	}
 
 	public IrmaSession.Status getStatus(String sessiontoken) {
-		SessionClass session = sessions.getNonNullSession(sessiontoken);
-		IrmaSession.Status status = session.getStatus();
-
-		// Remove the session if this session is cancelled
-		if (status == IrmaSession.Status.DONE || status == IrmaSession.Status.CANCELLED) {
-			session.close();
-		}
-
-		return status;
+		return sessions
+				.getNonNullSession(sessiontoken)
+				.getStatus();
 	}
 
 	public void delete(String sessiontoken) {

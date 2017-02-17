@@ -74,7 +74,13 @@ public class IssueResource extends BaseResource
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
 	public IrmaSession.Status getStatus(@PathParam("sessiontoken") String sessiontoken) {
-		return super.getStatus(sessiontoken);
+		IrmaSession.Status status = super.getStatus(sessiontoken);
+
+		IssueSession session = sessions.getNonNullSession(sessiontoken);
+		if (status == IrmaSession.Status.DONE || status == IrmaSession.Status.CANCELLED)
+			session.close();
+
+		return status;
 	}
 
 	@DELETE @Path("/{sessiontoken}")
