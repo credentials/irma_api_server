@@ -75,12 +75,18 @@ public abstract class BaseResource
 				String keyId = (String) header.get("kid");
 				if (keyId == null)
 					keyId = claims.getIssuer();
+				else {
+					if (!ApiConfiguration.getInstance().getClientName(keyId).equals(claims.getIssuer()))
+						throw new ApiException(ApiError.JWT_INVALID);
+				}
 				return ApiConfiguration.getInstance().getClientPublicKey(action, keyId);
 			}
 		});
 
-		ClientClass request = parser.parseJwt(jwt).getPayload();
-		return create(request, parser.getJwtIssuer(), jwt);
+		parser.parseJwt(jwt);
+		String keyId = parser.getKeyIdentifier();
+		ClientClass request = parser.getPayload();
+		return create(request, keyId, jwt);
 	}
 
 	protected abstract ClientQr create(ClientClass clientRequest, String issuer, String jwt);

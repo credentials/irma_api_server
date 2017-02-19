@@ -66,6 +66,8 @@ public class ApiConfiguration {
 	HashMap<String, ArrayList<String>> authorized_sps = new HashMap<>();
 	HashMap<String, ArrayList<String>> authorized_sigclients = new HashMap<>();
 
+	HashMap<String, String> client_names = new HashMap<>();
+
 	/* Transient members for convenience */
 	private transient PrivateKey jwtPrivateKey;
 	private transient PublicKey jwtPublicKey;
@@ -262,6 +264,14 @@ public class ApiConfiguration {
 
 	public int getClientGetTimeout() {
 		return client_get_timeout;
+	}
+
+	public String getClientName(String kid) {
+		String name = client_names.get(kid);
+		if (name == null || name.length() == 0)
+			return kid;
+		else
+			return name;
 	}
 
 	public PublicKey getClientPublicKey(String path, String name) {

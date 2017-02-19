@@ -36,11 +36,8 @@ package org.irmacard.api.web.resources;
 
 import com.google.api.client.http.*;
 import com.google.api.client.http.javanet.NetHttpTransport;
-import io.jsonwebtoken.*;
-
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
-
 import org.irmacard.api.common.AttributeDisjunction;
 import org.irmacard.api.common.ClientQr;
 import org.irmacard.api.common.JwtSessionRequest;
@@ -60,14 +57,11 @@ import org.irmacard.credentials.info.InfoException;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.Key;
-
 import java.security.KeyManagementException;
 import java.util.Calendar;
 
