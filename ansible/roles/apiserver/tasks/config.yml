@@ -51,3 +51,20 @@
     dest: "{{ conf_path }}/config.json"
     group: irma_api_server
   notify: restart apiserver
+
+- name: See if client publickey directories are present
+  local_action: stat path="{{ inventory_dir }}/files/{{ item }}s"
+  become: no
+  register: clientdirs
+  ignore_errors: true
+  with_items:
+    - verifier
+    - issuer
+    - sigclient
+
+- name: copy client dirs if they exists
+  copy:
+    src: "{{ inventory_dir }}/files/{{ item.item }}s"
+    dest: "{{ conf_path }}"
+  when: item.stat.exists
+  with_items: "{{ clientdirs.results }}"

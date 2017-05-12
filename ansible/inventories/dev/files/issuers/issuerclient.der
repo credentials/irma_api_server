@@ -1,0 +1,1 @@
+Place an issuer's .der public key here. The filename (excluding the .der) must match with an entry in the "authorized_ids" variable.

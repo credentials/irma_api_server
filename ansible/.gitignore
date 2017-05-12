@@ -1,3 +1,4 @@
 .vagrant/
 inventories/*
 !inventories/dev/
+!inventories/dev/**

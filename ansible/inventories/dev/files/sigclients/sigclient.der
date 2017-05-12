@@ -1,0 +1,1 @@
+Place a signature client .der public key here. The filename (excluding the .der) must match with an entry in the "authorized_sigclients" variable.
