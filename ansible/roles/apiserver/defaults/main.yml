@@ -1,4 +1,4 @@
-server_version: 1.0.0
+server_version: 1.2.0
 server_url: https://github.com/credentials/irma_api_server/releases/download/v{{ server_version }}/irma_api_server.zip
 conf_path: /etc/irma_api_server
 base_install_path: /opt
@@ -6,8 +6,24 @@ install_path: /opt/irma_api_server
 http_port: 8081
 https_port: 8444
 
-enable_issuing: "true"
+irma_configuration: "https://github.com/credentials/irma_configuration"
+irma_configuration_name:
+irma_configuration_subpath: false
+irma_configuration_branch: combined
+
+jwt_issuer: "apiserver"
+reject_unfloored_validity_timestamps: "false"
+
+enable_issuing: "false"
+enable_verification: "false"
+enable_signing: "false"
+
 allow_unsigned_issue_requests: "false"
 allow_unsigned_verification_requests: "false"
-authorized_sps:
+allow_unsigned_signature_requests: "false"
+
 authorized_idps:
+authorized_sps:
+authorized_sigclients:
+
+client_names:

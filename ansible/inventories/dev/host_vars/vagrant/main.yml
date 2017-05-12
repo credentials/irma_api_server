@@ -8,3 +8,6 @@ proxy_vhost_name: localhost
 proxy_certificate: "{{ lookup('file', inventory_dir+'/files/cert.pem') }}"
 # In production you should encrypt this, e.g. using ansible-vault; see the ../play script
 proxy_key: "{{ lookup('file', inventory_dir+'/files/key.pem') }}"
+
+proxy_certificate_file: "/etc/nginx/proxy_apiserver.crt"
+proxy_key_file: "/etc/nginx/proxy_apiserver.key"

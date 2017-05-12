@@ -1,11 +1,27 @@
 {
+    "jwt_issuer": "{{ jwt_issuer }}",
+
+    "reject_unfloored_validity_timestamps": {{ reject_unfloored_validity_timestamps }},
+
     "enable_issuing": {{ enable_issuing }},
+    "enable_verification": {{ enable_verification }},
+    "enable_signing": {{ enable_signing }},
+
     "allow_unsigned_issue_requests": {{ allow_unsigned_issue_requests }},
     "allow_unsigned_verification_requests": {{ allow_unsigned_verification_requests }},
+    "allow_unsigned_signature_requests": {{ allow_unsigned_signature_requests }},
+
     "authorized_idps": {
         {{ authorized_idps }}
     },
     "authorized_sps": {
         {{ authorized_sps }}
+    },
+    "authorized_sigclients": {
+        {{ authorized_sigclients }}
+    },
+
+    "client_names": {
+        {{ client_names }}
     }
 }

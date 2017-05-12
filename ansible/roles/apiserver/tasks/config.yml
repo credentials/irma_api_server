@@ -5,11 +5,27 @@
     group: irma_api_server
     mode: 02750 # 0 indicates octal; 2 is setgid bit so that contained files get the same group
 
+- name: Ensure that irma_configuration path exist
+  when: irma_configuration_subpath
+  file:
+    path: "{{ conf_path }}/irma_configuration"
+    state: directory
+    group: irma_api_server
+
 - name: Ensure that IRMA key and credential configuration is present
+  when: irma_configuration_subpath
   git:
-    repo: https://github.com/credentials/irma_configuration
+    repo: "{{ irma_configuration }}"
+    dest: "{{ conf_path }}/irma_configuration/{{ irma_configuration_name }}"
+    version: "{{ irma_configuration_branch }}"
+  notify: restart apiserver
+
+- name: Ensure that IRMA key and credential configuration is present
+  when: not irma_configuration_subpath
+  git:
+    repo: "{{ irma_configuration }}"
     dest: "{{ conf_path }}/irma_configuration"
-    version: combined # this is our branch
+    version: "{{ irma_configuration_branch }}"
   notify: restart apiserver
 
 - name: Download JWT key generation script
