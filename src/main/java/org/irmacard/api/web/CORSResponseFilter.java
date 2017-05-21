@@ -56,6 +56,10 @@ public class CORSResponseFilter implements ContainerResponseFilter {
 
         headers.add("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT");
         headers.add("Access-Control-Allow-Headers", "Content-Type");
+
+        // Don't let browsers (I'm looking at you, IE) think our stuff can be cached
+        headers.putSingle("Expires", "-1");
+        headers.putSingle("Cache-Control", "no-cache");
     }
 
 }
