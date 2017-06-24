@@ -3,11 +3,15 @@ package org.irmacard.api.web.sessions;
 import org.irmacard.api.common.ClientRequest;
 import org.irmacard.api.web.ApiConfiguration;
 import org.irmacard.api.web.StatusSocket;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Timer;
 import java.util.TimerTask;
 
 public abstract class IrmaSession<T extends ClientRequest<S>, S> {
+	private static Logger logger = LoggerFactory.getLogger(IrmaSession.class);
+
 	private String sessionToken;
 	private StatusSocket statusSocket;
 	private Timer timer;
@@ -17,7 +21,7 @@ public abstract class IrmaSession<T extends ClientRequest<S>, S> {
 	private class RemovalTask extends TimerTask {
 		@Override
 		public void run() {
-			System.out.println("Session " + sessionToken + " timeout, removing");
+			logger.warn("Session " + sessionToken + " timeout, removing");
 			if (statusSocket != null)
 				statusSocket.sendTimeout();
 			close();
@@ -44,7 +48,7 @@ public abstract class IrmaSession<T extends ClientRequest<S>, S> {
 	}
 
 	private void delayRemoval(int timeout) {
-		System.out.println("Delaying removal of session " + sessionToken + " with " + timeout + " seconds");
+		logger.info("Delaying removal of session " + sessionToken + " with " + timeout + " seconds");
 
 		if (timer != null)
 			timer.cancel();
@@ -120,7 +124,7 @@ public abstract class IrmaSession<T extends ClientRequest<S>, S> {
 	 * Close and remove the session. This also causes the socket to be closed
 	 */
 	public void close() {
-		System.out.println("Closing session " + sessionToken);
+		logger.info("Closing session " + sessionToken);
 
 		timer.cancel();
 		Sessions.removeSession(sessionToken);

@@ -52,6 +52,8 @@ import org.irmacard.credentials.idemix.proofs.ProofList;
 import org.irmacard.credentials.info.AttributeIdentifier;
 import org.irmacard.credentials.info.InfoException;
 import org.irmacard.credentials.info.KeyException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -64,6 +66,7 @@ import java.util.Map;
 @Path("signature")
 public class SignatureResource extends BaseResource
 		<SignatureProofRequest, SignatureClientRequest, SignatureSession>{
+	private static Logger logger = LoggerFactory.getLogger(SignatureResource.class);
 	private static final int DEFAULT_TOKEN_VALIDITY = 60 * 60; // 1 hour
 
 	@Inject
@@ -149,7 +152,7 @@ public class SignatureResource extends BaseResource
 		}
 		session.setResult(result);
 
-		System.out.println("Received proofs, token: " + sessiontoken);
+		logger.info("Received proofs, token: " + sessiontoken);
 
 		return result.getStatus();
 	}
@@ -192,13 +195,13 @@ public class SignatureResource extends BaseResource
 			AttributeBasedSignature signature = result.getSignature();
 			if (result.getMessageType() != SignatureProofRequest.MessageType.STRING || result.getMessage() == null
 					|| signature == null || signature.getNonce() == null || signature.getContext() == null) {
-				System.out.println("Error in signature verification request");
+				logger.error("Error in signature verification request");
 				throw new ApiException(ApiError.MALFORMED_INPUT);
 			}
 
 			return jwtSign(signature.verify(result.getMessage(), expiryDate, allowExpired), DEFAULT_TOKEN_VALIDITY);
 		} catch (ClassCastException | InfoException | KeyException e ) {
-			System.out.println("Error verifying proof: ");
+			logger.error("Error verifying proof: ");
 			e.printStackTrace();
 			throw new ApiException(ApiError.EXCEPTION, e.getMessage());
 		}

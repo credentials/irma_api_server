@@ -1,9 +1,6 @@
 package org.irmacard.api.web.resources;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.SigningKeyResolverAdapter;
 import org.irmacard.api.common.ClientQr;
 import org.irmacard.api.common.CredentialRequest;
 import org.irmacard.api.common.JwtParser;
@@ -32,16 +29,19 @@ import org.irmacard.credentials.info.DescriptionStore;
 import org.irmacard.credentials.info.InfoException;
 import org.irmacard.credentials.info.IssuerIdentifier;
 import org.irmacard.credentials.info.KeyException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import java.security.Key;
 import java.util.ArrayList;
 
 @Path("issue")
 public class IssueResource extends BaseResource
 		<IssuingRequest, IdentityProviderRequest, IssueSession> {
+
+	private static Logger logger = LoggerFactory.getLogger(IssueResource.class);
 
 	@Inject
 	public IssueResource() {
@@ -146,7 +146,7 @@ public class IssueResource extends BaseResource
 			fail(ApiError.UNEXPECTED_REQUEST, session);
 		}
 
-		System.out.println("Received commitments, token: " + sessiontoken);
+		logger.info("Received commitments, token: " + sessiontoken);
 
 		IssuingRequest request = session.getRequest();
 		ProofList proofs = commitments.getCombinedProofs();

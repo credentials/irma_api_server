@@ -35,20 +35,17 @@ package org.irmacard.api.web;
 
 import org.irmacard.api.web.sessions.IrmaSession;
 import org.irmacard.api.web.sessions.Sessions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-
-import javax.websocket.CloseReason;
-import javax.websocket.OnClose;
-import javax.websocket.OnMessage;
-import javax.websocket.OnOpen;
-import javax.websocket.RemoteEndpoint;
-import javax.websocket.Session;
+import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
+import java.io.IOException;
 
 @ServerEndpoint("/api/v2/status/{sessionToken}")
 public class StatusSocket {
+    private static Logger logger = LoggerFactory.getLogger(StatusSocket.class);
 
     private Session session;
     private RemoteEndpoint.Async remote;
@@ -57,7 +54,7 @@ public class StatusSocket {
     public void onWebSocketClose(CloseReason closeReason) {
         this.session = null;
         this.remote = null;
-        System.out.println("WebSocket Close: " + closeReason.getCloseCode() + " "
+        logger.info("WebSocket Close: " + closeReason.getCloseCode() + " "
                 + closeReason.getReasonPhrase());
     }
 
@@ -70,13 +67,13 @@ public class StatusSocket {
         // Prevent websockets from being closed prematurely.
         session.setMaxIdleTimeout(0);
 
-        System.out.println("WebSocket Connect: " + session);
+        logger.info("WebSocket Connect: " + session);
 
         // Store websocket connection in the corresponding session
         IrmaSession irmaSession = Sessions.findAnySession(sessionToken);
         if (irmaSession == null) {
             // TODO: Add some error handling here
-            System.out.println("Strange: session not yet setup");
+            logger.error("Strange: session not yet setup");
         } else {
             irmaSession.setStatusSocket(this);
         }
@@ -92,7 +89,7 @@ public class StatusSocket {
      */
     @OnMessage
     public void onMessage(String message, @PathParam("sessionToken") String sessionToken) {
-        System.out.println("Received message from client: " + message);
+        logger.info("Received message from client: " + message);
 
         if (this.session != null && this.session.isOpen() && this.remote != null) {
             this.remote.sendText("NOT SUPPORTED");
@@ -141,8 +138,7 @@ public class StatusSocket {
         if (session != null) {
             try {
                 session.close();
-            } catch (IOException e) {
-            }
+            } catch (IOException e) { /* ignore, connection is gone anyway */ }
         }
 
     }
@@ -151,7 +147,7 @@ public class StatusSocket {
         if (remote != null) {
             remote.sendText(msg);
         } else {
-            System.out.println("No websocket registered");
+            logger.warn("StatusSocket.sendUpdate() called but no websocket registered");
         }
     }
 }

@@ -53,6 +53,8 @@ import org.irmacard.api.web.sessions.VerificationSession;
 import org.irmacard.credentials.idemix.proofs.ProofList;
 import org.irmacard.credentials.info.AttributeIdentifier;
 import org.irmacard.credentials.info.InfoException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -69,6 +71,7 @@ import java.util.Calendar;
 @Path("verification")
 public class VerificationResource extends BaseResource
         <DisclosureProofRequest, ServiceProviderRequest, VerificationSession> {
+    private static Logger logger = LoggerFactory.getLogger(VerificationResource.class);
     private static final int DEFAULT_TOKEN_VALIDITY = 60 * 60; // 1 hour
 
     @Inject
@@ -154,18 +157,16 @@ public class VerificationResource extends BaseResource
         }
         session.setResult(result);
 
-        System.out.println("Received proofs, token: " + sessiontoken);
+        logger.info("Received proofs, token: " + sessiontoken);
 
         // If a callback url is supplied, call it
         if (session.getClientRequest().getCallbackUrl() != null) {
             String callbackUrl = session.getClientRequest().getCallbackUrl() + "/" + sessiontoken;
-            System.out.println("Posting proof to: " + callbackUrl);
+            logger.info("Posting proof to: " + callbackUrl);
 
             try {
                 sendProofResult(new URL(callbackUrl), gettoken(sessiontoken));
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            } catch (KeyManagementException e) {
+            } catch (MalformedURLException|KeyManagementException e) {
                 e.printStackTrace();
             }
         }
@@ -230,10 +231,10 @@ public class VerificationResource extends BaseResource
                 try {
                     HttpRequest proofResultRequest = transport.createRequestFactory().buildPostRequest(new GenericUrl(url), content);
                     HttpResponse response = proofResultRequest.execute();
-                    System.out.println("Proof sent to callbackURL, result: " + new BufferedReader(new InputStreamReader(response.getContent())).readLine());
+                    logger.info("Proof sent to callbackURL, result: " + new BufferedReader(new InputStreamReader(response.getContent())).readLine());
                 } catch (HttpResponseException e) {
-                    System.out.println("Sending proof failed!");
-                    System.out.println(e.getMessage());
+                    logger.error("Sending proof failed!");
+                    e.printStackTrace();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

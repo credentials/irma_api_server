@@ -10,6 +10,8 @@ import org.irmacard.api.web.resources.SignatureResource;
 import org.irmacard.api.web.resources.VerificationResource;
 import org.irmacard.credentials.info.AttributeIdentifier;
 import org.irmacard.credentials.info.CredentialIdentifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
@@ -30,6 +32,8 @@ import java.util.HashMap;
 
 @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection", "FieldCanBeLocal", "unused"})
 public class ApiConfiguration {
+	private static Logger logger = LoggerFactory.getLogger(ApiConfiguration.class);
+
 	private static URI confPath;
 
 	/* The 'private' modifier is purposefully absent for some of these members so that
@@ -78,19 +82,19 @@ public class ApiConfiguration {
 	 * Reloads the configuration from disk so that {@link #getInstance()} returns the updated version
 	 */
 	public static void load() {
-		// TODO: GSon seems to always be lenient (i.e. allow comments in the JSon), even though
-		// the documentation states that by default, it is not lenient. Why is this? Could change?
+		// GSon seems to always be lenient (i.e. allow comments in the JSon), even though
+		// the documentation states that by default, it is not lenient.
 		try {
 			String json = new String(getResource(filename));
 			instance = GsonUtil.getGson().fromJson(json, ApiConfiguration.class);
 		} catch (IOException|JsonSyntaxException e) {
-			System.out.println("WARNING: could not load configuration file. Using default values or environment vars");
+			logger.info("WARNING: could not load configuration file. Using default values or environment vars");
 			instance = new ApiConfiguration();
 		}
 		instance.loadEnvVars();
 
-		System.out.println("Configuration:");
-		System.out.println(instance.toString());
+		logger.info("Configuration:");
+		logger.info(instance.toString());
 	}
 
 	public static ApiConfiguration getInstance() {
@@ -142,7 +146,7 @@ public class ApiConfiguration {
 				Integer parsed = Integer.parseInt(env);
 				overrideValue = (T) parsed;
 			} catch (NumberFormatException e) {
-				System.out.println("WARNING: Could not parse config entry as int: " + confEntry + " with value: " + env);
+				logger.warn("Could not parse config entry as int: " + confEntry + " with value: " + env);
 				return null;
 			}
 		} else if (cls == boolean.class) {
@@ -154,14 +158,14 @@ public class ApiConfiguration {
 			try {
 				overrideValue = cls.cast(GsonUtil.getGson().fromJson(env, cls));
 			} catch (JsonSyntaxException e) {
-				System.out.println("WARNING: Could not parse config entry as json: " + confEntry + " with value: " + env);
+				logger.warn("Could not parse config entry as json: " + confEntry + " with value: " + env);
 				return null;
 			}
 		} else {
 			throw new IllegalArgumentException("Invalid class specified, must be one of: Integer, Boolean, String, HashMap");
 		}
 
-		System.out.println("Overriding config entry " + confEntry + " with value: " + env);
+		logger.info("Overriding config entry " + confEntry + " with value: " + env);
 		return overrideValue;
 	}
 

@@ -14,6 +14,8 @@ import org.irmacard.api.common.signatures.SignatureProofRequest;
 import org.irmacard.api.web.ApiConfiguration;
 import org.irmacard.api.web.sessions.*;
 import org.irmacard.credentials.info.IssuerIdentifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
 import java.security.Key;
@@ -23,6 +25,8 @@ public abstract class BaseResource
 		<RequestClass extends SessionRequest,
 		ClientClass extends ClientRequest<RequestClass>,
 		SessionClass extends IrmaSession<ClientClass, RequestClass>> {
+
+	private static Logger logger = LoggerFactory.getLogger(BaseResource.class);
 
 	/* Template boilerplate to keep the type system happy. Getting rather crazy here,
 	 * but the code deduplication is worth it, I deem. The following enum works around
@@ -103,14 +107,14 @@ public abstract class BaseResource
 		String token = session.getSessionToken();
 		sessions.addSession(session);
 
-		System.out.println("Received session, token: " + token);
-		System.out.println(request.toString());
+		logger.info("Received session, token: " + token);
+		logger.info(request.toString());
 
 		return new ClientQr("2.0", "2.2", token, action.name().toLowerCase());
 	}
 
 	public RequestClass get(String sessiontoken) {
-		System.out.println("Received get, token: " + sessiontoken);
+		logger.info("Received get, token: " + sessiontoken);
 		SessionClass session = sessions.getNonNullSession(sessiontoken);
 		if (session.getStatus() != IssueSession.Status.INITIALIZED) {
 			fail(ApiError.UNEXPECTED_REQUEST, session);
@@ -121,7 +125,7 @@ public abstract class BaseResource
 	}
 
 	public JwtSessionRequest getJwt(String sessiontoken) {
-		System.out.println("Received get, token: " + sessiontoken);
+		logger.info("Received get, token: " + sessiontoken);
 		SessionClass session = sessions.getNonNullSession(sessiontoken);
 		if (session.getStatus() != IssueSession.Status.INITIALIZED) {
 			fail(ApiError.UNEXPECTED_REQUEST, session);
@@ -150,7 +154,7 @@ public abstract class BaseResource
 	public void delete(String sessiontoken) {
 		SessionClass session = sessions.getNonNullSession(sessiontoken);
 
-		System.out.println("Received delete, token: " + sessiontoken);
+		logger.info("Received delete, token: " + sessiontoken);
 		if (session.getStatus() == IrmaSession.Status.CONNECTED) {
 			// We have connected clients, we need to inform listeners of cancel
 			session.setStatusCancelled();

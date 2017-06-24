@@ -36,12 +36,17 @@ package org.irmacard.api.web.sessions;
 import org.bouncycastle.util.encoders.Base64;
 import org.irmacard.api.common.exceptions.ApiError;
 import org.irmacard.api.common.exceptions.ApiException;
+import org.irmacard.api.web.resources.SignatureResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
 public class Sessions<T extends IrmaSession> {
+    private static Logger logger = LoggerFactory.getLogger(Sessions.class);
+
     private static Sessions<VerificationSession> vs = null;
     private static Sessions<IssueSession> is = null;
     private static Sessions<SignatureSession> ss = null;
@@ -101,12 +106,12 @@ public class Sessions<T extends IrmaSession> {
     }
 
     public void print() {
-        System.out.println("Active sessions:");
+        logger.info("Active sessions:");
         for (Entry<String, T> pairs : sessions.entrySet()) {
             String key = pairs.getKey();
             IrmaSession session = pairs.getValue();
 
-            System.out.println(key + ": " + session);
+            logger.info(key + ": " + session);
         }
     }
 

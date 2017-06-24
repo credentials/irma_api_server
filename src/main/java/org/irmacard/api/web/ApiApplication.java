@@ -42,6 +42,8 @@ import org.irmacard.credentials.idemix.info.IdemixKeyStoreDeserializer;
 import org.irmacard.credentials.info.DescriptionStore;
 import org.irmacard.credentials.info.DescriptionStoreDeserializer;
 import org.irmacard.credentials.info.InfoException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.Path;
@@ -49,8 +51,10 @@ import java.net.URI;
 
 @ApplicationPath("/")
 public class ApiApplication extends ResourceConfig {
+    private static Logger logger = LoggerFactory.getLogger(ApiApplication.class);
+
     public ApiApplication() {
-        System.out.println("Using configuration path: " + ApiConfiguration.getConfigurationPath().toString());
+        logger.info("Using configuration path: " + ApiConfiguration.getConfigurationPath().toString());
 
         // register Gson
         register(GsonJerseyProvider.class);
@@ -67,11 +71,11 @@ public class ApiApplication extends ResourceConfig {
         for (Class resource : resources) {
             // register verification application
             if (ApiConfiguration.getInstance().isEnabled(resource)) {
-                System.out.println("Enabling " + resource.getSimpleName()
+                logger.warn("Enabling " + resource.getSimpleName()
                         + " at /" + ((Path)resource.getAnnotation(Path.class)).value());
                 register(resource);
             } else {
-                System.out.println("Disabling " + resource.getSimpleName());
+                logger.warn("Disabling " + resource.getSimpleName());
             }
         }
 
