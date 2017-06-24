@@ -94,14 +94,16 @@ public class IssueResource extends BaseResource
 	 * @return The session token and protocol version, for the identity provider to forward to the token
 	 */
 	protected ClientQr create(IdentityProviderRequest isRequest, String idp, String jwt) {
+		ApiConfiguration conf = ApiConfiguration.getInstance();
 		IssuingRequest request = isRequest.getRequest();
 		boolean isDistributed = false;
+		int counter;
 
 		if (request == null || request.getCredentials() == null || request.getCredentials().size() == 0)
 			throw new ApiException(ApiError.MALFORMED_ISSUER_REQUEST);
 
 		for (CredentialRequest cred : request.getCredentials()) {
-			if (!ApiConfiguration.getInstance().canIssueCredential(idp, cred.getIdentifier()))
+			if (!conf.canIssueCredential(idp, cred.getIdentifier()))
 				throw new ApiException(ApiError.UNAUTHORIZED, cred.getFullName());
 
 			String schemeManager = cred.getIdentifier().getSchemeManagerName();
@@ -112,15 +114,8 @@ public class IssueResource extends BaseResource
 					throw new ApiException(ApiError.MALFORMED_ISSUER_REQUEST);
 				}
 			}
-		}
 
-		// Check if the requested credentials have the right attributes
-		if (!request.credentialsMatchStore())
-			throw new ApiException(ApiError.ATTRIBUTES_WRONG);
-
-		// Check if we have all necessary secret keys
-		int counter;
-		for (CredentialRequest cred : request.getCredentials()) {
+			// Check if we have all necessary secret keys
 			try {
 				IssuerIdentifier identifier = cred.getIssuerDescription().getIdentifier();
 				counter = IdemixKeyStore.getInstance().getKeyCounter(identifier);
@@ -130,14 +125,14 @@ public class IssueResource extends BaseResource
 			} catch (KeyException e) {
 				throw new ApiException(ApiError.CANNOT_ISSUE, cred.getIssuerName());
 			}
+
+			if (conf.shouldRejectUnflooredTimestamps() && !cred.isValidityFloored())
+				throw new ApiException(ApiError.INVALID_TIMESTAMP,  "Epoch length: " + Attributes.EXPIRY_FACTOR);
 		}
 
-		if (ApiConfiguration.getInstance().shouldRejectUnflooredTimestamps()) {
-			for (CredentialRequest cred : request.getCredentials())
-				if (!cred.isValidityFloored())
-					throw new ApiException(ApiError.INVALID_TIMESTAMP,
-							"Epoch length: " + Attributes.EXPIRY_FACTOR);
-		}
+		// Check if the requested credentials have the right attributes
+		if (!request.credentialsMatchStore())
+			throw new ApiException(ApiError.ATTRIBUTES_WRONG);
 
 		IssueSession session = new IssueSession(isDistributed);
 		return super.create(session, isRequest, jwt);
