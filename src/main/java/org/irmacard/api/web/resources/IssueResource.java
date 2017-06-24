@@ -25,10 +25,7 @@ import org.irmacard.credentials.idemix.messages.IssueCommitmentMessage;
 import org.irmacard.credentials.idemix.messages.IssueSignatureMessage;
 import org.irmacard.credentials.idemix.proofs.ProofList;
 import org.irmacard.credentials.idemix.proofs.ProofP;
-import org.irmacard.credentials.info.DescriptionStore;
-import org.irmacard.credentials.info.InfoException;
-import org.irmacard.credentials.info.IssuerIdentifier;
-import org.irmacard.credentials.info.KeyException;
+import org.irmacard.credentials.info.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,6 +95,7 @@ public class IssueResource extends BaseResource
 	 */
 	protected ClientQr create(IdentityProviderRequest isRequest, String idp, String jwt) {
 		IssuingRequest request = isRequest.getRequest();
+		boolean isDistributed = false;
 
 		if (request == null || request.getCredentials() == null || request.getCredentials().size() == 0)
 			throw new ApiException(ApiError.MALFORMED_ISSUER_REQUEST);
@@ -105,6 +103,15 @@ public class IssueResource extends BaseResource
 		for (CredentialRequest cred : request.getCredentials()) {
 			if (!ApiConfiguration.getInstance().canIssueCredential(idp, cred.getIdentifier()))
 				throw new ApiException(ApiError.UNAUTHORIZED, cred.getFullName());
+
+			String schemeManager = cred.getIdentifier().getSchemeManagerName();
+			if (DescriptionStore.getInstance().getSchemeManager(schemeManager).hasKeyshareServer()) {
+				if (!isDistributed) {
+					isDistributed = true;
+				} else { // We don't yet support issuance sessions with multiple keyshare servers
+					throw new ApiException(ApiError.MALFORMED_ISSUER_REQUEST);
+				}
+			}
 		}
 
 		// Check if the requested credentials have the right attributes
@@ -132,7 +139,7 @@ public class IssueResource extends BaseResource
 							"Epoch length: " + Attributes.EXPIRY_FACTOR);
 		}
 
-		IssueSession session = new IssueSession();
+		IssueSession session = new IssueSession(isDistributed);
 		return super.create(session, isRequest, jwt);
 	}
 
@@ -156,22 +163,20 @@ public class IssueResource extends BaseResource
 		}
 
 		try {
-			// Assumption made here: all credentials in the request are from the same scheme manager!
-			// TODO: fix
-			final String schemeManager = request.getCredentials().get(0)
-					.getIdentifier().getSchemeManagerName();
-			boolean isDistributed = DescriptionStore.getInstance()
-					.getSchemeManager(schemeManager).hasKeyshareServer();
+			String schemeManager = null;
+			for (CredentialIdentifier id : request.getCredentialList())
+				if (DescriptionStore.getInstance().getSchemeManager(id.getSchemeManagerName()).hasKeyshareServer())
+					schemeManager = id.getSchemeManagerName();
 			String jwt = commitments.getProofPJwt();
 			ProofP proofP = null; // Will extract this from the JWT
 
 			// If the scheme mamanger uses a keyshare server, the JWT has to be present and valid
 			// If it is not, jwtParser.parseJwt() throws an exception that we catch below.
-			if (isDistributed) {
+			if (session.isDistributed()) {
 				if (jwt == null)
 					fail(ApiError.KEYSHARE_PROOF_MISSING, session);
 
-				JwtParser<ProofP> jwtParser = new JwtParser<ProofP>(ProofP.class, false, 60*1000, "ProofP", "ProofP");
+				JwtParser<ProofP> jwtParser = new JwtParser<>(ProofP.class, false, 60*1000, "ProofP", "ProofP");
 				jwtParser.setSigningKey(ApiConfiguration.getInstance().getKssPublicKey(schemeManager));
 				proofP = jwtParser.parseJwt(jwt).getPayload();
 			}
@@ -181,7 +186,7 @@ public class IssueResource extends BaseResource
 			proofs.populatePublicKeyArray();
 			int disclosureCount = proofs.getProofDCount();
 			for (int i = 0; i < proofs.size(); i++) {
-				IdemixPublicKey pk = null;
+				IdemixPublicKey pk;
 				if (i < disclosureCount) {
 					// This is a disclosure proof, so we get the public key from the metadata attribute
 					pk = proofs.get(i).extractPublicKey();
@@ -189,7 +194,8 @@ public class IssueResource extends BaseResource
 					pk = request.getCredentials().get(i - disclosureCount).getPublicKey();
 					proofs.setPublicKey(i, pk);
 				}
-				if (isDistributed) // Do this for all proofs
+
+				if (pk.getIssuerIdentifier().getSchemeManager().hasKeyshareServer())
 					proofs.get(i).mergeProofP(proofP, pk);
 			}
 
@@ -230,15 +236,19 @@ public class IssueResource extends BaseResource
 			session.setStatusDone();
 			return sigs;
 		} catch (InfoException e) {
+			e.printStackTrace();
 			fail(ApiError.EXCEPTION, session);
 			return null;
 		} catch (CredentialsException e) {
+			e.printStackTrace();
 			fail(ApiError.ISSUANCE_FAILED, session);
 			return null;
 		} catch (KeyException e) {
+			e.printStackTrace();
 			fail(ApiError.UNKNOWN_PUBLIC_KEY, session);
 			return null;
 		} catch (JwtException|IllegalArgumentException e) {
+			e.printStackTrace();
 			fail(ApiError.JWT_INVALID, session);
 			return null;
 		}

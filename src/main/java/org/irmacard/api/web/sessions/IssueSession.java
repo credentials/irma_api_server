@@ -6,9 +6,11 @@ import org.irmacard.credentials.idemix.messages.IssueCommitmentMessage;
 
 public class IssueSession extends IrmaSession<IdentityProviderRequest, IssuingRequest> {
 	private IssueCommitmentMessage commitments;
+	private boolean isDistributed;
 
-	public IssueSession() {
+	public IssueSession(boolean isDistributed) {
 		super();
+		this.isDistributed = isDistributed;
 	}
 
 	public IssueSession(IdentityProviderRequest ipRequest) {
@@ -21,5 +23,9 @@ public class IssueSession extends IrmaSession<IdentityProviderRequest, IssuingRe
 
 	public void setCommitments(IssueCommitmentMessage commitments) {
 		this.commitments = commitments;
+	}
+
+	public boolean isDistributed() {
+		return isDistributed;
 	}
 }
