@@ -4,15 +4,10 @@ var jwt = require('jsonwebtoken');
 var fs = require('fs');
 
 var sprequest = {
-	"data": "foobar",
 	"validity": 60,
 	"timeout": 60,
 	"request": {
 		"content": [
-			{
-				"label": "Name",
-				"attributes": ["irma-demo.MijnOverheid.fullName.firstname"]
-			},
 			{
 				"label": "Over 21",
 				"attributes": ["irma-demo.MijnOverheid.ageLower.over18", "irma-demo.MijnOverheid.ageLower.over21"]
@@ -34,6 +29,8 @@ var token = jwt.sign({sprequest: sprequest}, null, jwtOptions);
 var server = process.argv[2] + "/irma_api_server/api/v2/verification/";
 var publickey = fs.readFileSync(confpath + '/pk.pem');
 var result = null;
+
+console.log(token);
 
 var options = {
 	uri: server,
