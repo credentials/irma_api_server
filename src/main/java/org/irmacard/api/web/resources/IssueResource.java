@@ -98,6 +98,7 @@ public class IssueResource extends BaseResource
 		IssuingRequest request = isRequest.getRequest();
 		boolean isDistributed = false;
 		int counter;
+		String keyshareManager = null;
 
 		if (request == null || request.getCredentials() == null || request.getCredentials().size() == 0)
 			throw new ApiException(ApiError.MALFORMED_ISSUER_REQUEST);
@@ -108,9 +109,10 @@ public class IssueResource extends BaseResource
 
 			String schemeManager = cred.getIdentifier().getSchemeManagerName();
 			if (DescriptionStore.getInstance().getSchemeManager(schemeManager).hasKeyshareServer()) {
-				if (!isDistributed) {
-					isDistributed = true;
-				} else { // We don't yet support issuance sessions with multiple keyshare servers
+				isDistributed = true;
+				if (keyshareManager == null) {
+					keyshareManager = schemeManager;
+				} else if (!keyshareManager.equals(schemeManager)) { // We don't yet support issuance sessions with multiple keyshare servers
 					throw new ApiException(ApiError.MALFORMED_ISSUER_REQUEST);
 				}
 			}
