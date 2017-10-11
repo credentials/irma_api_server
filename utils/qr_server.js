@@ -3,6 +3,7 @@ const request = require('request');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const http = require('http');
+const url = require('url');
 
 const iprequest = {
     data: 'foobar',
@@ -29,7 +30,14 @@ const iprequest = {
                     'zipcode': '6525 EC'
                 }
             }
-        ]
+        ],
+
+        // 'disclose': [
+        //     {
+        //         'label': 'Over 18',
+        //         'attributes': ['irma-demo.MijnOverheid.ageLower.over18', 'irma-demo.MijnOverheid.ageLower.over21']
+        //     }
+        // ]
     }
 };
 
@@ -38,6 +46,26 @@ const sprequest = {
     "timeout": 60,
     "request": {
         "content": [
+            {
+                "label": "Over 18",
+                "attributes": ["irma-demo.MijnOverheid.ageLower.over18", "irma-demo.MijnOverheid.ageLower.over21"]
+            },
+        ]
+    }
+};
+
+var sigrequest = {
+    "data": "foobar",
+    "validity": 60,
+    "timeout": 60,
+    "request": {
+        "message" : "Message to be signed",
+        "messageType" : "STRING",
+        "content": [
+            // {
+            //     "label": "Name",
+            //     "attributes": {"irma-demo.MijnOverheid.fullName.firstname": "Johan" }
+            // },
             {
                 "label": "Over 21",
                 "attributes": ["irma-demo.MijnOverheid.ageLower.over18", "irma-demo.MijnOverheid.ageLower.over21"]
@@ -49,6 +77,7 @@ const sprequest = {
 // const serverUri = process.argv[2] + "/irma_api_server/api/v2/issue/";
 
 const serverUri = 'https://demo.irmacard.org/tomcat';
+const apiUri = serverUri + '/irma_api_server/api/v2';
 
 function checkStatus(token, doneCallback) {
     const checkOptions = {
@@ -79,7 +108,7 @@ function setupSession(endpointUri, jwtMessage, jwtOptions, qrCallback) {
             const qrcontent = JSON.parse(body);
             const token = qrcontent.u;
             
-            qrcontent.u = endpointUri + token;
+            qrcontent.u = endpointUri + '/' + token;
             qrCallback(JSON.stringify(qrcontent));
 
             const delayedReportStatus = () => {
@@ -98,7 +127,7 @@ function setupSession(endpointUri, jwtMessage, jwtOptions, qrCallback) {
 }
 
 function setupIssuanceSession(qrCallback) {
-    const endpointUri = serverUri + '/irma_api_server/api/v2/issue/';
+    const endpointUri = apiUri + '/issue';
     console.log(endpointUri);
     const jwtMessage = {iprequest};
     const jwtOptions = {
@@ -111,7 +140,7 @@ function setupIssuanceSession(qrCallback) {
 }
 
 function setupDisclosureSession(qrCallback) {
-    const endpointUri = serverUri + '/irma_api_server/api/v2/verification/';
+    const endpointUri = apiUri + '/verification';
     const jwtMessage = {sprequest};
     const jwtOptions = {
         algorithm: 'none',
@@ -122,13 +151,44 @@ function setupDisclosureSession(qrCallback) {
     setupSession(endpointUri, jwtMessage, jwtOptions, qrCallback);
 }
 
-const server = http.createServer( (req, res) => {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'application/json');
+function setupSigningSession(qrCallback) {
+    const endpointUri = apiUri + '/signature';
+    const jwtMessage = {absrequest: sigrequest}
+    var jwtOptions = {
+        algorithm: "none",
+        issuer: "testsigclient",
+        subject: "signature_request"
+    };
 
-    console.log('Got request')
-    setupDisclosureSession( qrJSON => {
+    setupSession(endpointUri, jwtMessage, jwtOptions, qrCallback);
+}
+
+const server = http.createServer( (req, res) => {
+    var query = url.parse(req.url, true).query;
+    console.log('Got request for type', query.type);
+
+    let fn;
+    switch(query.type) {
+        case 'issuance':
+            fn = setupIssuanceSession; break;
+        case 'disclosure':
+            fn = setupDisclosureSession; break;
+        case 'signing':
+            fn = setupSigningSession; break;
+
+        default:
+            console.log('Unrecognized session type');
+
+            res.statusCode = 400;
+            res.end();
+            return;
+    }
+    
+    fn( qrJSON => {
         console.log('Served up QR:', qrJSON)
+
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
         res.end(qrJSON);
     });
 });
