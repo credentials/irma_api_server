@@ -72,6 +72,9 @@ public class ApiConfiguration {
 
 	HashMap<String, String> client_names = new HashMap<>();
 
+    String events_webhook_uri = null;
+    String events_webhook_authorizationToken = null;
+
 	/* Transient members for convenience */
 	private transient PrivateKey jwtPrivateKey;
 	private transient PublicKey jwtPublicKey;
