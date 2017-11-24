@@ -112,9 +112,10 @@ public class Historian implements Runnable {
         boolean pushWasSuccessful = false;
 
         while (true) {
-            // TODO graceful shutdown?
             this.lock.lock();
             try {
+                if (!this.enabled) break;
+
                 // Did we succesfully push some data?  If so, we need to clear
                 // it from the lists.
                 if (pushAttempted) {
@@ -146,13 +147,24 @@ public class Historian implements Runnable {
         }
     }
 
+    public void disable() {
+        if (!this.enabled) return;
+        this.enabled = false;
+        this.lock.lock();
+        try {
+            this.cond.signal();
+        } finally {
+            this.lock.unlock();
+        }
+    }
+
     public void enable(String uri, String authorizationToken) {
         if (enabled) {
             throw new IllegalStateException("Already enabled");
         }
 
-        this.thread = new Thread(this);
         this.enabled = true;
+        this.thread = new Thread(this);
         this.authorizationToken = authorizationToken;
         this.uri = uri;
 

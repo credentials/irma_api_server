@@ -15,4 +15,7 @@
         <servlet-name>irma_api_server</servlet-name>
         <url-pattern>/api/v2/*</url-pattern>
     </servlet-mapping>
+    <listener>
+        <listener-class>org.irmacard.api.web.OurServletContextListener</listener-class>
+    </listener>
 </web-app>
