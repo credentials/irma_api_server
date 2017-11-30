@@ -38,9 +38,10 @@ public class Historian implements Runnable {
     private class IssueEvent {
         public Date When;
         public String Attribute;
+        public String IP;
 
-        public IssueEvent(Date When, String Attribute) {
-            this.When = When; this.Attribute = Attribute;
+        public IssueEvent(Date When, String Attribute, String IP) {
+            this.When = When; this.Attribute = Attribute; this.IP = IP;
         }
     }
     private class SubmitRequest {
@@ -171,12 +172,12 @@ public class Historian implements Runnable {
         thread.start();
     }
 
-    public void recordIssue(String attribute) {
+    public void recordIssue(String attribute, String ip) {
         if (!this.enabled)
             return;
         this.lock.lock();
         try {
-            issueEvents.add(new IssueEvent(new Date(), attribute));
+            issueEvents.add(new IssueEvent(new Date(), attribute, ip));
             this.cond.signal();
         } finally {
             this.lock.unlock();
