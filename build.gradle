@@ -33,6 +33,7 @@ dependencies {
     compile 'org.irmacard.credentials:credentials_idemix:0.18.0'
     compile 'org.irmacard.api:irma_api_common:0.7.8'
     compile 'ch.qos.logback:logback-classic:1.1.7'
+    compile 'org.apache.httpcomponents:httpclient:4.5.3'
 
     providedCompile 'javax.servlet:javax.servlet-api:3.1.0'
 

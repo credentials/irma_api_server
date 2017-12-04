@@ -75,5 +75,15 @@
 
     // A list of authorized signature clients and what they may verify. Structure is the same as above.
     "authorized_sigclients": {
-    }
+    },
+
+    // When events_webhook_uri is set to an URI, the server will periodically
+    // send an HTTP POST request to it details like the types of attributes
+    // issued.
+    // See github.com/privacybydesign/irma-historyd for an example of a
+    // webserver collecting the data send out by this webhook.
+    "events_webhook_uri": null,
+    // Optional basic http authorization token to include in the webhook
+    // set by events_webhook_uri.
+    "events_webhook_authorizationToken": null
 }

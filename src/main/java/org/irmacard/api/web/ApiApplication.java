@@ -90,5 +90,13 @@ public class ApiApplication extends ResourceConfig {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
+
+        // Enable the Historian class, if an events webhook uri is set.
+        ApiConfiguration conf = ApiConfiguration.getInstance();
+        if (conf.events_webhook_uri != null) {
+            Historian.getInstance().enable(
+                    conf.events_webhook_uri,
+                    conf.events_webhook_authorizationToken);
+        }
     }
 }

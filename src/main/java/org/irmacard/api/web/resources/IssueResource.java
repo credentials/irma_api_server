@@ -12,6 +12,7 @@ import org.irmacard.api.common.exceptions.ApiException;
 import org.irmacard.api.common.issuing.IdentityProviderRequest;
 import org.irmacard.api.common.issuing.IssuingRequest;
 import org.irmacard.api.web.ApiConfiguration;
+import org.irmacard.api.web.Historian;
 import org.irmacard.api.web.sessions.IrmaSession;
 import org.irmacard.api.web.sessions.IssueSession;
 import org.irmacard.api.web.sessions.Sessions;
@@ -33,12 +34,17 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
+import javax.ws.rs.core.Context;
+import javax.servlet.http.HttpServletRequest;
 
 @Path("issue")
 public class IssueResource extends BaseResource
 		<IssuingRequest, IdentityProviderRequest, IssueSession> {
 
 	private static Logger logger = LoggerFactory.getLogger(IssueResource.class);
+
+    @Context
+    private HttpServletRequest servletRequest;
 
 	@Inject
 	public IssueResource() {
@@ -228,6 +234,7 @@ public class IssueResource extends BaseResource
 				sigs.add(issuer.issueSignatureNoCheck(
 						commitments, cred.convertToBigIntegers(), i, request.getNonce()));
 
+                Historian.getInstance().recordIssue(cred.getIdentifier().toString(), servletRequest.getRemoteAddr());
 			}
 
 			session.setStatusDone();
