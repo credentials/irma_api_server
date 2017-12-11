@@ -43,8 +43,8 @@ public class IssueResource extends BaseResource
 
 	private static Logger logger = LoggerFactory.getLogger(IssueResource.class);
 
-    @Context
-    private HttpServletRequest servletRequest;
+	@Context
+	private HttpServletRequest servletRequest;
 
 	@Inject
 	public IssueResource() {
@@ -234,8 +234,8 @@ public class IssueResource extends BaseResource
 				sigs.add(issuer.issueSignatureNoCheck(
 						commitments, cred.convertToBigIntegers(), i, request.getNonce()));
 
-                ApiConfiguration conf = ApiConfiguration.getInstance();
-                Historian.getInstance().recordIssue(cred.getIdentifier().toString(), conf.getClientIp(servletRequest));
+				ApiConfiguration conf = ApiConfiguration.getInstance();
+				Historian.getInstance().recordIssue(cred.getIdentifier().toString(), conf.getClientIp(servletRequest));
 			}
 
 			session.setStatusDone();
