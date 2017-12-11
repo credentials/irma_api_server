@@ -25,6 +25,7 @@ import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -50,6 +51,8 @@ public class ApiConfiguration {
 	private String jwt_privatekey = "sk.der";
 	private String jwt_publickey = "pk.der";
 	private String jwt_issuer = null;
+
+    private String client_ip_header = null;
 
 	boolean enable_verification = true;
 	boolean enable_issuing = false;
@@ -529,4 +532,15 @@ public class ApiConfiguration {
 
 		//endregion
 	}
+
+    public String getClientIp(HttpServletRequest req) {
+        String ret;
+        if (this.client_ip_header != null) {
+            ret = req.getHeader(this.client_ip_header);
+            if (ret != null) {
+                return ret;
+            }
+        }
+        return req.getRemoteAddr();
+    }
 }

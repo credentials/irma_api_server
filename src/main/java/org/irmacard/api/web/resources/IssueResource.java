@@ -234,7 +234,8 @@ public class IssueResource extends BaseResource
 				sigs.add(issuer.issueSignatureNoCheck(
 						commitments, cred.convertToBigIntegers(), i, request.getNonce()));
 
-                Historian.getInstance().recordIssue(cred.getIdentifier().toString(), servletRequest.getRemoteAddr());
+                ApiConfiguration conf = ApiConfiguration.getInstance();
+                Historian.getInstance().recordIssue(cred.getIdentifier().toString(), conf.getClientIp(servletRequest));
 			}
 
 			session.setStatusDone();
