@@ -92,6 +92,7 @@
     "client_ip_header": null,
 
     // If set, periodically checks schememanager at the given URI and
-    // downloads updates.
-    "schemeManager_update_uri": "https://privacybydesign.foundation/schememanager/pbdf"
+    // downloads updates.  If you set this, you also need to put the
+    // public key of the schememanager in schemeManager.pk.pem.
+    "schemeManager_update_uri": null
 }
