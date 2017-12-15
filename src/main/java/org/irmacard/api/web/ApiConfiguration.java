@@ -50,6 +50,7 @@ public class ApiConfiguration {
 
 	private String jwt_privatekey = "sk.der";
 	private String jwt_publickey = "pk.der";
+	private String schemeManager_publickey = "schemeManager.pk.pem";
 	private String jwt_issuer = null;
 
     private String client_ip_header = null;
@@ -77,6 +78,8 @@ public class ApiConfiguration {
 
     String events_webhook_uri = null;
     String events_webhook_authorizationToken = null;
+
+	String schemeManager_update_uri = null;
 
 	/* Transient members for convenience */
 	private transient PrivateKey jwtPrivateKey;
@@ -542,5 +545,14 @@ public class ApiConfiguration {
 			}
 		}
 		return req.getRemoteAddr();
+	}
+
+
+	public String getSchemeManagerPublicKeyString() {
+		try {
+			return new String(getResource(schemeManager_publickey));
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }
