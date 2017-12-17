@@ -1,0 +1,3 @@
+[submodule "irma-demo-schememanager"]
+	path = src/test/resources/irma_configuration/irma-demo
+	url = https://github.com/privacybydesign/irma-demo-schememanager.git
