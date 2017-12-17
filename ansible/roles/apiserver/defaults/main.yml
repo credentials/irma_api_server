@@ -1,12 +1,12 @@
 server_version: 1.3.1
-server_url: https://github.com/credentials/irma_api_server/releases/download/v{{ server_version }}/irma_api_server.zip
+server_url: https://github.com/privacybydesign/irma_api_server/releases/download/v{{ server_version }}/irma_api_server.zip
 conf_path: /etc/irma_api_server
 base_install_path: /opt
 install_path: /opt/irma_api_server
 http_port: 8081
 https_port: 8444
 
-irma_configuration: "https://github.com/credentials/irma-demo-schememanager"
+irma_configuration: "https://github.com/privacybydesign/irma-demo-schememanager"
 irma_configuration_name: irma-demo
 irma_configuration_subpath: true
 irma_configuration_branch: master

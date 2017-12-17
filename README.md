@@ -2,9 +2,9 @@
 
 # IRMA API server
 
-This is a server that sits between IRMA tokens such as the [IRMA app](https://github.com/credentials/irma_mobile) on the one hand, and authorized service or identity providers on the other hand. It handles all IRMA-specific cryptographic details of issuing credentials and verifying disclosure proofs on behalf of the service or identity provider. It exposes a RESTful JSON API driven by JWTs for authentication.
+This is a server that sits between IRMA tokens such as the [IRMA app](https://github.com/privacybydesign/irma_mobile) on the one hand, and authorized service or identity providers on the other hand. It handles all IRMA-specific cryptographic details of issuing credentials and verifying disclosure proofs on behalf of the service or identity provider. It exposes a RESTful JSON API driven by JWTs for authentication.
 
-The API that this server offers is described [here](https://credentials.github.io/proposals/irma-without-apdus). We offer a client of the API exponsed by this server in the form of a javascript library, [irma_js](https://github.com/credentials/irma_js), that you can use in your webpages to easily issue and verify credentials. The flow of the various interactions of these components in a typical IRMA session is shown [here](https://credentials.github.io/#irma-session-flow).
+The API that this server offers is described [here](https://credentials.github.io/protocols/irma-protocol). We offer a client of the API exponsed by this server in the form of a javascript library, [irma_js](https://github.com/privacybydesign/irma_js), that you can use in your webpages to easily issue and verify credentials. The flow of the various interactions of these components in a typical IRMA session is shown [here](https://credentials.github.io/#irma-session-flow).
 
 See below to run or build the server yourself. Alternatively, you can use our demo API server, which is setup to be very permissive (but only in the demo domain). It is hosted at `https://demo.irmacard.org/tomcat/irma_api_server/`, you can find its signing key [here](https://demo.irmacard.org/v2/data/pk.pem).
 
@@ -29,17 +29,17 @@ The main configuration file is a json file called `config.json`. In `src/main/re
 
 All credential descriptions, issuer public keys and possibly private keys - that is, the *scheme manager* information - are expected in a subdirectory called `irma_configuration` within the configuration directory. There are several options:
 
-* You can use our [`irma-demo`](https://github.com/credentials/irma-demo-schememanager) scheme manager (which includes issuer private keys) for experimenting,
-* You can use our [`pbdf`](https://github.com/credentials/pbdf-schememanager) if you want to verify attributes issued by the [Privacy by Design Foundation](https://privacybydesign.foundation/issuance),
+* You can use our [`irma-demo`](https://github.com/privacybydesign/irma-demo-schememanager) scheme manager (which includes issuer private keys) for experimenting,
+* You can use our [`pbdf`](https://github.com/privacybydesign/pbdf-schememanager) if you want to verify attributes issued by the [Privacy by Design Foundation](https://privacybydesign.foundation/issuance),
 * you can create your own scheme manager containing your own issuers and credential types.
 
 For example, in the first case, you would `cd` to your configuration directory, and do
 
     mkdir irma_configuration 2>/dev/null
     cd irma_configuration
-    git clone https://github.com/credentials/irma-demo-schememanager irma-demo
+    git clone https://github.com/privacybydesign/irma-demo-schememanager irma-demo
 
-For more information, see the [README.md of the `irma-demo` scheme manager](https://github.com/credentials/irma-demo-schememanager).
+For more information, see the [README.md of the `irma-demo` scheme manager](https://github.com/privacybydesign/irma-demo-schememanager).
 
 ## Ports
 
@@ -92,7 +92,7 @@ Alternatively, you can build the server, resulting in a standalone package that 
 
     gradle buildProduct
 
-The resulting package will then be stored in `build/output/irma_api_server` and can be started with `start.sh`. ***NOTE***: before runnung `gradle war` or `buildProduct`, be sure to run `git submodule update --init` first! This fetches the [IRMA configuration and keys](https://github.com/credentials/irma_configuration) that are used for the unit tests, which are automatically performed by these two gradle commands.
+The resulting package will then be stored in `build/output/irma_api_server` and can be started with `start.sh`. ***NOTE***: before runnung `gradle war` or `buildProduct`, be sure to run `git submodule update --init` first! This fetches the [IRMA configuration and keys](https://github.com/privacybydesign/irma_configuration) that are used for the unit tests, which are automatically performed by these two gradle commands.
 
 # Testing
 
@@ -110,4 +110,4 @@ After this you can run it using:
 
 where `<SERVER>` refers to the IP address or hostname of your running `irma_api_server`, and where the optional second argument specifies the configuration directory in which the script is to find the JWT keys (if absent, `src/main/resources` is assumed). Make sure you use an address that the IRMA app can also reach (we usually use a local ip address for testing).
 
-For more sophisticated examples, see [irma_js](https://github.com/credentials/irma_js).
+For more sophisticated examples, see [irma_js](https://github.com/privacybydesign/irma_js).
