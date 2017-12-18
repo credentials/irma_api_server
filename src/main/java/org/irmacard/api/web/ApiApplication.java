@@ -35,11 +35,13 @@ package org.irmacard.api.web;
 
 import org.glassfish.jersey.server.ResourceConfig;
 import org.irmacard.api.web.resources.IssueResource;
+import org.irmacard.api.web.BackgroundJobManager;
 import org.irmacard.api.web.resources.SignatureResource;
 import org.irmacard.api.web.resources.VerificationResource;
 import org.irmacard.credentials.idemix.info.IdemixKeyStore;
 import org.irmacard.credentials.idemix.info.IdemixKeyStoreDeserializer;
 import org.irmacard.credentials.info.DescriptionStore;
+import org.irmacard.credentials.info.updater.Updater;
 import org.irmacard.credentials.info.DescriptionStoreDeserializer;
 import org.irmacard.credentials.info.InfoException;
 import org.slf4j.Logger;
@@ -48,6 +50,10 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.Path;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Paths;
+import java.nio.file.Files;
+import java.util.concurrent.TimeUnit;
 
 @ApplicationPath("/")
 public class ApiApplication extends ResourceConfig {
@@ -82,21 +88,50 @@ public class ApiApplication extends ResourceConfig {
         // register CORS filter
         register(CORSResponseFilter.class);
 
-        try {
-            URI CORE_LOCATION = ApiConfiguration.getConfigurationPath().resolve("irma_configuration/");
-            DescriptionStore.initialize(new DescriptionStoreDeserializer(CORE_LOCATION));
-            IdemixKeyStore.initialize(new IdemixKeyStoreDeserializer(CORE_LOCATION));
-        } catch (InfoException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
+        ApiConfiguration conf = ApiConfiguration.getInstance();
+        loadOrUpdateIrmaConfiguration(true);
+
+        if (conf.schemeManager_update_uri != null) {
+            BackgroundJobManager.getScheduler().scheduleAtFixedRate(new Runnable() {
+                @Override public void run() {
+                    loadOrUpdateIrmaConfiguration(false);
+                }
+            }, 1, 1, TimeUnit.HOURS);
         }
 
         // Enable the Historian class, if an events webhook uri is set.
-        ApiConfiguration conf = ApiConfiguration.getInstance();
         if (conf.events_webhook_uri != null) {
             Historian.getInstance().enable(
                     conf.events_webhook_uri,
                     conf.events_webhook_authorizationToken);
+        }
+    }
+
+    private void loadOrUpdateIrmaConfiguration(boolean initial) {
+        ApiConfiguration conf = ApiConfiguration.getInstance();
+        URI CORE_LOCATION = ApiConfiguration.getConfigurationPath().resolve("irma_configuration/");
+        boolean updated = false;
+
+        if (conf.schemeManager_update_uri != null) {
+            logger.info("Updating irma_configuration from {} ...",
+                    conf.schemeManager_update_uri);
+            try {
+                updated = Updater.update(
+                        conf.schemeManager_update_uri,
+                        Paths.get(CORE_LOCATION).toString(),
+                        conf.getSchemeManagerPublicKeyString());
+            } catch(Exception e) {
+                logger.error("Update failed:", e);
+            }
+        }
+
+        try {
+            if (initial || updated) {
+                DescriptionStore.initialize(new DescriptionStoreDeserializer(CORE_LOCATION));
+                IdemixKeyStore.initialize(new IdemixKeyStoreDeserializer(CORE_LOCATION));
+            }
+        } catch (Exception e) {
+            logger.error("Store initialization failed:", e);
         }
     }
 }

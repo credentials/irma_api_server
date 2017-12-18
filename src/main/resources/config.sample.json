@@ -89,5 +89,10 @@
 
     // Optional header that stores the client IP address.
     // Eg. "X-Forwarded-For"
-    "client_ip_header": null
+    "client_ip_header": null,
+
+    // If set, periodically checks schememanager at the given URI and
+    // downloads updates.  If you set this, you also need to put the
+    // public key of the schememanager in schemeManager.pk.pem.
+    "schemeManager_update_uri": null
 }
