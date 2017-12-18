@@ -544,6 +544,8 @@ public class ApiConfiguration {
 				return ret;
 			}
 		}
+		if (req == null) // happens during unit tests
+			return "127.0.0.1";
 		return req.getRemoteAddr();
 	}
 
