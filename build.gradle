@@ -2,7 +2,7 @@ apply plugin: 'war'
 apply plugin: 'org.akhikhl.gretty'
 apply plugin: 'eclipse-wtp'
 
-version = "1.4.0"
+version = "1.4.1"
 
 import org.gradle.internal.os.OperatingSystem;
 
@@ -26,12 +26,10 @@ repositories {
 }
 
 dependencies {
+    compile 'org.irmacard.api:irma_api_common:0.8.0'
+
     compile 'org.glassfish.jersey.core:jersey-server:2.19'
     compile 'org.glassfish.jersey.containers:jersey-container-servlet:2.19'
-    compile 'com.google.code.gson:gson:2.2.2'
-    compile 'org.irmacard.credentials:credentials_api:0.18.3'
-    compile 'org.irmacard.credentials:credentials_idemix:0.19.0'
-    compile 'org.irmacard.api:irma_api_common:0.7.8'
     compile 'ch.qos.logback:logback-classic:1.1.7'
     compile 'org.apache.httpcomponents:httpclient:4.5.3'
 
