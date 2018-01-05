@@ -1,5 +1,6 @@
 package org.irmacard.api.web;
 
+import foundation.privacybydesign.common.BaseConfiguration;
 import io.jsonwebtoken.Jwts;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.test.JerseyTest;
@@ -47,7 +48,6 @@ public class IssueTest extends JerseyTest {
 		try {
 			String configuration = new String(ApiConfiguration.getResource("config.test.json"));
 			ApiConfiguration.instance = GsonUtil.getGson().fromJson(configuration, ApiConfiguration.class);
-			ApiConfiguration.instance.hot_reload_configuration = false;
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

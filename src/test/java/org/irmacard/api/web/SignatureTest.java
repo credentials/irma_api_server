@@ -33,6 +33,7 @@
 
 package org.irmacard.api.web;
 
+import foundation.privacybydesign.common.BaseConfiguration;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
@@ -93,7 +94,6 @@ public class SignatureTest extends JerseyTest {
 		try {
 			configuration = new String(ApiConfiguration.getResource("config.test.json"));
 			ApiConfiguration.instance = GsonUtil.getGson().fromJson(configuration, ApiConfiguration.class);
-			ApiConfiguration.instance.hot_reload_configuration = false;
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

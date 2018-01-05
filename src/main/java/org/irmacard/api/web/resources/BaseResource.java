@@ -66,9 +66,6 @@ public abstract class BaseResource
 	// Base methods for subclasses to use
 
 	public ClientQr newSession(String jwt) {
-		if (ApiConfiguration.getInstance().isHotReloadEnabled())
-			ApiConfiguration.load();
-
 		@SuppressWarnings("unchecked")
 		JwtParser<ClientClass> parser = (JwtParser<ClientClass>) new JwtParser<>(action.ClientClass,
 				ApiConfiguration.getInstance().allowUnsignedRequests(action),

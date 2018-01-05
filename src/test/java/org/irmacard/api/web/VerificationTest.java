@@ -30,6 +30,7 @@
 
 package org.irmacard.api.web;
 
+import foundation.privacybydesign.common.BaseConfiguration;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
@@ -74,7 +75,6 @@ public class VerificationTest extends JerseyTest {
 		super(new JettyTestContainerFactory());
 
 		ApiConfiguration.instance = GsonUtil.getGson().fromJson(configuration, ApiConfiguration.class);
-		ApiConfiguration.instance.hot_reload_configuration = false;
 	}
 
 	@BeforeClass
@@ -319,7 +319,7 @@ public class VerificationTest extends JerseyTest {
 
 	@Test
 	public void unnecessarilySignedJwt() throws KeyManagementException {
-		ApiConfiguration.instance.allow_unsigned_verification_requests = true;
+		((ApiConfiguration)ApiConfiguration.instance).allow_unsigned_verification_requests = true;
 		createSession();
 	}
 
@@ -338,22 +338,24 @@ public class VerificationTest extends JerseyTest {
 
 	@Test
 	public void authorizedVerifierTest() throws KeyManagementException {
-		ApiConfiguration.getInstance().allow_unsigned_verification_requests = false;
-		ApiConfiguration.instance.authorized_sps.put("testsp", new ArrayList<String>());
+		ApiConfiguration conf = (ApiConfiguration) BaseConfiguration.instance;
+
+		conf.allow_unsigned_verification_requests = false;
+		conf.authorized_sps.put("testsp", new ArrayList<String>());
 		try {
 			createSession();
 		} catch (ForbiddenException e) { /* Expected */ }
 
-		ApiConfiguration.instance.authorized_sps.get("testsp").add(schemeManager+".MijnOverheid.ageLower.over12");
+		conf.authorized_sps.get("testsp").add(schemeManager+".MijnOverheid.ageLower.over12");
 		createSession();
 
-		ApiConfiguration.instance.authorized_sps.get("testsp").set(0, schemeManager+".*");
+		conf.authorized_sps.get("testsp").set(0, schemeManager+".*");
 		createSession();
 
-		ApiConfiguration.instance.authorized_sps.get("testsp").set(0, schemeManager+".MijnOverheid.*");
+		conf.authorized_sps.get("testsp").set(0, schemeManager+".MijnOverheid.*");
 		createSession();
 
-		ApiConfiguration.instance.authorized_sps.get("testsp").set(0, schemeManager+".MijnOverheid.ageLower.*");
+		conf.authorized_sps.get("testsp").set(0, schemeManager+".MijnOverheid.ageLower.*");
 		createSession();
 	}
 }

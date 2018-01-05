@@ -60,8 +60,6 @@ public class ApiApplication extends ResourceConfig {
     private static Logger logger = LoggerFactory.getLogger(ApiApplication.class);
 
     public ApiApplication() {
-        logger.info("Using configuration path: " + ApiConfiguration.getConfigurationPath().toString());
-
         // register Gson
         register(GsonJerseyProvider.class);
 
@@ -109,7 +107,7 @@ public class ApiApplication extends ResourceConfig {
 
     private void loadOrUpdateIrmaConfiguration(boolean initial) {
         ApiConfiguration conf = ApiConfiguration.getInstance();
-        URI CORE_LOCATION = ApiConfiguration.getConfigurationPath().resolve("irma_configuration/");
+        URI CORE_LOCATION = ApiConfiguration.getConfigurationDirectory().resolve("irma_configuration/");
         boolean updated = false;
 
         if (conf.schemeManager_update_uri != null) {
