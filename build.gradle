@@ -6,6 +6,10 @@ version = "1.4.1"
 
 import org.gradle.internal.os.OperatingSystem;
 
+war {
+    archiveName 'irma_api_server.war'
+}
+
 buildscript {
     repositories {
         mavenLocal()
