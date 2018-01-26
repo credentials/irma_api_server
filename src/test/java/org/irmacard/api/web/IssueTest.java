@@ -71,6 +71,15 @@ public class IssueTest extends JerseyTest {
 		doIssueSession(getAgeLowerIPrequest(), null);
 	}
 
+	// Issuance with missing required attribute (without disclosure)
+	@Test(expected=BadRequestException.class)
+	public void requiredAttributeTest()
+	throws CredentialsException, InfoException, KeyManagementException, KeyException {
+		IdentityProviderRequest req = getAgeLowerIPrequest();
+		req.getRequest().getCredentials().get(0).getAttributes().remove("over18");
+		doIssueSession(req, null);
+	}
+
 	@Test // Valid issuance with disclosure of 1 attribute
 	public void validBoundIssueTest()
 	throws CredentialsException, InfoException, KeyManagementException, KeyException {
