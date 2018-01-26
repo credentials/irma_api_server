@@ -3,7 +3,7 @@ server_url: https://github.com/privacybydesign/irma_api_server/releases/download
 conf_path: /etc/irma_api_server
 base_install_path: /opt
 install_path: /opt/irma_api_server
-http_port: 8081
+http_port: 8088
 https_port: 8444
 
 irma_configuration: "https://github.com/privacybydesign/irma-demo-schememanager"
