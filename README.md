@@ -106,7 +106,7 @@ Furthermore, you should run the `utils/preparetestjs.sh` script to prepare testi
 
 After this you can run it using:
 
-    node utils/testsp.js http://<SERVER>:8081 [configuration_dir]
+    node utils/testsp.js http://<SERVER>:8088 [configuration_dir]
 
 where `<SERVER>` refers to the IP address or hostname of your running `irma_api_server`, and where the optional second argument specifies the configuration directory in which the script is to find the JWT keys (if absent, `src/main/resources` is assumed). Make sure you use an address that the IRMA app can also reach (we usually use a local ip address for testing).
 
