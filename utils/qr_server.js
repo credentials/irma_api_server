@@ -74,22 +74,42 @@ var sigrequest = {
     }
 };
 
-// const serverUri = process.argv[2] + "/irma_api_server/api/v2/issue/";
-
 const serverUri = 'https://demo.irmacard.org/tomcat';
 const apiUri = serverUri + '/irma_api_server/api/v2';
 
-function checkStatus(token, doneCallback) {
+function checkStatus(url, doneCallback) {
     const checkOptions = {
-        uri: serverUri + token + '/status',
+        uri: url + '/status',
         method: 'GET'
     };
 
     request(checkOptions, (error, response, body) => {
-        if ( !(body == '"INITIALIZED"' || body == '"CONNECTED"') ) {
+        if (error != null) {
+            console.log();
+            doneCallback(error);
+        }
+        else if ( !(body == '"INITIALIZED"' || body == '"CONNECTED"') ) {
+            console.log();
             doneCallback(body);
         } else {
-            // process.stdout.write(".");
+            process.stdout.write(".");
+            setTimeout(() => {checkStatus(url, doneCallback)}, 1000);
+        }
+    });
+}
+
+function getProof(url) {
+    var proofOptions = {
+        uri: url + "/getproof",
+        method: 'GET'
+    };
+
+    request(proofOptions, (error, response, body) => {
+        if (error != null) {
+            console.log(response);
+            console.log(error);
+        } else {
+            console.log(jwt.decode(body));
         }
     });
 }
@@ -107,18 +127,18 @@ function setupSession(endpointUri, jwtMessage, jwtOptions, qrCallback) {
         if (!error && response.statusCode == 200) {
             const qrcontent = JSON.parse(body);
             const token = qrcontent.u;
-            
             qrcontent.u = endpointUri + '/' + token;
             qrCallback(JSON.stringify(qrcontent));
 
             const delayedReportStatus = () => {
-                checkStatus(token, () => {
+                checkStatus(qrcontent.u, (status) => {
                     console.log('Status report for token', token + ':', status);    
+                    if (status === "\"DONE\"" && jwtOptions.subject != 'issue_request')
+                        getProof(qrcontent.u);
                 });
             }
 
-            // Don't check for status for now
-            // setTimeout(delayedReportStatus, 30000);
+            setTimeout(delayedReportStatus, 500);
         } else {
             console.log('Error in initial request: ', error);
             console.log(body);
