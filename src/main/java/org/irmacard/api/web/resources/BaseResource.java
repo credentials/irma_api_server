@@ -107,7 +107,7 @@ public abstract class BaseResource
 		logger.info("Received session, token: " + token);
 		logger.info(request.toString());
 
-		return new ClientQr("2.0", "2.2", token, action.name().toLowerCase());
+		return new ClientQr("2.0", "2.3", token, action.name().toLowerCase());
 	}
 
 	public RequestClass get(String sessiontoken) {
@@ -121,13 +121,18 @@ public abstract class BaseResource
 		return session.getRequest();
 	}
 
-	public JwtSessionRequest getJwt(String sessiontoken) {
+	public JwtSessionRequest getJwt(String sessiontoken, String version) {
 		logger.info("Received get, token: " + sessiontoken);
 		SessionClass session = sessions.getNonNullSession(sessiontoken);
 		if (session.getStatus() != IssueSession.Status.INITIALIZED) {
 			fail(ApiError.UNEXPECTED_REQUEST, session);
 		}
 
+		if (version != null) {
+			session.setVersion(version); // >= 2.3
+		} else {
+			session.setVersion("2.2"); // < 2.3
+		}
 		session.setStatusConnected();
 		RequestClass request = session.getRequest();
 		BigInteger nonce = request.getNonce();
@@ -146,6 +151,13 @@ public abstract class BaseResource
 		return sessions
 				.getNonNullSession(sessiontoken)
 				.getStatus();
+	}
+
+	protected byte getMetadataVersion(ProtocolVersion version) {
+		if (version.below(2, 3)) {
+			return 0x02; // does not support optional attributes
+		}
+		return 0x03; // current version
 	}
 
 	public void delete(String sessiontoken) {
