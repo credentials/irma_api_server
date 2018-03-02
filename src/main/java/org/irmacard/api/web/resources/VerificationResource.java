@@ -97,8 +97,8 @@ public class VerificationResource extends BaseResource
     @GET @Path("/{sessiontoken}/jwt")
     @Produces(MediaType.APPLICATION_JSON)
     @Override
-    public JwtSessionRequest getJwt(@PathParam("sessiontoken") String sessiontoken) {
-       return super.getJwt(sessiontoken);
+    public JwtSessionRequest getJwt(@PathParam("sessiontoken") String sessiontoken, @HeaderParam("X-IRMA-ProtocolVersion") String version) {
+       return super.getJwt(sessiontoken, version);
     }
 
     @GET @Path("/{sessiontoken}/status")

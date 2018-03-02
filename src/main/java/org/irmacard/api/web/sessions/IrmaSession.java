@@ -17,6 +17,7 @@ public abstract class IrmaSession<T extends ClientRequest<S>, S> {
 	private Timer timer;
 	private T clientRequest;
 	private String jwt;
+	private ProtocolVersion version;
 
 	private class RemovalTask extends TimerTask {
 		@Override
@@ -71,6 +72,15 @@ public abstract class IrmaSession<T extends ClientRequest<S>, S> {
 
 	public void setJwt(String jwt) {
 		this.jwt = jwt;
+	}
+
+	public ProtocolVersion getVersion() {
+		return version;
+	}
+
+	public void setVersion(String version) {
+		// TODO: check whether version number is supported
+		this.version = new ProtocolVersion(version);
 	}
 
 	public S getRequest() {

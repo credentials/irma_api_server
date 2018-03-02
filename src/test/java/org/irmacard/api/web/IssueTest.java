@@ -1,6 +1,5 @@
 package org.irmacard.api.web;
 
-import foundation.privacybydesign.common.BaseConfiguration;
 import io.jsonwebtoken.Jwts;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.test.JerseyTest;
@@ -69,6 +68,15 @@ public class IssueTest extends JerseyTest {
 	public void validIssueTest()
 	throws CredentialsException, InfoException, KeyManagementException, KeyException {
 		doIssueSession(getAgeLowerIPrequest(), null);
+	}
+
+	// Issuance with missing required attribute (without disclosure)
+	@Test(expected=BadRequestException.class)
+	public void requiredAttributeTest()
+	throws CredentialsException, InfoException, KeyManagementException, KeyException {
+		IdentityProviderRequest req = getAgeLowerIPrequest();
+		req.getRequest().getCredentials().get(0).getAttributes().remove("over18");
+		doIssueSession(req, null);
 	}
 
 	@Test // Valid issuance with disclosure of 1 attribute
@@ -144,7 +152,7 @@ public class IssueTest extends JerseyTest {
 
 		for (CredentialRequest cred : request.getCredentials()) {
 			CredentialBuilder cb = new CredentialBuilder(
-					cred.getPublicKey(), cred.convertToBigIntegers(), request.getContext(), nonce2);
+					cred.getPublicKey(), cred.convertToBigIntegers((byte)2), request.getContext(), nonce2);
 			proofsBuilder.addCredentialBuilder(cb);
 			credentialBuilders.add(cb);
 		}

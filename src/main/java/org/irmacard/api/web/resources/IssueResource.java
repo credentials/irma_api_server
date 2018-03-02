@@ -69,8 +69,8 @@ public class IssueResource extends BaseResource
 	@GET @Path("/{sessiontoken}/jwt")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
-	public JwtSessionRequest getJwt(@PathParam("sessiontoken") String sessiontoken) {
-		return super.getJwt(sessiontoken);
+	public JwtSessionRequest getJwt(@PathParam("sessiontoken") String sessiontoken, @HeaderParam("X-IRMA-ProtocolVersion") String version) {
+		return super.getJwt(sessiontoken, version);
 	}
 
 	@GET @Path("/{sessiontoken}/status")
@@ -231,8 +231,9 @@ public class IssueResource extends BaseResource
 					// credential, the others are implied
 					issuer.verifyCommitments(commitments, request.getNonce());
 				}
+				byte metadataVersion = getMetadataVersion(session.getVersion());
 				sigs.add(issuer.issueSignatureNoCheck(
-						commitments, cred.convertToBigIntegers(), i, request.getNonce()));
+						commitments, cred.convertToBigIntegers(metadataVersion), i, request.getNonce()));
 
 				ApiConfiguration conf = ApiConfiguration.getInstance();
 				Historian.getInstance().recordIssue(cred.getIdentifier().toString(), conf.getClientIp(servletRequest));
