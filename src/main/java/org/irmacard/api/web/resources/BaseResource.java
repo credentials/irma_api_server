@@ -118,6 +118,7 @@ public abstract class BaseResource
 		}
 
 		session.setStatusConnected();
+		session.setVersion("2.0");
 		return session.getRequest();
 	}
 

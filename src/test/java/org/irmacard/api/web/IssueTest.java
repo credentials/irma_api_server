@@ -1,6 +1,5 @@
 package org.irmacard.api.web;
 
-import foundation.privacybydesign.common.BaseConfiguration;
 import io.jsonwebtoken.Jwts;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.test.JerseyTest;
@@ -153,7 +152,7 @@ public class IssueTest extends JerseyTest {
 
 		for (CredentialRequest cred : request.getCredentials()) {
 			CredentialBuilder cb = new CredentialBuilder(
-					cred.getPublicKey(), cred.convertToBigIntegers(), request.getContext(), nonce2);
+					cred.getPublicKey(), cred.convertToBigIntegers((byte)2), request.getContext(), nonce2);
 			proofsBuilder.addCredentialBuilder(cb);
 			credentialBuilders.add(cb);
 		}
