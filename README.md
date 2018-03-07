@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/credentials/irma_api_server.svg?branch=master)](https://travis-ci.org/credentials/irma_api_server)
+[![Build Status](https://travis-ci.org/privacybydesign/irma_api_server.svg?branch=master)](https://travis-ci.org/privacybydesign/irma_api_server)
 
 # IRMA API server
 

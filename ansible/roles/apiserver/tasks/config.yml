@@ -30,7 +30,7 @@
 
 - name: Download JWT key generation script
   get_url:
-    url: https://raw.githubusercontent.com/credentials/irma_api_server/master/utils/keygen.sh
+    url: https://raw.githubusercontent.com/privacybydesign/irma_api_server/master/utils/keygen.sh
     dest: /tmp/irma-keygen.sh
     mode: 0750
 
