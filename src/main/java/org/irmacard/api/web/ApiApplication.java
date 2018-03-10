@@ -35,7 +35,6 @@ package org.irmacard.api.web;
 
 import org.glassfish.jersey.server.ResourceConfig;
 import org.irmacard.api.web.resources.IssueResource;
-import org.irmacard.api.web.BackgroundJobManager;
 import org.irmacard.api.web.resources.SignatureResource;
 import org.irmacard.api.web.resources.VerificationResource;
 import org.irmacard.credentials.idemix.info.IdemixKeyStore;
@@ -43,21 +42,21 @@ import org.irmacard.credentials.idemix.info.IdemixKeyStoreDeserializer;
 import org.irmacard.credentials.info.DescriptionStore;
 import org.irmacard.credentials.info.updater.Updater;
 import org.irmacard.credentials.info.DescriptionStoreDeserializer;
-import org.irmacard.credentials.info.InfoException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.Path;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Paths;
-import java.nio.file.Files;
 import java.util.concurrent.TimeUnit;
 
 @ApplicationPath("/")
 public class ApiApplication extends ResourceConfig {
     private static Logger logger = LoggerFactory.getLogger(ApiApplication.class);
+
+    public static ProtocolVersion minVersion = new ProtocolVersion("2.0");
+    public static ProtocolVersion maxVersion = new ProtocolVersion("2.3");
 
     public ApiApplication() {
         // register Gson

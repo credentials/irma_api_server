@@ -1,4 +1,4 @@
-package org.irmacard.api.web.sessions;
+package org.irmacard.api.web;
 
 public class ProtocolVersion {
     private int major;
