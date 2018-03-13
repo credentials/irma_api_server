@@ -2,6 +2,7 @@ package org.irmacard.api.web.sessions;
 
 import org.irmacard.api.common.ClientRequest;
 import org.irmacard.api.web.ApiConfiguration;
+import org.irmacard.api.web.ProtocolVersion;
 import org.irmacard.api.web.StatusSocket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

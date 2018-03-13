@@ -11,7 +11,9 @@ import org.irmacard.api.common.issuing.IdentityProviderRequest;
 import org.irmacard.api.common.issuing.IssuingRequest;
 import org.irmacard.api.common.signatures.SignatureClientRequest;
 import org.irmacard.api.common.signatures.SignatureProofRequest;
+import org.irmacard.api.web.ApiApplication;
 import org.irmacard.api.web.ApiConfiguration;
+import org.irmacard.api.web.ProtocolVersion;
 import org.irmacard.api.web.sessions.*;
 import org.irmacard.credentials.info.IssuerIdentifier;
 import org.slf4j.Logger;
@@ -107,7 +109,9 @@ public abstract class BaseResource
 		logger.info("Received session, token: " + token);
 		logger.info(request.toString());
 
-		return new ClientQr("2.0", "2.3", token, action.name().toLowerCase());
+		String minVersion = ApiApplication.minVersion.toString();
+		String maxVersion = ApiApplication.maxVersion.toString();
+		return new ClientQr(minVersion, maxVersion, token, action.name().toLowerCase());
 	}
 
 	public RequestClass get(String sessiontoken) {
