@@ -4,11 +4,44 @@
 
 This is a server that sits between IRMA tokens such as the [IRMA app](https://github.com/privacybydesign/irma_mobile) on the one hand, and authorized service or identity providers on the other hand. It handles all IRMA-specific cryptographic details of issuing credentials and verifying disclosure proofs on behalf of the service or identity provider. It exposes a RESTful JSON API driven by JWTs for authentication.
 
-The API that this server offers is described [here](https://credentials.github.io/protocols/irma-protocol). We offer a client of the API exponsed by this server in the form of a javascript library, [irma_js](https://github.com/privacybydesign/irma_js), that you can use in your webpages to easily issue and verify credentials. The flow of the various interactions of these components in a typical IRMA session is shown [here](https://credentials.github.io/#irma-session-flow).
+The API that this server offers is described [here](https://credentials.github.io/protocols/irma-protocol). We offer a client of the API exposed by this server in the form of a javascript library, [irma_js](https://github.com/privacybydesign/irma_js), that you can use in your webpages to easily issue and verify credentials. The flow of the various interactions of these components in a typical IRMA session is shown [here](https://credentials.github.io/#irma-session-flow).
 
 See below to run or build the server yourself. Alternatively, you can use our demo API server, which is setup to be very permissive (but only in the demo domain). It is hosted at `https://demo.irmacard.org/tomcat/irma_api_server/`, you can find its signing key [here](https://demo.irmacard.org/v2/data/pk.pem).
 
-# Configuring the server
+# Running with Docker (recommended)
+
+The most easy way to get this server quickly up and running is using Docker.
+
+First generate an JWT Keypair that will be used by the API server to sign its responses:
+
+    ./utils/docker/docker_keygen.sh
+
+The output of this command will show you a Docker command that will run the API server and set the JWT keys in environment variables. It will also show the public JWT key in PEM format. You need to save both the run command and the JWT key to a save location!
+
+Now, run the container using the command generated from the script, for example:
+
+    docker run -e IRMA_API_CONF_BASE64_JWT_PUBLICKEY=exampleDoNotCopy -e IRMA_API_CONF_BASE64_JWT_PRIVATEKEY=exampleDoNotCopy privacybydesign/irma_api_server
+
+By default, the API server in the container will allow unsigned verification and signature requests from all clients. Issue requests are blocked. This behaviour can be customized with environment variables (using '-e' flags of `docker run`). See below for configuration of these environment variables.
+
+## Testing and connecting to the Docker IRMA API Server
+
+First, obtain the IP address of the running container. This can for instance be done with the following commands:
+
+    docker ps                         # To obtain the container id
+    docker inspect CONTAINER_ID
+
+We already included an example test service provider in the directory `./utils/docker`. This service provider needs your JWT key (generated with `docker_keygen.sh`) in `./utils/docker/irma_api_key.pem`. So first place it there.
+
+Then, start the test service provider with the IP of the Docker container as argument:
+
+    cd utils/docker
+    npm install
+    npm testip http://IP_OF_CONTAINER:8080
+
+This will show a QR code. In order to make that QR code usable by the IRMA App, you'll need to make sure that the IRMA API server and the phone are on the same network (i.e. the Docker container should be reachable by the phone).
+
+# Configuring the server without Docker
 Currently, the server expects all configuration files in a single directory. The location of this server can be configured by setting a environment variable called `IRMA_API_CONF`, for example,
 
     IRMA_API_CONF=/etc/irma_api_server gradle appRun
@@ -60,7 +93,7 @@ Neither `utils/keygen.sh` nor `utils/preparetest.sh` will overwrite existing fil
 
 ## Config via environment variables
 
-All config entries in `config.json`, as well as all the jwt keys (i.e. sk/pk.der) can also be defined as environment variables. In this way, `irma_configuration` is the only extra directory/set of files that is needed to run the server. All entries in `config.json` can be 'converted' to an environment variable by converting the entry to upper case and prepending it with `IRMA_API_CONF_`. For instance the config entry `"enable_verification": true,`, would be set with an environment variable as follows:
+All config entries in `config.json`, as well as all the jwt keys (i.e. sk/pk.der) can also be defined as environment variables, which can be passed to a Docker container. In this way, `irma_configuration` is the only extra directory/set of files that is needed to run the server. All entries in `config.json` can be 'converted' to an environment variable by converting the entry to upper case and prepending it with `IRMA_API_CONF_`. For instance the config entry `"enable_verification": true,`, would be set with an environment variable as follows:
 
     export IRMA_API_CONF_ENABLE_VERIFICATION="true"
 

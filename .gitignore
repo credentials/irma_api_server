@@ -15,3 +15,6 @@ src/main/webapp/client/
 src/main/webapp/examples/
 src/main/webapp/server/
 *.swp
+yarn.lock
+utils/docker/*.pem
+utils/*.pem
