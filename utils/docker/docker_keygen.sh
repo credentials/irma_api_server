@@ -25,7 +25,7 @@ cat << EOF
 
 Key generation finished, use (and save!) the following command to start your container:
 
-# docker run -e IRMA_API_CONF_BASE64_JWT_PUBLICKEY=`cat $PK.der | base64 | tr -d '\n'` -e IRMA_API_CONF_BASE64_JWT_PRIVATEKEY=`cat $SK.der | base64 | tr -d '\n'` privacybydesign/irma_api_server 
+# docker run -p 8080:8080 -e IRMA_API_CONF_BASE64_JWT_PUBLICKEY=`cat $PK.der | base64 | tr -d '\n'` -e IRMA_API_CONF_BASE64_JWT_PRIVATEKEY=`cat $SK.der | base64 | tr -d '\n'` privacybydesign/irma_api_server
 
 EOF
 
