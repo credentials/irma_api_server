@@ -1,0 +1,27 @@
+<html>
+    <head>
+        <title>Signing IRMA attributes</title>
+        <link rel="stylesheet" type="text/css" href="css/irma.css">
+        <script type="text/javascript" src="../bower_components/jquery/dist/jquery.js"></script>
+        <script type="text/javascript" src="../bower_components/jquery-qrcode/dist/jquery.qrcode.js"></script>
+        <script type="text/javascript" src="bundle.js"></script>
+    </head>
+    <body>
+        <div class="irma_page">
+            <div class="irma_content">
+                <img src="img/irma_logo_160px.png" class="irma_logo_top" alt="IRMA logo"></img>
+                <div class="irma_title">signing</div>
+                <p id="irma_text">A website requested that you sign a message using some IRMA attributes. Please scan the QR code with your phone.</p>
+                <div id="spinner" class="load6">
+                    <div class="loader">Waiting for data...</div>
+                </div>
+                <div class="irma_option_container" style="display:none;">
+                    <div id="qrcode" class="irma_option_box"></div>
+                </div>
+            </div>
+            <div class="irma_button_box">
+                <button class="irma_button" id="cancel_button">Cancel</button>
+            </div>
+        </div>
+    </body>
+</html>
