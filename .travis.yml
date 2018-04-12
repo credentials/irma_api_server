@@ -1,1 +1,12 @@
 language: java
+sudo: required
+services:
+  - docker
+script: 
+  - git submodule init
+  - git submodule update
+  - ./gradlew build
+  - ./gradlew -b bower.gradle bowerInstall
+  - docker build -t "$DOCKER_USERNAME"/irma_api_server .
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - docker push "$DOCKER_USERNAME"/irma_api_server

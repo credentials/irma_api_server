@@ -1,0 +1,14 @@
+plugins {
+     id 'com.craigburke.bower-installer' version '2.5.1'
+}
+
+bower {
+    installBase = 'src/main/webapp/bower_components'
+    
+    'jquery'('2.1.4')
+    'jquery-qrcode'('https://github.com/lrsjng/jquery-qrcode.git')
+    'jwt-decode'('1.4.0')
+    'compass-mixins'('1.0.2')
+    'bootstrap'('3.3.7')
+    'handlebars'('4.0.5')
+}

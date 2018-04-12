@@ -1,0 +1,15 @@
+{
+  "name": "irma_api_example_tools",
+  "version": "0.1",
+  "description": "Some example scripts to test IRMA Api Server Docker image",
+  "main": "testsp.js",
+  "scripts": {
+    "testsp": "node testsp.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "jsonwebtoken": "^8.2.0",
+    "qrcode-terminal": "^0.11.0",
+    "request": "^2.85.0"
+  }
+}
