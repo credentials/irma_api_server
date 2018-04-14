@@ -29,10 +29,18 @@ Key generation finished, use (and save!) the following command to start your con
 
 EOF
 
-echo "Use (and save!) the following key in your IRMA-enabled application to verify JWT tokens:"
+echo "Use (and save!) the following key in your IRMA-enabled application to verify the JWT tokens that the API server outputs:"
 echo
 cat $PK.pem
 echo
+
+UTILS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+if [ ! -f "$UTILS/irma_api_key.pem" ]; then
+    cp $PK.pem "$UTILS/irma_api_key.pem"
+    echo "After starting the server using the command above, you can test your API server by running 'npm install && npm run testsp http://localhost:8080.''"
+else
+    echo "$UTILS/irma_api_key.pem already exists. It is not overwritten with the public key above, so if you want to run 'npm run testsp http://localhost:8080' to test your API server you will first have to write the public key above to $UTILS/irma_api_key.pem."
+fi
 
 # Clean up
 rm $SK.{pem,der} $PK.{pem,der}

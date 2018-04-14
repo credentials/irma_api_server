@@ -8,15 +8,15 @@ The API that this server offers is described [here](https://credentials.github.i
 
 See below to run or build the server yourself. Alternatively, you can use our demo API server, which is setup to be very permissive (but only in the demo domain). It is hosted at `https://demo.irmacard.org/tomcat/irma_api_server/`, you can find its signing key [here](https://demo.irmacard.org/v2/data/pk.pem).
 
-# Running with Docker (recommended)
+# Running with Docker
 
-The most easy way to get this server quickly up and running is using Docker.
+The easiest way to get this server quickly up and running is using Docker.
 
-First generate an JWT Keypair that will be used by the API server to sign its responses:
+First generate an JWT keypair that will be used by the API server to sign its responses:
 
     ./utils/docker/docker_keygen.sh
 
-The output of this command will show you a Docker command that will run the API server and set the JWT keys in environment variables. It will also show the public JWT key in PEM format. You need to save both the run command and the JWT key to a save location!
+This will output a Docker command that will run the API server and set the JWT keys in environment variables. It will also show the public JWT key in PEM format. You should save both the run command and the JWT key someplace safely!
 
 Now, run the container using the command generated from the script, for example:
 
@@ -24,25 +24,22 @@ Now, run the container using the command generated from the script, for example:
 
 The Docker container will bind to port 8080 on any interface, so the IRMA API Server is reachable at http://localhost:8080.
 
-By default, the API server in the container will allow unsigned verification and signature requests from all clients. Issue requests are blocked. This behaviour can be customized with environment variables (using '-e' flags of `docker run`). See below for configuration of these environment variables.
+By default, the API server in the container will allow unsigned verification and signature requests from all clients. Issue requests are blocked. This behaviour can be customized with environment variables (using '-e' flags of `docker run`). See [here](#config-via-environment-variables) for configuration of these environment variables.
 
 ## Testing and connecting to the Docker IRMA API Server
 
-We already included an example test service provider in the directory `./utils/docker`. This service provider needs your JWT key (generated with `docker_keygen.sh`) in `./utils/docker/irma_api_key.pem`. So first place it there.
-
-Then, start the test service provider:
+An example test service provider is included in the directory `utils/docker`:
 
     cd utils/docker
-    vi irma_api_key.pem   # Put your generated API key here
     npm install
-    npm testsp http://localhost:8080
+    npm run testsp http://localhost:8080
 
 This will show a QR code.
 
 In order to make that QR code usable by the IRMA App, you'll need to make sure that the IRMA API server and the phone are on the same network (i.e. the Docker container should be reachable by the phone). This can be done by providing your local IP address to the npm testcommand. You can find and start test service provider with:
 
    ip a          # To obtain your local ip address
-   npm testsp http://INSERT_LOCAL_IP_ADDRESS:8080
+   npm run testsp http://INSERT_LOCAL_IP_ADDRESS:8080
 
 Obvousily, your mobile phone should be able to reach your local IP address, and port 8080 should be openen in your firewall.
 

@@ -1,6 +1,6 @@
 {
   "name": "irma_api_example_tools",
-  "version": "0.1",
+  "version": "0.1.0",
   "description": "Some example scripts to test IRMA Api Server Docker image",
   "main": "testsp.js",
   "scripts": {
