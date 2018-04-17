@@ -146,6 +146,17 @@ public class IssueResource extends BaseResource
 		return super.create(session, isRequest, jwt);
 	}
 
+	private ProofP extractProofP(IssueSession session, IssueCommitmentMessage commitments, String schemeManager) {
+		// If the scheme mamanger uses a keyshare server, the JWT has to be present and valid
+		// If it is not, jwtParser.parseJwt() throws an exception.
+		String jwt = commitments.getProofPJwt();
+		if (jwt == null)
+			fail(ApiError.KEYSHARE_PROOF_MISSING, session);
+		JwtParser<ProofP> jwtParser = new JwtParser<>(ProofP.class, false, 60*1000, "ProofP", "ProofP");
+		jwtParser.setSigningKey(ApiConfiguration.getInstance().getKssPublicKey(schemeManager));
+		return jwtParser.parseJwt(jwt).getPayload();
+	}
+
 	@POST @Path("/{sessiontoken}/commitments")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -170,19 +181,7 @@ public class IssueResource extends BaseResource
 			for (CredentialIdentifier id : request.getCredentialList())
 				if (DescriptionStore.getInstance().getSchemeManager(id.getSchemeManagerName()).hasKeyshareServer())
 					schemeManager = id.getSchemeManagerName();
-			String jwt = commitments.getProofPJwt();
-			ProofP proofP = null; // Will extract this from the JWT
-
-			// If the scheme mamanger uses a keyshare server, the JWT has to be present and valid
-			// If it is not, jwtParser.parseJwt() throws an exception that we catch below.
-			if (session.isDistributed()) {
-				if (jwt == null)
-					fail(ApiError.KEYSHARE_PROOF_MISSING, session);
-
-				JwtParser<ProofP> jwtParser = new JwtParser<>(ProofP.class, false, 60*1000, "ProofP", "ProofP");
-				jwtParser.setSigningKey(ApiConfiguration.getInstance().getKssPublicKey(schemeManager));
-				proofP = jwtParser.parseJwt(jwt).getPayload();
-			}
+			ProofP proofP = null;
 
 			// Lookup the public keys of all ProofU's in the proof list. We have to do this before we can compute the CL
 			// sigatures below, because that also verifies the proofs, which needs these keys.
@@ -198,8 +197,11 @@ public class IssueResource extends BaseResource
 					proofs.setPublicKey(i, pk);
 				}
 
-				if (pk.getIssuerIdentifier().getSchemeManager().hasKeyshareServer())
+				if (pk.getIssuerIdentifier().getSchemeManager().hasKeyshareServer()) {
+					if (proofP == null)
+						proofP = extractProofP(session, commitments, schemeManager);
 					proofs.get(i).mergeProofP(proofP, pk);
+				}
 			}
 
 			// If any disclosures are required before we give the credentials, verify that they are present and correct
