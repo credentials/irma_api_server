@@ -68,3 +68,22 @@
     dest: "{{ conf_path }}"
   when: item.stat.exists
   with_items: "{{ clientdirs.results }}"
+
+- name: ensure privatekeys folder exists if necessary
+  file:
+    path: "{{ conf_path }}/irma_configuration/{{ item.schememanager }}/{{ item.issuer }}/PrivateKeys"
+    state: directory
+    mode: 0400
+  no_log: true # Don't spew privatekeys all over stdout
+  with_items: "{{ irma_privatekeys }}"
+  when: irma_privatekeys is defined
+
+- name: copy privatekeys from vault
+  copy:
+    content: "{{ item.privatekey }}"
+    dest: "{{ conf_path }}/irma_configuration/{{ item.schememanager }}/{{ item.issuer }}/PrivateKeys/{{ item.counter }}.xml"
+    mode: 0400
+  no_log: true
+  with_items: "{{ irma_privatekeys }}"
+  when: irma_privatekeys is defined
+  notify: restart apiserver
