@@ -231,11 +231,9 @@ public class VerificationResource extends BaseResource
                 try {
                     HttpRequest proofResultRequest = transport.createRequestFactory().buildPostRequest(new GenericUrl(url), content);
                     HttpResponse response = proofResultRequest.execute();
-                    logger.info("Proof sent to callbackURL, result: " + new BufferedReader(new InputStreamReader(response.getContent())).readLine());
-                } catch (HttpResponseException e) {
-                    logger.error("Sending proof failed!");
-                    e.printStackTrace();
-                } catch (IOException e) {
+                    logger.info("Proof sent to callbackURL");
+                } catch (Exception e) {
+                    logger.error("Sending proof failed: {}", e.getMessage());
                     e.printStackTrace();
                 }
 

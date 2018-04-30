@@ -142,6 +142,10 @@ public class IssueResource extends BaseResource
 		if (!request.credentialsMatchStore())
 			throw new ApiException(ApiError.ATTRIBUTES_WRONG);
 
+		logger.info("Received issuance session");
+		for (CredentialRequest cred : request.getCredentials())
+			logger.info("type: {}", cred.getIdentifier().toString());
+
 		IssueSession session = new IssueSession(isDistributed);
 		return super.create(session, isRequest, jwt);
 	}

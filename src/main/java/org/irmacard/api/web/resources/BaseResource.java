@@ -106,9 +106,6 @@ public abstract class BaseResource
 		String token = session.getSessionToken();
 		sessions.addSession(session);
 
-		logger.info("Received session, token: " + token);
-		logger.info(request.toString());
-
 		String minVersion = ApiApplication.minVersion.toString();
 		String maxVersion = ApiApplication.maxVersion.toString();
 		return new ClientQr(minVersion, maxVersion, token, action.name().toLowerCase());
