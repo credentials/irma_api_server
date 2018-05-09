@@ -33,22 +33,19 @@
 
 package org.irmacard.api.web;
 
-import foundation.privacybydesign.common.BaseConfiguration;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.glassfish.jersey.test.TestProperties;
 import org.glassfish.jersey.test.jetty.JettyTestContainerFactory;
-import org.irmacard.api.common.AttributeBasedSignature;
 import org.irmacard.api.common.AttributeDisjunction;
 import org.irmacard.api.common.AttributeDisjunctionList;
 import org.irmacard.api.common.ClientQr;
+import org.irmacard.api.common.IrmaSignedMessage;
 import org.irmacard.api.common.disclosure.DisclosureProofResult.Status;
 import org.irmacard.api.common.signatures.SignatureClientRequest;
 import org.irmacard.api.common.signatures.SignatureProofRequest;
-import org.irmacard.api.common.signatures.SignatureProofRequest.MessageType;
 import org.irmacard.api.common.signatures.SignatureProofResult;
 import org.irmacard.api.common.util.GsonUtil;
 import org.irmacard.credentials.Attributes;
@@ -72,27 +69,24 @@ import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.KeyManagementException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
  * Test class for signature createtion and verification
  */
 public class SignatureTest extends JerseyTest {
-	public static final String schemeManager = "irma-demo";
-	private static String configuration;
+	private static final String schemeManager = "irma-demo";
 
 	public SignatureTest() {
 		super(new JettyTestContainerFactory());
 	}
 
 	@BeforeClass
-	public static void initializeInformation() throws InfoException {
+	public static void initializeInformation() {
 		ApiConfiguration.testing = true;
 
 		try {
-			configuration = new String(ApiConfiguration.getResource("config.test.json"));
+			String configuration = new String(ApiConfiguration.getResource("config.test.json"));
 			ApiConfiguration.instance = GsonUtil.getGson().fromJson(configuration, ApiConfiguration.class);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -111,14 +105,14 @@ public class SignatureTest extends JerseyTest {
 		return new ApiApplication();
 	}
 
-	public String createSession(String value) throws InfoException {
+	private String createSession(String value) throws InfoException {
 		AttributeDisjunction d = new AttributeDisjunction("Over 12", schemeManager + ".MijnOverheid.ageLower.over12");
 		if (value != null)
 			d.getValues().put(d.get(0), value);
 
 		AttributeDisjunctionList attrs = new AttributeDisjunctionList(1);
 		attrs.add(d);
-		SignatureProofRequest request = new SignatureProofRequest(null, null, attrs, "to be signed", SignatureProofRequest.MessageType.STRING);
+		SignatureProofRequest request = new SignatureProofRequest(BigInteger.ONE, BigInteger.ONE, attrs, "to be signed");
 		SignatureClientRequest spRequest = new SignatureClientRequest("testrequest", request, 60);
 
 		Map<String, Object> claims = new HashMap<>();
@@ -127,9 +121,7 @@ public class SignatureTest extends JerseyTest {
 		claims.put("sub", "signature_request");
 		claims.put("iat", System.currentTimeMillis() / 1000);
 
-		JwtBuilder builder = Jwts.builder().setPayload(GsonUtil.getGson().toJson(claims));
-		String jwt = builder.compact();
-
+		String jwt = Jwts.builder().setPayload(GsonUtil.getGson().toJson(claims)).compact();
 		ClientQr qr = target("/signature/").request(MediaType.APPLICATION_JSON)
 				.post(Entity.entity(jwt, MediaType.TEXT_PLAIN), ClientQr.class);
 
@@ -150,7 +142,7 @@ public class SignatureTest extends JerseyTest {
 		return GsonUtil.getGson().fromJson(json, SignatureProofResult.class);
 	}
 
-	public void doSession(IdemixCredential cred, List<Integer> disclosed,
+	private void doSession(IdemixCredential cred, List<Integer> disclosed,
 	                      String session, Status expectedPostResult, Status expectedVerificationResult, boolean isSig)
 			throws InfoException, KeyException, KeyManagementException {
 		SignatureProofRequest request = target("/signature/" + session).request(MediaType.APPLICATION_JSON)
@@ -160,26 +152,28 @@ public class SignatureTest extends JerseyTest {
 		ProofList proofs = new ProofListBuilder(request.getContext(), request.getNonce(), isSig)
 				.addProofD(cred, disclosed)
 				.build();
+		IrmaSignedMessage irmaSignedMessage = new IrmaSignedMessage(proofs, request.getSignatureNonce(), request.getContext(), request.getMessage());
 		Status status = target("/signature/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
-				.post(Entity.entity(proofs, MediaType.APPLICATION_JSON), Status.class);
+				.post(Entity.entity(irmaSignedMessage, MediaType.APPLICATION_JSON), Status.class);
 
 		assert(status == expectedPostResult);
 
 
 		// Verify the token itself, and that the credential was valid
-		String jwt = target("/signature/" + session  +"/getsignature").request(MediaType.TEXT_PLAIN)
+		String jwt = target("/signature/" + session +"/getsignature").request(MediaType.TEXT_PLAIN)
 				.get(String.class);
 		SignatureProofResult result = parseJwt(jwt);
 
+		// Verify 'stateless' api
 		jwt = target("/signature/checksignature").request(MediaType.TEXT_PLAIN)
-				.post(Entity.entity(result, MediaType.APPLICATION_JSON), String.class);
+				.post(Entity.entity(irmaSignedMessage, MediaType.APPLICATION_JSON), String.class);
 		result = parseJwt(jwt);
 		assert(result.getStatus() == expectedVerificationResult);
 
 		// If status is valid, verify signature in the JSON response
 		// (Note: a SP is not required to do this, just for us to test)
 		if (expectedPostResult.equals(Status.VALID)) {
-			AttributeBasedSignature signature = result.getSignature();
+			IrmaSignedMessage signature = result.getSignature();
 			proofs = signature.getProofs();
 			proofs.populatePublicKeyArray();
 			proofs.setSig(true); // This value isn't stored in the serialized signature
@@ -190,12 +184,10 @@ public class SignatureTest extends JerseyTest {
 			// Verify signature using the enclosed nonce, context and message data by constructing a new request
 			BigInteger nonce = signature.getNonce();
 			BigInteger context = signature.getContext();
-			String message = result.getMessage();
-
-			assert (result.getMessageType() == MessageType.STRING);
+			String message = signature.getMessage();
 
 			SignatureProofRequest resultReq = new SignatureProofRequest(nonce, context,
-					new AttributeDisjunctionList(), message, MessageType.STRING);
+					new AttributeDisjunctionList(), message);
 			result = resultReq.verify(proofs, false);
 			assert result.getStatus().equals(Status.VALID);
 		}
@@ -232,7 +224,7 @@ public class SignatureTest extends JerseyTest {
 		doSession(cred, Arrays.asList(1, 2), session, Status.MISSING_ATTRIBUTES, Status.VALID, true);
 	}
 
-	public IdemixCredential issue(Date signDate) throws KeyException, InfoException, CredentialsException {
+	private IdemixCredential issue(Date signDate) throws KeyException, InfoException, CredentialsException {
 		// Meta info
 		IssuerIdentifier issuerId = new IssuerIdentifier(schemeManager + ".MijnOverheid");
 		CredentialIdentifier credId = new CredentialIdentifier(issuerId, "ageLower");
@@ -284,27 +276,30 @@ public class SignatureTest extends JerseyTest {
 		Calendar exp = Calendar.getInstance();
 		exp.add(Calendar.YEAR, -2);
 
+		final BigInteger nonce = BigInteger.TEN;
+		final BigInteger context = BigInteger.ONE;
+		final String message = "foo";
+
 		SignatureProofRequest request = new SignatureProofRequest(
-				BigInteger.TEN, BigInteger.ONE, null, "foo", MessageType.STRING);
-		ProofList proofs = new ProofListBuilder(BigInteger.ONE, request.getNonce(), true)
+				nonce, context, null, message);
+		ProofList proofs = new ProofListBuilder(context, request.getNonce(), true)
 				.addProofD(issue(exp.getTime()), Arrays.asList(1, 2))
 				.build();
 
-		SignatureProofResult sigMessage = new SignatureProofResult(proofs, request);
+		IrmaSignedMessage signature = new IrmaSignedMessage(proofs, nonce, context, message);
 
 		if (verificationDate == null) {
 			String jwt = target("/signature/checksignature")
 					.request(MediaType.TEXT_PLAIN)
-					.post(Entity.entity(sigMessage, MediaType.APPLICATION_JSON), String.class);
+					.post(Entity.entity(signature, MediaType.APPLICATION_JSON), String.class);
 			SignatureProofResult verifyResult = parseJwt(jwt);
 			assert (verifyResult.getStatus() == Status.EXPIRED);
 		} else {
 			String jwt = target("/signature/checksignature/" + verificationDate.getTime()/1000)
 					.request(MediaType.TEXT_PLAIN)
-					.post(Entity.entity(sigMessage, MediaType.APPLICATION_JSON), String.class);
+					.post(Entity.entity(signature, MediaType.APPLICATION_JSON), String.class);
 			SignatureProofResult verifyResult = parseJwt(jwt);
 			assert (verifyResult.getStatus() == Status.VALID);
 		}
 	}
-
 }

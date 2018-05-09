@@ -34,9 +34,9 @@
 package org.irmacard.api.web.resources;
 
 import io.jsonwebtoken.Jwts;
-import org.irmacard.api.common.AttributeBasedSignature;
 import org.irmacard.api.common.AttributeDisjunction;
 import org.irmacard.api.common.ClientQr;
+import org.irmacard.api.common.IrmaSignedMessage;
 import org.irmacard.api.common.JwtSessionRequest;
 import org.irmacard.api.common.exceptions.ApiError;
 import org.irmacard.api.common.exceptions.ApiException;
@@ -48,7 +48,6 @@ import org.irmacard.api.web.ApiConfiguration;
 import org.irmacard.api.web.sessions.IrmaSession.Status;
 import org.irmacard.api.web.sessions.Sessions;
 import org.irmacard.api.web.sessions.SignatureSession;
-import org.irmacard.credentials.idemix.proofs.ProofList;
 import org.irmacard.credentials.info.AttributeIdentifier;
 import org.irmacard.credentials.info.InfoException;
 import org.irmacard.credentials.info.KeyException;
@@ -136,14 +135,12 @@ public class SignatureResource extends BaseResource
 	@POST @Path("/{sessiontoken}/proofs")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public SignatureProofResult.Status proofs(ProofList proofs, @PathParam("sessiontoken") String sessiontoken)
-			throws InfoException {
+	public SignatureProofResult.Status proofs(IrmaSignedMessage signature, @PathParam("sessiontoken") String sessiontoken) {
 		SignatureSession session = sessions.getNonNullSession(sessiontoken);
-
 		SignatureProofResult result;
 		try {
-			proofs.populatePublicKeyArray();
-			result = session.getRequest().verify(proofs, false); // Don't allow expired attributes here
+			SignatureProofRequest request = session.getRequest();
+			result = signature.verify(request, Calendar.getInstance().getTime(), false); // Don't allow expired attributes here
 		} catch (Exception e) {
 			// Everything in the verification has to be exactly right; if not, we don't accept the proofs as valid
 			e.printStackTrace();
@@ -177,29 +174,27 @@ public class SignatureResource extends BaseResource
 	@POST @Path("/checksignature")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.TEXT_PLAIN)
-	public String checkSignature(SignatureProofResult result) throws KeyManagementException {
-		return checkSignature(result, Calendar.getInstance().getTime(), true);
+	public String checkSignature(IrmaSignedMessage signature) throws KeyManagementException {
+		 return checkSignature(signature, Calendar.getInstance().getTime(), true);
 	}
 
 	@POST @Path("/checksignature/{date}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.TEXT_PLAIN)
-	public String checkSignature(SignatureProofResult result, @PathParam("date") Long expiryDate)
+	public String checkSignature(IrmaSignedMessage signature, @PathParam("date") Long expiryDate)
 	throws KeyManagementException {
-		return checkSignature(result, new Date(expiryDate * 1000), false);
+		return checkSignature(signature, new Date(expiryDate * 1000), false);
 	}
 
-	private String checkSignature(SignatureProofResult result, Date expiryDate, boolean allowExpired)
+	private String checkSignature(IrmaSignedMessage signature, Date expiryDate, boolean allowExpired)
 	throws KeyManagementException {
 		try {
-			AttributeBasedSignature signature = result.getSignature();
-			if (result.getMessageType() != SignatureProofRequest.MessageType.STRING || result.getMessage() == null
-					|| signature == null || signature.getNonce() == null || signature.getContext() == null) {
+			if (signature == null || signature.getNonce() == null || signature.getContext() == null) {
 				logger.error("Error in signature verification request");
 				throw new ApiException(ApiError.MALFORMED_INPUT);
 			}
 
-			return jwtSign(signature.verify(result.getMessage(), expiryDate, allowExpired), DEFAULT_TOKEN_VALIDITY);
+			return jwtSign(signature.verify(expiryDate, allowExpired), DEFAULT_TOKEN_VALIDITY);
 		} catch (ClassCastException | InfoException | KeyException e ) {
 			logger.error("Error verifying proof: ");
 			e.printStackTrace();
