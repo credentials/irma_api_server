@@ -37,38 +37,38 @@ public class ApiConfiguration extends BaseConfiguration<ApiConfiguration> {
 	}
 
 	/* Configuration keys and defaults */
-	private String jwt_privatekey = "sk.der";
-	private String jwt_publickey = "pk.der";
-	private String schemeManager_publickey = "schemeManager.pk.pem";
-	private String jwt_issuer = null;
+	public String jwt_privatekey = "sk.der";
+	public String jwt_publickey = "pk.der";
+	public String schemeManager_publickey = "schemeManager.pk.pem";
+	public String jwt_issuer = null;
 
-    private String client_ip_header = null;
+    public String client_ip_header = null;
 
-	boolean enable_verification = true;
-	boolean enable_issuing = false;
-	boolean enable_signing = false;
+	public boolean enable_verification = true;
+	public boolean enable_issuing = false;
+	public boolean enable_signing = false;
 
-	boolean reject_unfloored_validity_timestamps = true;
+	public boolean reject_unfloored_validity_timestamps = true;
 
-	boolean allow_unsigned_issue_requests = false;
-	boolean allow_unsigned_verification_requests = false;
-	boolean allow_unsigned_signature_requests = false;
+	public boolean allow_unsigned_issue_requests = false;
+	public boolean allow_unsigned_verification_requests = false;
+	public boolean allow_unsigned_signature_requests = false;
 
-	int max_jwt_age = 60;
-	int token_response_timeout = 10 * 60;
-	int token_get_timeout = 2 * 60;
-	int client_get_timeout = 2 * 60;
+	public int max_jwt_age = 60;
+	public int token_response_timeout = 10 * 60;
+	public int token_get_timeout = 2 * 60;
+	public int client_get_timeout = 2 * 60;
 
-	HashMap<String, ArrayList<String>> authorized_idps = new HashMap<>();
-	HashMap<String, ArrayList<String>> authorized_sps = new HashMap<>();
-	HashMap<String, ArrayList<String>> authorized_sigclients = new HashMap<>();
+	public HashMap<String, ArrayList<String>> authorized_idps = new HashMap<>();
+	public HashMap<String, ArrayList<String>> authorized_sps = new HashMap<>();
+	public HashMap<String, ArrayList<String>> authorized_sigclients = new HashMap<>();
 
-	HashMap<String, String> client_names = new HashMap<>();
+	public HashMap<String, String> client_names = new HashMap<>();
 
-    String events_webhook_uri = null;
-    String events_webhook_authorizationToken = null;
+	public String events_webhook_uri = null;
+	public String events_webhook_authorizationToken = null;
 
-	String schemeManager_update_uri = null;
+	public String schemeManager_update_uri = null;
 
 	/* Transient members for convenience */
 	private transient PrivateKey jwtPrivateKey;
