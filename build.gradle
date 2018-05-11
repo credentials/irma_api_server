@@ -53,7 +53,19 @@ task preTest(type: Exec) {
     }
 }
 
+task compileGo(type: Exec) {
+    commandLine 'go', 'build', '-o', 'build/timestamp', 'src/main/go/timestamp.go'
+    ignoreExitValue = true // Without this the task is aborted before printing the output below
+    errorOutput = new ByteArrayOutputStream()
+    doLast {
+        if (execResult.exitValue != 0) {
+            throw new GradleException('Go compilation failed: ' + errorOutput.toString())
+        }
+    }
+}
+
 processTestResources.dependsOn preTest
+classes.dependsOn compileGo
 
 gretty {
     contextConfigFile = file('src/test/resources/jetty-env.xml')
