@@ -67,6 +67,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.KeyManagementException;
 import java.util.*;
@@ -301,5 +302,12 @@ public class SignatureTest extends JerseyTest {
 			SignatureProofResult verifyResult = parseJwt(jwt);
 			assert (verifyResult.getStatus() == Status.VALID);
 		}
+	}
+
+	@Test
+	private void go() throws IOException {
+		String command = "ls";
+		Process child = Runtime.getRuntime().exec(command);
+		InputStream in = child.getInputStream();
 	}
 }

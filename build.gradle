@@ -54,6 +54,7 @@ task preTest(type: Exec) {
 }
 
 task compileGo(type: Exec) {
+    // TODO go get -u github.com/privacybydesign/irmago
     commandLine 'go', 'build', '-o', 'build/timestamp', 'src/main/go/timestamp.go'
     ignoreExitValue = true // Without this the task is aborted before printing the output below
     errorOutput = new ByteArrayOutputStream()
