@@ -1,0 +1,27 @@
+<html>
+    <head>
+        <title>IRMA demo disclosure</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="../irma_js/build/bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+        <script type="text/javascript" src="../irma_js/bower_components/jquery/dist/jquery.js"></script>
+        <script type="text/javascript" src="../irma_js/bower_components/jwt-decode/build/jwt-decode.js"></script>
+        <script type="text/javascript" src="../irma_js/build/client/irma.js" async defer></script>
+        <script type="text/javascript" src="verify.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <div class="row">
+                <div class="col-xs-12 col-md-8 col-lg-6 col-md-offset-2 col-lg-offset-3">
+                    <h2>IRMA demo disclosure</h2>
+                    <label for="ip">API server address</label>&nbsp;<input id="ip" type="text" />
+                    <button id="try_irma_btn" class="btn btn-primary">Disclose attributes</button>
+
+                    <h3>Result</h3>
+                    <h2 id="result_status"></h2>
+                    <p>Content of JSON web token:</p>
+                    <pre id="token-content"></pre>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
