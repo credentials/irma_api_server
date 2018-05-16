@@ -2,11 +2,18 @@ language: java
 sudo: required
 services:
   - docker
+before_script:
+  - npm install -g bower
+  - npm install -g grunt-cli
 script: 
-  - git submodule init
-  - git submodule update
+  - git submodule update --init
+  - cd utils/irma_js
+  - bower install
+  - npm install
+  - grunt build --client --server
+  - cd -
+  - cp -r utils/irma_js/build/client utils/irma_js/build/server utils/irma_js/build/bower_components src/main/webapp
   - ./gradlew build
-  - ./gradlew -b bower.gradle bowerInstall
   - docker build -t "$DOCKER_USERNAME"/irma_api_server .
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   - docker push "$DOCKER_USERNAME"/irma_api_server

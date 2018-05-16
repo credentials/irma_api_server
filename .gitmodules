@@ -7,3 +7,6 @@
 [submodule "docker/irma_configuration/irma-demo"]
 	path = docker/irma_configuration/irma-demo
 	url = https://github.com/privacybydesign/irma-demo-schememanager
+[submodule "utils/irma_js"]
+	path = utils/irma_js
+	url = https://github.com/privacybydesign/irma_js
