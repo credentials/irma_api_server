@@ -102,8 +102,14 @@ public class ApiConfiguration extends BaseConfiguration<ApiConfiguration> {
 
 	private boolean canRequestAttribute(String client, AttributeIdentifier attribute,
 	                                    HashMap<String, ArrayList<String>> authorizedClients) {
-		if (!authorizedClients.containsKey(client))
-			return false;
+		if (!authorizedClients.containsKey(client)) {
+			// If requested wildcard, and not present, return false
+			if (client.equals("*"))
+				return false;
+
+			// Try again with wildcard if we haven't tried that yet
+			return canRequestAttribute("*", attribute, authorizedClients);
+		}
 
 		ArrayList<String> attributes = authorizedClients.get(client);
 

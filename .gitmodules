@@ -1,3 +1,12 @@
 [submodule "irma-demo-schememanager"]
 	path = src/test/resources/irma_configuration/irma-demo
 	url = https://github.com/privacybydesign/irma-demo-schememanager.git
+[submodule "docker/irma_configuration/pbdf_schememanager"]
+	path = docker/irma_configuration/pbdf
+	url = https://github.com/privacybydesign/pbdf-schememanager
+[submodule "docker/irma_configuration/irma-demo"]
+	path = docker/irma_configuration/irma-demo
+	url = https://github.com/privacybydesign/irma-demo-schememanager
+[submodule "utils/irma_js"]
+	path = utils/irma_js
+	url = https://github.com/privacybydesign/irma_js
