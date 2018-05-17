@@ -13,6 +13,14 @@
             <div class="row">
                 <div class="col-xs-12 col-md-8 col-lg-6 col-md-offset-2 col-lg-offset-3">
                     <h2>IRMA demo disclosure</h2>
+                    <p>
+                        This page demonstrates IRMA attributes disclosure, using the IRMA API server that you specify below. Be sure to enter an IP address or domain name that your <a href="https://github.com/privacybydesign/irma_mobile">IRMA app</a> is able to connect to (i.e., <code>localhost</code> will generally not work).
+                    </p>
+                    <p>Examples (assuming your IP address is <code>1.2.3.4</code>):</p>
+                    <ul>
+                        <li>If you are running the API server using docker: <code>1.2.3.4:8088</code></li>
+                        <li>If you are running the API server directly or using ansible: <code>1.2.3.4:8088/irma_api_server</code></li>
+                    </ul>
                     <label for="ip">API server address</label>&nbsp;<input id="ip" type="text" />
                     <button id="try_irma_btn" class="btn btn-primary">Disclose attributes</button>
 

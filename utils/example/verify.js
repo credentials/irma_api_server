@@ -30,7 +30,7 @@ $(function() {
             ip = "http://" + ip;
         if (!ip.endsWith("/"))
             ip = ip + "/";
-        IRMA.init(ip + "irma_api_server/api/v2/", ip + "irma_api_server/server/");
+        IRMA.init(ip + "api/v2/", ip + "server/");
         var jwt = IRMA.createUnsignedVerificationJWT(sprequest);
         IRMA.verify(jwt, onSuccess, onCancel, onError);
     });
