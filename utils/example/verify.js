@@ -1,18 +1,14 @@
 $(function() {
-    var sprequest = {
-        "request": {
-            "content": [
-                {
-                    "label": "Over 18",
-                    "attributes": ["pbdf.pbdf.ageLimits.over18"]
-                },
-            ]
-        }
-    };
-
     var onSuccess = function(data) {
         $("#result_status").html("Success!");
-        $("#token-content").text(JSON.stringify(jwt_decode(data), null, 2));
+        var jwt = jwt_decode(data);
+        var table = $("tbody");
+        $.each(jwt.attributes, function(attrid, attrvalue) {
+            var tr = $("<tr>").appendTo(table);
+            tr.append($("<td>", { text: attrid }));
+            tr.append($("<td>", { text: attrvalue }));
+        });
+        $("#token-content").text(JSON.stringify(jwt, null, 2));
     }
 
     var onCancel = function(data) {
@@ -31,7 +27,20 @@ $(function() {
         if (!ip.endsWith("/"))
             ip = ip + "/";
         IRMA.init(ip + "api/v2/", ip + "server/");
+
+        var attr = $("#attribute").val();
+        var sprequest = {
+            "request": {
+                "content": [
+                    {
+                        "label": "IRMA attribute",
+                        "attributes": [attr]
+                    },
+                ]
+            }
+        };
         var jwt = IRMA.createUnsignedVerificationJWT(sprequest);
+
         IRMA.verify(jwt, onSuccess, onCancel, onError);
     });
 });

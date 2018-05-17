@@ -1,12 +1,23 @@
 <html>
     <head>
         <title>IRMA demo disclosure</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link href="../irma_js/build/bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
-        <script type="text/javascript" src="../irma_js/bower_components/jquery/dist/jquery.js"></script>
-        <script type="text/javascript" src="../irma_js/bower_components/jwt-decode/build/jwt-decode.js"></script>
-        <script type="text/javascript" src="../irma_js/build/client/irma.js" async defer></script>
-        <script type="text/javascript" src="verify.js"></script>
+        <style type="text/css">
+            label {
+                display: inline-block;
+                width: 140px;
+                text-align: right;
+            }
+            #form {
+                padding: 1em;
+            }
+        </style>
+        <script type="text/javascript" src="../irma_js/bower_components/jquery/dist/jquery.js" defer></script>
+        <script type="text/javascript" src="../irma_js/bower_components/jwt-decode/build/jwt-decode.js" defer></script>
+        <script type="text/javascript" src="../irma_js/build/client/irma.js" defer></script>
+        <script type="text/javascript" src="verify.js" defer></script>
     </head>
     <body>
         <div class="container">
@@ -21,12 +32,28 @@
                         <li>If you are running the API server using docker: <code>1.2.3.4:8088</code></li>
                         <li>If you are running the API server directly or using ansible: <code>1.2.3.4:8088/irma_api_server</code></li>
                     </ul>
-                    <label for="ip">API server address</label>&nbsp;<input id="ip" type="text" />
-                    <button id="try_irma_btn" class="btn btn-primary">Disclose attributes</button>
+
+                    <div id="form">
+                        <label for="attribute">Attribute to disclose</label>&nbsp;
+                        <input id="attribute" type="text" size="30" value="pbdf.pbdf.ageLimits.over18"/><br/>
+                        <label for="ip">API server address</label>&nbsp;
+                        <input id="ip" type="text" size="30" /><br/>
+                        <button id="try_irma_btn" class="btn btn-primary">Disclose attribute</button>
+                    </div>
 
                     <h3>Result</h3>
-                    <h2 id="result_status"></h2>
-                    <p>Content of JSON web token:</p>
+                    <p>Status: <span id="result_status">none</span></p>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Attribute ID</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                    <p>Content of JSON web token returned by API server:</p>
                     <pre id="token-content"></pre>
                 </div>
             </div>
