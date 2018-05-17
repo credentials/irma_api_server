@@ -25,7 +25,7 @@ cat << EOF
 
 Key generation finished, use (and save!) the following command to start your container:
 
-# docker run -p 8080:8080 -e IRMA_API_CONF_BASE64_JWT_PUBLICKEY=`cat $PK.der | base64 | tr -d '\n'` -e IRMA_API_CONF_BASE64_JWT_PRIVATEKEY=`cat $SK.der | base64 | tr -d '\n'` privacybydesign/irma_api_server
+# docker run -p 8088:8080 -e IRMA_API_CONF_BASE64_JWT_PUBLICKEY=`cat $PK.der | base64 | tr -d '\n'` -e IRMA_API_CONF_BASE64_JWT_PRIVATEKEY=`cat $SK.der | base64 | tr -d '\n'` privacybydesign/irma_api_server
 
 EOF
 
@@ -37,9 +37,9 @@ echo
 UTILS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 if [ ! -f "$UTILS/irma_api_key.pem" ]; then
     cp $PK.pem "$UTILS/irma_api_key.pem"
-    echo "After starting the server using the command above, you can test your API server by running 'npm install && npm run testsp http://localhost:8080.''"
+    echo "After starting the server using the command above, you can test your API server by running 'npm install && npm run testsp http://localhost:8088.''"
 else
-    echo "$UTILS/irma_api_key.pem already exists. It is not overwritten with the public key above, so if you want to run 'npm run testsp http://localhost:8080' to test your API server you will first have to write the public key above to $UTILS/irma_api_key.pem."
+    echo "$UTILS/irma_api_key.pem already exists. It is not overwritten with the public key above, so if you want to run 'npm run testsp http://localhost:8088' to test your API server you will first have to write the public key above to $UTILS/irma_api_key.pem."
 fi
 
 # Clean up
