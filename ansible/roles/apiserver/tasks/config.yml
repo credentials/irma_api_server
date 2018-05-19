@@ -74,7 +74,7 @@
     path: "{{ conf_path }}/irma_configuration/{{ item.schememanager }}/{{ item.issuer }}/PrivateKeys"
     state: directory
     group: irma_api_server
-    mode: 0440
+    mode: 0550
   no_log: true # Don't spew privatekeys all over stdout
   with_items: "{{ irma_privatekeys }}"
   when: irma_privatekeys is defined
