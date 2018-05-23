@@ -9,15 +9,11 @@ import (
 	"github.com/privacybydesign/irmago"
 )
 
-func getJsonErrorString(e error) string {
-	return fmt.Sprintf("{\"error\":\"%v\"}", e)
-}
-
 func parseCliArgs() (*irma.Configuration, *irma.IrmaSignedMessage, error) {
 	if len(os.Args) < 3 {
 		return nil, nil, errors.New("Missing IrmaSignedMessage argument")
 	}
-	conf, err := parse(os.Args[1])
+	conf, err := parseIrmaConfiguration(os.Args[1])
 	if err != nil {
 		return nil, nil, err
 	}
@@ -25,7 +21,7 @@ func parseCliArgs() (*irma.Configuration, *irma.IrmaSignedMessage, error) {
 	return conf, abs, json.Unmarshal([]byte(os.Args[2]), abs)
 }
 
-func parse(path string) (conf *irma.Configuration, err error) {
+func parseIrmaConfiguration(path string) (conf *irma.Configuration, err error) {
 	if conf, err = irma.NewConfiguration(path, ""); err != nil {
 		return
 	}
@@ -39,7 +35,7 @@ func main() {
 		exitCode := 0
 		if err != nil {
 			exitCode = 1
-			fmt.Print(getJsonErrorString(err))
+			fmt.Print(err.Error())
 		}
 		os.Exit(exitCode)
 	}()
