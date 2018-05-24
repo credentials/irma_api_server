@@ -54,9 +54,8 @@ task preTest(type: Exec) {
 }
 
 task compileGo(type: Exec) {
-    // TODO go get -u github.com/privacybydesign/irmago
-    commandLine 'go', 'build', '-o', 'src/main/resources/timestamp', 'src/main/go/timestamp.go'
-    ignoreExitValue = true // Without this the task is aborted before printing the output below
+    commandLine './src/main/go/build.sh'
+    ignoreExitValue = true // Without this the task is aborted before printing the output below in case of error
     errorOutput = new ByteArrayOutputStream()
     doLast {
         if (execResult.exitValue != 0) {
@@ -66,7 +65,6 @@ task compileGo(type: Exec) {
 }
 
 processTestResources.dependsOn preTest
-classes.dependsOn compileGo
 
 gretty {
     contextConfigFile = file('src/test/resources/jetty-env.xml')

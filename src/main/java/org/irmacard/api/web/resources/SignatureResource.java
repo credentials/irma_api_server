@@ -45,6 +45,7 @@ import org.irmacard.api.common.signatures.SignatureProofRequest;
 import org.irmacard.api.common.signatures.SignatureProofResult;
 import org.irmacard.api.common.util.GsonUtil;
 import org.irmacard.api.web.ApiConfiguration;
+import org.irmacard.api.web.GoBridge;
 import org.irmacard.api.web.sessions.IrmaSession.Status;
 import org.irmacard.api.web.sessions.Sessions;
 import org.irmacard.api.web.sessions.SignatureSession;
@@ -140,7 +141,12 @@ public class SignatureResource extends BaseResource
 		SignatureProofResult result;
 		try {
 			SignatureProofRequest request = session.getRequest();
-			result = signature.verify(request, Calendar.getInstance().getTime(), false); // Don't allow expired attributes here
+			request.setTimestamp(signature.getTimestamp());
+			Date time = Calendar.getInstance().getTime();
+			if (signature.getTimestamp() != null)
+				time = new Date(signature.getTimestamp().Time * 1000);
+			result = signature.verify(request, time, false);
+			GoBridge.verifyTimestamp(signature);
 		} catch (Exception e) {
 			// Everything in the verification has to be exactly right; if not, we don't accept the proofs as valid
 			e.printStackTrace();
@@ -175,7 +181,10 @@ public class SignatureResource extends BaseResource
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.TEXT_PLAIN)
 	public String checkSignature(IrmaSignedMessage signature) throws KeyManagementException {
-		 return checkSignature(signature, Calendar.getInstance().getTime(), true);
+		Date time = Calendar.getInstance().getTime();
+		if (signature.getTimestamp() != null)
+			time = new Date(signature.getTimestamp().Time * 1000);
+		 return checkSignature(signature, time, true);
 	}
 
 	@POST @Path("/checksignature/{date}")

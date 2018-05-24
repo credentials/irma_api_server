@@ -9,16 +9,18 @@ import (
 	"github.com/privacybydesign/irmago"
 )
 
-func parseCliArgs() (*irma.Configuration, *irma.IrmaSignedMessage, error) {
+func parseCliArgs() (conf *irma.Configuration, abs *irma.IrmaSignedMessage, err error) {
 	if len(os.Args) < 3 {
-		return nil, nil, errors.New("Missing IrmaSignedMessage argument")
+		err = errors.New("Missing IrmaSignedMessage argument")
+		return
 	}
-	conf, err := parseIrmaConfiguration(os.Args[1])
+	conf, err = parseIrmaConfiguration(os.Args[1])
 	if err != nil {
-		return nil, nil, err
+		return
 	}
-	abs := new(irma.IrmaSignedMessage)
-	return conf, abs, json.Unmarshal([]byte(os.Args[2]), abs)
+	abs = new(irma.IrmaSignedMessage)
+	err = json.Unmarshal([]byte(os.Args[2]), abs)
+	return
 }
 
 func parseIrmaConfiguration(path string) (conf *irma.Configuration, err error) {
@@ -35,21 +37,15 @@ func main() {
 		exitCode := 0
 		if err != nil {
 			exitCode = 1
-			fmt.Print(err.Error())
+			fmt.Printf(err.Error())
 		}
 		os.Exit(exitCode)
 	}()
 
-	// Parse CLI args
 	conf, irmaSignature, err := parseCliArgs()
 	if err != nil {
 		return
 	}
 
-	status, _ := irma.VerifySigWithoutRequest(conf, irmaSignature)
-	bts, err := json.Marshal(status)
-	if err != nil {
-		return
-	}
-	fmt.Println(string(bts))
+	err = irma.VerifyTimestamp(irmaSignature, irmaSignature.Message, conf)
 }

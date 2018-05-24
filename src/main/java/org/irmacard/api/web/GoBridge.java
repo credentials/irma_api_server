@@ -1,10 +1,13 @@
 package org.irmacard.api.web;
 
 import com.google.gson.JsonSyntaxException;
+import com.sun.javafx.PlatformUtil;
 import foundation.privacybydesign.common.BaseConfiguration;
 import org.apache.commons.lang3.ArrayUtils;
 import org.irmacard.api.common.IrmaSignedMessage;
 import org.irmacard.api.common.util.GsonUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,33 +18,62 @@ public class GoBridge {
 	private static String irmaconfiguration;
 	private static boolean enabled = false;
 
+	private static Logger logger = LoggerFactory.getLogger(GoBridge.class);
+
 	static {
 		try {
-			URL url = GoBridge.class.getClassLoader().getResource("timestamp");
-			if (url == null) throw new RuntimeException("timestamp binary not found");
+			// Find the timestamp binary and our irma_configuration
+			String suffix = "";
+			if (PlatformUtil.isWindows())
+				suffix = "-windows.exe";
+			else if (PlatformUtil.isMac())
+				suffix = "-macos";
+			else if (PlatformUtil.isLinux())
+				suffix = "-linux";
+			else
+				logger.warn("Unrecognized operating system");
+			String name = "timestamp" + suffix;
+
+			URL url = GoBridge.class.getClassLoader().getResource(name);
+			if (url == null)
+				throw new RuntimeException("Binary '" + name + "' not found");
 			File file = new File(url.toURI());
+
 			executable = file.getPath();
 			irmaconfiguration = file.getParent() + "/irma_configuration";
 			enabled = true;
 		} catch (Exception e) {
-			System.out.printf("Failed to initialize GoBridge: %s\n", e.getMessage());
+			logger.warn("Failed to initialize GoBridge: " + e.getMessage());
 			enabled = false;
 		}
 	}
 
-	private static <T> T execute(Class<T> clazz, String... args) throws IOException, InterruptedException, IllegalStateException, JsonSyntaxException {
+	private static void execute(String... args)
+	throws IOException, InterruptedException, IllegalStateException, JsonSyntaxException {
 		if (!enabled)
 			throw new IllegalStateException("GoBridge is not enabled");
 		Process child = Runtime.getRuntime().exec(ArrayUtils.addAll(new String[]{executable, irmaconfiguration}, args));
 		child.waitFor();
-		String output = new String(BaseConfiguration.convertSteamToByteArray(child.getInputStream(), 2048));
-		if (child.exitValue() != 0)
-			throw new RuntimeException(GsonUtil.getGson().fromJson(output, String.class));
-		return GsonUtil.getGson().fromJson(output, clazz);
+		if (child.exitValue() != 0) {
+			String output = new String(BaseConfiguration.convertSteamToByteArray(child.getInputStream(), 2048));
+			throw new RuntimeException(output);
+		}
 	}
 
-	public static String verifyTimestamp(IrmaSignedMessage msg) throws IOException, InterruptedException, IllegalStateException, JsonSyntaxException {
-		return execute(String.class, GsonUtil.getGson().toJson(msg));
+	/**
+	 * Verify the timestamp of the specified IMRA attribute-based signature, establishing that the ABS was created
+	 * at the time from the timestamp, and that the IRMA attributes were valid at that time, using the irmago-based
+	 * timestamp binary.
+	 * NOTE: this ONLY verifies the timestamp, not the attached IRMA attributes nor that the message is validly signed.
+	 * @param msg The IRMA attribute-based signature whose timestamp to verify.
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws IllegalStateException
+	 * @throws JsonSyntaxException
+	 */
+	public static void verifyTimestamp(IrmaSignedMessage msg)
+	throws IOException, InterruptedException, IllegalStateException, JsonSyntaxException {
+		execute(GsonUtil.getGson().toJson(msg));
 	}
 
 	public static boolean isEnabled() {

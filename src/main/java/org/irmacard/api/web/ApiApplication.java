@@ -73,7 +73,7 @@ public class ApiApplication extends ResourceConfig {
 
         for (Class resource : resources) {
             // register verification application
-            if (ApiConfiguration.getInstance().isEnabled(resource)) {
+            if ( ApiConfiguration.getInstance().isEnabled(resource) && (resource != SignatureResource.class || GoBridge.isEnabled()) ) {
                 logger.warn("Enabling " + resource.getSimpleName()
                         + " at /" + ((Path)resource.getAnnotation(Path.class)).value());
                 register(resource);
