@@ -31,7 +31,7 @@ repositories {
 
 dependencies {
     compile 'org.irmacard.api:irma_api_common:1.1.0'
-    compile 'foundation.privacybydesign.common:irma_server_common:0.3.0'
+    compile 'foundation.privacybydesign.common:irma_server_common:0.3.1'
 
     compile 'org.glassfish.jersey.core:jersey-server:2.19'
     compile 'org.glassfish.jersey.containers:jersey-container-servlet:2.19'

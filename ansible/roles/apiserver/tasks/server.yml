@@ -18,6 +18,7 @@
 - name: Ensure irma_api_server user and group exists
   user:
     name: irma_api_server
+    groups: irma_api_server
     shell: /bin/false
     system: yes
 

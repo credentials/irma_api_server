@@ -52,6 +52,19 @@
     group: irma_api_server
   notify: restart apiserver
 
+- name: Check existence of keyshare server public key
+  local_action: stat path="{{ inventory_dir }}/files/{{ irma_configuration_name }}-kss.der"
+  become: no
+  register: ksspublickey
+
+- name: copy keyshare public key if it exists
+  copy:
+    src: "{{ inventory_dir }}/files/{{ irma_configuration_name }}-kss.der"
+    dest: "{{ conf_path }}"
+    group: irma_api_server
+  when: ksspublickey.stat.exists
+  notify: restart apiserver
+
 - name: See if client publickey directories are present
   local_action: stat path="{{ inventory_dir }}/files/{{ item }}s"
   become: no
@@ -73,7 +86,8 @@
   file:
     path: "{{ conf_path }}/irma_configuration/{{ item.schememanager }}/{{ item.issuer }}/PrivateKeys"
     state: directory
-    mode: 0400
+    group: irma_api_server
+    mode: 0550
   no_log: true # Don't spew privatekeys all over stdout
   with_items: "{{ irma_privatekeys }}"
   when: irma_privatekeys is defined
@@ -82,7 +96,8 @@
   copy:
     content: "{{ item.privatekey }}"
     dest: "{{ conf_path }}/irma_configuration/{{ item.schememanager }}/{{ item.issuer }}/PrivateKeys/{{ item.counter }}.xml"
-    mode: 0400
+    group: irma_api_server
+    mode: 0440
   no_log: true
   with_items: "{{ irma_privatekeys }}"
   when: irma_privatekeys is defined

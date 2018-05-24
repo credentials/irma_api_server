@@ -1,0 +1,22 @@
+{
+    "hot_reload_configuration": false,
+    "jwt_issuer": "irma_api_server",
+    "enable_verification": true,
+    "enable_issuing": false,
+    "enable_signing": true,
+    "reject_unfloored_validity_timestamps": true,
+    "allow_unsigned_issue_requests": false,
+    "allow_unsigned_verification_requests": true,
+    "allow_unsigned_signature_requests": true,
+    "max_jwt_age": 120,
+    "token_response_timeout": 600,
+    "token_get_timeout": 120,
+    "client_get_timeout": 120,
+    "authorized_idps": {},
+    "authorized_sps": {"*": ["*"]},
+    "authorized_sigclients": {"*": ["*"]},
+    "events_webhook_uri": null,
+    "events_webhook_authorizationToken": null,
+    "client_ip_header": null,
+    "schemeManager_update_uri": null
+}
