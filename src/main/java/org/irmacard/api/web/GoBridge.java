@@ -1,7 +1,6 @@
 package org.irmacard.api.web;
 
 import com.google.gson.JsonSyntaxException;
-import com.sun.javafx.PlatformUtil;
 import foundation.privacybydesign.common.BaseConfiguration;
 import org.apache.commons.lang3.ArrayUtils;
 import org.irmacard.api.common.IrmaSignedMessage;
@@ -18,19 +17,21 @@ public class GoBridge {
 	private static String irmaconfiguration;
 	private static boolean enabled = false;
 
-	private static Logger logger = LoggerFactory.getLogger(GoBridge.class);
+	private static final Logger logger = LoggerFactory.getLogger(GoBridge.class);
+	private static final String os = System.getProperty("os.name");
 
 	static {
 		try {
 			// Find the timestamp binary and our irma_configuration
+			logger.info("Initializing GoBridge");
 			String suffix = "";
-			if (PlatformUtil.isWindows())
+			if (os.startsWith("Windows"))
 				suffix = "-windows.exe";
-			else if (PlatformUtil.isMac())
+			else if (os.startsWith("Mac"))
 				suffix = "-macos";
-			else if (PlatformUtil.isLinux())
+			else if (os.startsWith("Linux"))
 				suffix = "-linux";
-			else
+			else // Warn, and try to use unsuffixed "timestamp" in this case
 				logger.warn("Unrecognized operating system");
 			String name = "timestamp" + suffix;
 
@@ -39,9 +40,10 @@ public class GoBridge {
 				throw new RuntimeException("Binary '" + name + "' not found");
 			File file = new File(url.toURI());
 
-			executable = file.getPath();
 			irmaconfiguration = file.getParent() + "/irma_configuration";
-			enabled = true;
+			executable = file.getPath();
+			if (file.setExecutable(true) && file.canExecute())
+				enabled = true;
 		} catch (Exception e) {
 			logger.warn("Failed to initialize GoBridge: " + e.getMessage());
 			enabled = false;
