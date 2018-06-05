@@ -108,6 +108,11 @@ Public keys for issuers/verifiers can also be set via environment variables. If 
     cat issuers/MijnOverheid.der | base64 -w0
     export IRMA_API_CONF_BASE64_JWT_ISSUERS_MIJNOVERHEID="<OUTPUT OF COMMAND ABOVE>"
 
+Public keyshare server keys from scheme managers can be set in the following way (example for pbdf scheme manager):
+
+    cat pbdf-kss.der | base64 -w0
+    export IRMA_API_CONF_BASE64_KSS_PBDF="<OUTPUT OF COMMAND ABOVE>"
+
 Like with the config entries, keys that are set via environment variables are prioritized over keys that are located in files.
 
 # Running and building the server
