@@ -17,3 +17,6 @@ src/main/webapp/examples/
 yarn.lock
 utils/docker/*.pem
 utils/*.pem
+src/main/resources/timestamp-*
+src/main/webapp/components/
+src/main/webapp/server/
