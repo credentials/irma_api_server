@@ -40,7 +40,7 @@ public class GoBridge {
 				throw new RuntimeException("Binary '" + name + "' not found");
 			File file = new File(url.toURI());
 
-			irmaconfiguration = file.getParent() + "/irma_configuration";
+			irmaconfiguration = BaseConfiguration.getConfigurationDirectory().resolve("irma_configuration").getPath();
 			executable = file.getPath();
 			if (file.setExecutable(true) && file.canExecute())
 				enabled = true;
@@ -58,6 +58,7 @@ public class GoBridge {
 		child.waitFor();
 		if (child.exitValue() != 0) {
 			String output = new String(BaseConfiguration.convertSteamToByteArray(child.getInputStream(), 2048));
+			logger.error("Timestamp verification error: " + output);
 			throw new RuntimeException(output);
 		}
 	}
