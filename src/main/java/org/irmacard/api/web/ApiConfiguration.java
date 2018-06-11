@@ -219,6 +219,10 @@ public class ApiConfiguration extends BaseConfiguration<ApiConfiguration> {
 	 */
 	public PublicKey getKssPublicKey(String schemeManager) {
 		try {
+			byte[] env = getBase64ResourceByEnv("BASE64_KSS_" + schemeManager);
+			if (env != null) {
+				return decodePublicKey(env);
+			}
 			return getPublicKey(schemeManager + "-kss.der");
 		} catch (KeyManagementException e) {
 			throw new RuntimeException(e);
