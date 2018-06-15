@@ -5,6 +5,12 @@ const fs = require('fs');
 const http = require('http');
 const url = require('url');
 
+// Get a timestamp for a year of validity, but floored to weeks, required by the API server
+const boundedTimestamp = () => {
+  const epochSeconds = Math.floor((new Date).getTime() / 1000) + (60 * 60 * 24 * 365);
+  return epochSeconds - (epochSeconds % (60 * 60 * 24 * 7));
+};
+
 const iprequest = {
     data: 'foobar',
     timeout: 60,
@@ -12,7 +18,7 @@ const iprequest = {
         'credentials': [
             {
                 'credential': 'irma-demo.MijnOverheid.ageLower',
-                'validity': 1582969600,
+                'validity': boundedTimestamp(),
                 'attributes': {
                     'over12': 'yes',
                     'over16': 'yes',
@@ -22,7 +28,7 @@ const iprequest = {
             },
             {
                 'credential': 'irma-demo.MijnOverheid.address',
-                'validity': 1582969600,
+                'validity': boundedTimestamp(),
                 'attributes': {
                     'country': 'The Netherlands',
                     'city': 'Nijmegen',
