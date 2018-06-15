@@ -71,7 +71,8 @@
     // src/main/resources/issuers/testip.der should exist.
     // Note that the included testip.js will not work until you put it here, for example as above.
     "authorized_idps": {
-        "testip": [ "*" ]
+        "testip": [ "*" ],
+        "keyshare_server": [ "*" ]
     },
 
     // A list of authorized SP's and what attributes they may verify.
