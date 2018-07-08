@@ -102,7 +102,7 @@ public class VerificationTest extends JerseyTest {
 
 	public String createSession() throws KeyManagementException {
 		return createSession(System.currentTimeMillis() / 1000,
-				ApiConfiguration.getInstance().getPrivateKey("test-sk.der"));
+				ApiConfiguration.getPrivateKey("test-sk.der"));
 	}
 
 	public String createSession(long issuedAt, PrivateKey jwtPrivateKey) throws KeyManagementException {
@@ -115,7 +115,7 @@ public class VerificationTest extends JerseyTest {
 
 	public String createSession(DisclosureProofRequest request) throws KeyManagementException {
 		return createSession(request, System.currentTimeMillis() / 1000,
-				ApiConfiguration.getInstance().getPrivateKey("test-sk.der"));
+				ApiConfiguration.getPrivateKey("test-sk.der"));
 	}
 
 	public String createSession(DisclosureProofRequest request, long issuedAt, PrivateKey jwtPrivateKey)
@@ -326,14 +326,14 @@ public class VerificationTest extends JerseyTest {
 	@Test(expected=NotAuthorizedException.class)
 	public void oldJwtTest() throws KeyManagementException {
 		ApiConfiguration.getInstance().allow_unsigned_verification_requests = false;
-		createSession(1, ApiConfiguration.getInstance().getPrivateKey("test-sk.der"));
+		createSession(1, ApiConfiguration.getPrivateKey("test-sk.der"));
 	}
 
 	@Test(expected=NotAuthorizedException.class)
 	public void wrongJwtKeyTest() throws KeyManagementException {
 		ApiConfiguration.getInstance().allow_unsigned_verification_requests = false;
 		createSession(System.currentTimeMillis() / 1000,
-				ApiConfiguration.instance.getPrivateKey("sk.der"));
+				ApiConfiguration.getPrivateKey("sk.der"));
 	}
 
 	@Test
