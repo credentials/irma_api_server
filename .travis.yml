@@ -3,28 +3,30 @@ sudo: required
 services:
   - docker
 before_script:
-  - npm install -g bower
-  - npm install -g grunt-cli
-  - wget https://dl.google.com/go/go1.10.3.linux-amd64.tar.gz
-  - sudo tar -xf go1.10.3.linux-amd64.tar.gz
-  - sudo mv go /usr/local
-  - export GOROOT=/usr/local/go
+#  - npm install -g bower
+#  - npm install -g grunt-cli
+#  - wget https://dl.google.com/go/go1.10.3.linux-amd64.tar.gz
+#  - sudo tar -xf go1.10.3.linux-amd64.tar.gz
+#  - sudo mv go /usr/local
+  - echo $GOROOT
+#  - export GOROOT=/usr/local/go
+  - which go
   - go version
 script: 
-  - git submodule update --init
-  - cd utils/irma_js
-  - bower install
-  - npm install
-  - grunt build --client --server
-  - cd -
-  - cp -r utils/irma_js/build/client utils/irma_js/build/server utils/irma_js/build/bower_components src/main/webapp
+#  - git submodule update --init
+#  - cd utils/irma_js
+#  - bower install
+#  - npm install
+#  - grunt build --client --server
+#  - cd -
+#  - cp -r utils/irma_js/build/client utils/irma_js/build/server utils/irma_js/build/bower_components src/main/webapp
   - go get -u github.com/privacybydesign/irmago
   - cd $GOPATH/src/github.com/credentials/safeprime
   - git fetch origin go
   - git checkout go
   - cd -
   - go build -o src/main/resources/timestamp-linux src/main/go/timestamp.go
-  - ./gradlew build
-  - docker build -t "$DOCKER_USERNAME"/irma_api_server .
-  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-  - docker push "$DOCKER_USERNAME"/irma_api_server
+#  - ./gradlew build
+#  - docker build -t "$DOCKER_USERNAME"/irma_api_server .
+#  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+#  - docker push "$DOCKER_USERNAME"/irma_api_server
