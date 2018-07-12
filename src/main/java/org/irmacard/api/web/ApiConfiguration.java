@@ -33,6 +33,7 @@ public class ApiConfiguration extends BaseConfiguration<ApiConfiguration> {
 		BaseConfiguration.environmentVarPrefix = "IRMA_API_CONF_";
 		BaseConfiguration.confDirEnvironmentVarName = "IRMA_API_CONF";
 		BaseConfiguration.logger = ApiConfiguration.logger;
+		BaseConfiguration.confDirName = "irma_api_server";
 		BaseConfiguration.printOnLoad = true;
 	}
 
