@@ -13,7 +13,6 @@ import org.irmacard.api.common.signatures.SignatureClientRequest;
 import org.irmacard.api.common.signatures.SignatureProofRequest;
 import org.irmacard.api.web.ApiApplication;
 import org.irmacard.api.web.ApiConfiguration;
-import org.irmacard.api.web.ProtocolVersion;
 import org.irmacard.api.web.sessions.*;
 import org.irmacard.credentials.info.IssuerIdentifier;
 import org.slf4j.Logger;
@@ -111,30 +110,41 @@ public abstract class BaseResource
 		return new ClientQr(minVersion, maxVersion, token, action.name().toLowerCase());
 	}
 
-	public RequestClass get(String sessiontoken) {
+	private ProtocolVersion chooseProtocolVersion(ProtocolVersion min, ProtocolVersion max) {
+		if (min.above(ApiApplication.maxVersion) || max.below(ApiApplication.minVersion))
+			throw new RuntimeException("Protocol version negotiation failed: no acceptable protocol version in range");
+
+		if (max.above(ApiApplication.maxVersion))
+			return ApiApplication.maxVersion;
+		else
+			return max;
+	}
+
+	public RequestClass get(String sessiontoken, ProtocolVersion minVersion, ProtocolVersion maxVersion) {
 		logger.info("Received get, token: " + sessiontoken);
+
 		SessionClass session = sessions.getNonNullSession(sessiontoken);
 		if (session.getStatus() != IssueSession.Status.INITIALIZED) {
 			fail(ApiError.UNEXPECTED_REQUEST, session);
 		}
 
+		session.setVersion(chooseProtocolVersion(minVersion, maxVersion));
 		session.setStatusConnected();
-		session.setVersion("2.0");
 		return session.getRequest();
 	}
 
-	public JwtSessionRequest getJwt(String sessiontoken, String version) {
-		logger.info("Received get, token: " + sessiontoken);
+	public JwtSessionRequest getJwt(String sessiontoken, ProtocolVersion version) {
+		logger.info("Received jwt get, token: " + sessiontoken);
 		SessionClass session = sessions.getNonNullSession(sessiontoken);
 		if (session.getStatus() != IssueSession.Status.INITIALIZED) {
 			fail(ApiError.UNEXPECTED_REQUEST, session);
 		}
 
-		if (version != null) {
+		if (version != null)
 			session.setVersion(version); // >= 2.3
-		} else {
-			session.setVersion("2.2"); // < 2.3
-		}
+		else
+			session.setVersion(new ProtocolVersion("2.2")); // < 2.3
+
 		session.setStatusConnected();
 		RequestClass request = session.getRequest();
 		BigInteger nonce = request.getNonce();
@@ -156,7 +166,7 @@ public abstract class BaseResource
 	}
 
 	protected byte getMetadataVersion(ProtocolVersion version) {
-		if (version.below(2, 3)) {
+		if (version.below(new ProtocolVersion("2.3"))) {
 			return 0x02; // does not support optional attributes
 		}
 		return 0x03; // current version
@@ -188,6 +198,7 @@ public abstract class BaseResource
 	 * @throws ApiException The specified exception
 	 */
 	protected void fail(ApiError error, SessionClass session) throws ApiException {
+		logger.warn("Session failed: %s %d %s %s", session.getSessionToken(), error.getStatusCode(), error.toString(), error.getDescription());
 		session.setStatusCancelled();
 		throw new ApiException(error);
 	}

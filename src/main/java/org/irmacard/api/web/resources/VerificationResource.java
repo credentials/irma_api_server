@@ -41,6 +41,7 @@ import io.jsonwebtoken.Jwts;
 import org.irmacard.api.common.AttributeDisjunction;
 import org.irmacard.api.common.ClientQr;
 import org.irmacard.api.common.JwtSessionRequest;
+import org.irmacard.api.common.ProtocolVersion;
 import org.irmacard.api.common.disclosure.DisclosureProofRequest;
 import org.irmacard.api.common.disclosure.DisclosureProofResult;
 import org.irmacard.api.common.disclosure.ServiceProviderRequest;
@@ -90,14 +91,16 @@ public class VerificationResource extends BaseResource
     @GET @Path("/{sessiontoken}")
     @Produces(MediaType.APPLICATION_JSON)
     @Override
-    public DisclosureProofRequest get(@PathParam("sessiontoken") String sessiontoken) {
-        return super.get(sessiontoken);
+    public DisclosureProofRequest get(@PathParam("sessiontoken") String sessiontoken,
+                                      @HeaderParam("X-IRMA-MinProtocolVersion") ProtocolVersion minVersion,
+                                      @HeaderParam("X-IRMA-MaxProtocolVersion") ProtocolVersion maxVersion) {
+        return super.get(sessiontoken, minVersion, maxVersion);
     }
 
     @GET @Path("/{sessiontoken}/jwt")
     @Produces(MediaType.APPLICATION_JSON)
     @Override
-    public JwtSessionRequest getJwt(@PathParam("sessiontoken") String sessiontoken, @HeaderParam("X-IRMA-ProtocolVersion") String version) {
+    public JwtSessionRequest getJwt(@PathParam("sessiontoken") String sessiontoken, @HeaderParam("X-IRMA-ProtocolVersion") ProtocolVersion version) {
        return super.getJwt(sessiontoken, version);
     }
 

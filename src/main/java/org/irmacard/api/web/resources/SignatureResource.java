@@ -34,10 +34,7 @@
 package org.irmacard.api.web.resources;
 
 import io.jsonwebtoken.Jwts;
-import org.irmacard.api.common.AttributeDisjunction;
-import org.irmacard.api.common.ClientQr;
-import org.irmacard.api.common.IrmaSignedMessage;
-import org.irmacard.api.common.JwtSessionRequest;
+import org.irmacard.api.common.*;
 import org.irmacard.api.common.exceptions.ApiError;
 import org.irmacard.api.common.exceptions.ApiException;
 import org.irmacard.api.common.signatures.SignatureClientRequest;
@@ -86,14 +83,16 @@ public class SignatureResource extends BaseResource
 	@GET @Path("/{sessiontoken}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
-	public SignatureProofRequest get(@PathParam("sessiontoken") String sessiontoken) {
-		return super.get(sessiontoken);
+	public SignatureProofRequest get(@PathParam("sessiontoken") String sessiontoken,
+	                                 @HeaderParam("X-IRMA-MinProtocolVersion") ProtocolVersion minVersion,
+	                                 @HeaderParam("X-IRMA-MaxProtocolVersion") ProtocolVersion maxVersion) {
+		return super.get(sessiontoken, minVersion, maxVersion);
 	}
 
 	@GET @Path("/{sessiontoken}/jwt")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
-	public JwtSessionRequest getJwt(@PathParam("sessiontoken") String sessiontoken, @HeaderParam("X-IRMA-ProtocolVersion") String version) {
+	public JwtSessionRequest getJwt(@PathParam("sessiontoken") String sessiontoken, @HeaderParam("X-IRMA-ProtocolVersion") ProtocolVersion version) {
 		return super.getJwt(sessiontoken, version);
 	}
 

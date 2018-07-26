@@ -1,8 +1,9 @@
 package org.irmacard.api.web.sessions;
 
 import org.irmacard.api.common.ClientRequest;
+import org.irmacard.api.common.ProtocolVersion;
+import org.irmacard.api.common.SessionRequest;
 import org.irmacard.api.web.ApiConfiguration;
-import org.irmacard.api.web.ProtocolVersion;
 import org.irmacard.api.web.StatusSocket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public abstract class IrmaSession<T extends ClientRequest<S>, S> {
+public abstract class IrmaSession<T extends ClientRequest<S>, S extends SessionRequest> {
 	private static Logger logger = LoggerFactory.getLogger(IrmaSession.class);
 
 	private String sessionToken;
@@ -79,9 +80,10 @@ public abstract class IrmaSession<T extends ClientRequest<S>, S> {
 		return version;
 	}
 
-	public void setVersion(String version) {
+	public void setVersion(ProtocolVersion version) {
 		// TODO: check whether version number is supported
-		this.version = new ProtocolVersion(version);
+		this.version = version;
+		this.getRequest().setProtocolVersion(this.version);
 	}
 
 	public S getRequest() {

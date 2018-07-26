@@ -1,10 +1,7 @@
 package org.irmacard.api.web.resources;
 
 import io.jsonwebtoken.JwtException;
-import org.irmacard.api.common.ClientQr;
-import org.irmacard.api.common.CredentialRequest;
-import org.irmacard.api.common.JwtParser;
-import org.irmacard.api.common.JwtSessionRequest;
+import org.irmacard.api.common.*;
 import org.irmacard.api.common.disclosure.DisclosureProofRequest;
 import org.irmacard.api.common.disclosure.DisclosureProofResult;
 import org.irmacard.api.common.exceptions.ApiError;
@@ -34,6 +31,7 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
+import java.util.HashMap;
 import javax.ws.rs.core.Context;
 import javax.servlet.http.HttpServletRequest;
 
@@ -62,14 +60,16 @@ public class IssueResource extends BaseResource
 	@GET @Path("/{sessiontoken}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
-	public IssuingRequest get(@PathParam("sessiontoken") String sessiontoken) {
-		return super.get(sessiontoken);
+	public IssuingRequest get(@PathParam("sessiontoken") String sessiontoken,
+	                          @HeaderParam("X-IRMA-MinProtocolVersion") ProtocolVersion minVersion,
+	                          @HeaderParam("X-IRMA-MaxProtocolVersion") ProtocolVersion maxVersion) {
+		return super.get(sessiontoken, minVersion, maxVersion);
 	}
 
 	@GET @Path("/{sessiontoken}/jwt")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
-	public JwtSessionRequest getJwt(@PathParam("sessiontoken") String sessiontoken, @HeaderParam("X-IRMA-ProtocolVersion") String version) {
+	public JwtSessionRequest getJwt(@PathParam("sessiontoken") String sessiontoken, @HeaderParam("X-IRMA-ProtocolVersion") ProtocolVersion version) {
 		return super.getJwt(sessiontoken, version);
 	}
 
@@ -150,15 +150,27 @@ public class IssueResource extends BaseResource
 		return super.create(session, isRequest, jwt);
 	}
 
+	private HashMap<String, ProofP> proofps = new HashMap<>();
+	private static final ProtocolVersion proofpProtocolVersionBoundary = new ProtocolVersion("2.4");
 	private ProofP extractProofP(IssueSession session, IssueCommitmentMessage commitments, String schemeManager) {
+		if (proofps.containsKey(schemeManager))
+			return proofps.get(schemeManager);
+
 		// If the scheme mamanger uses a keyshare server, the JWT has to be present and valid
 		// If it is not, jwtParser.parseJwt() throws an exception.
-		String jwt = commitments.getProofPJwt();
+		String jwt;
+		if (session.getVersion().below(proofpProtocolVersionBoundary))
+			jwt = commitments.getProofPJwt();
+		else
+			jwt = commitments.getProofPJwt(schemeManager);
 		if (jwt == null)
 			fail(ApiError.KEYSHARE_PROOF_MISSING, session);
 		JwtParser<ProofP> jwtParser = new JwtParser<>(ProofP.class, false, 60*1000, "ProofP", "ProofP");
 		jwtParser.setSigningKey(ApiConfiguration.getInstance().getKssPublicKey(schemeManager));
-		return jwtParser.parseJwt(jwt).getPayload();
+		ProofP proof = jwtParser.parseJwt(jwt).getPayload();
+
+		proofps.put(schemeManager, proof);
+		return proof;
 	}
 
 	@POST @Path("/{sessiontoken}/commitments")
@@ -181,12 +193,6 @@ public class IssueResource extends BaseResource
 		}
 
 		try {
-			String schemeManager = null;
-			for (CredentialIdentifier id : request.getCredentialList())
-				if (DescriptionStore.getInstance().getSchemeManager(id.getSchemeManagerName()).hasKeyshareServer())
-					schemeManager = id.getSchemeManagerName();
-			ProofP proofP = null;
-
 			// Lookup the public keys of all ProofU's in the proof list. We have to do this before we can compute the CL
 			// sigatures below, because that also verifies the proofs, which needs these keys.
 			proofs.populatePublicKeyArray();
@@ -201,9 +207,9 @@ public class IssueResource extends BaseResource
 					proofs.setPublicKey(i, pk);
 				}
 
-				if (pk.getIssuerIdentifier().getSchemeManager().hasKeyshareServer()) {
-					if (proofP == null)
-						proofP = extractProofP(session, commitments, schemeManager);
+				SchemeManager scheme = pk.getIssuerIdentifier().getSchemeManager();
+				if (scheme.hasKeyshareServer()) {
+					ProofP proofP = extractProofP(session, commitments, scheme.getName());
 					proofs.get(i).mergeProofP(proofP, pk);
 				}
 			}

@@ -33,27 +33,35 @@
 
 package org.irmacard.api.web;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+import org.irmacard.api.common.ProtocolVersion;
 import org.irmacard.api.common.exceptions.ApiError;
 import org.irmacard.api.common.exceptions.ApiException;
 import org.irmacard.api.common.util.GsonUtil;
+import org.irmacard.api.common.util.GsonUtilBuilder;
+import org.irmacard.api.common.util.IssuerIdentifierSerializer;
+import org.irmacard.api.common.util.PublicKeyIdentifierSerializer;
+import org.irmacard.api.web.sessions.IrmaSession;
+import org.irmacard.api.web.sessions.Sessions;
+import org.irmacard.credentials.info.IssuerIdentifier;
+import org.irmacard.credentials.info.PublicKeyIdentifier;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
-
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
+import java.io.*;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
@@ -62,10 +70,41 @@ public class GsonJerseyProvider implements MessageBodyWriter<Object>, MessageBod
 
 	private static final String UTF_8 = "UTF-8";
 
+	@Context
+	private HttpServletRequest servletRequest;
+
+	private static Gson oldGson;
+	private static Gson newGson;
+	private static final ProtocolVersion boundary = new ProtocolVersion("2.4");
+
+	static {
+		oldGson = GsonUtil.getGson();
+
+		// TODO move these to GsonUtil when old protocol is deprecated
+		GsonUtilBuilder builder = new GsonUtilBuilder();
+		builder.addTypeAdapter(IssuerIdentifier.class, new IssuerIdentifierSerializer());
+		builder.addTypeAdapter(PublicKeyIdentifier.class, new PublicKeyIdentifierSerializer());
+		newGson = builder.create();
+	}
+
 	@Override
 	public boolean isReadable(Class<?> type, Type genericType,
 							  java.lang.annotation.Annotation[] annotations, MediaType mediaType) {
 		return true;
+	}
+
+	private Gson getGson() {
+		Pattern p = Pattern.compile(".*api/v2/\\w+/(\\w+).*");
+		Matcher m = p.matcher(servletRequest.getRequestURI());
+		if (!m.matches())
+			return oldGson;
+
+		String sessiontoken = m.group(1);
+		IrmaSession session = Sessions.findAnySession(sessiontoken);
+		if (sessiontoken == null || session == null || session.getVersion() == null)
+			return oldGson;
+
+		return session.getVersion().below(boundary) ? oldGson : newGson;
 	}
 
 	@Override
@@ -74,7 +113,7 @@ public class GsonJerseyProvider implements MessageBodyWriter<Object>, MessageBod
 						   MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
 			throws IOException {
 		try (InputStreamReader streamReader = new InputStreamReader(entityStream, UTF_8)) {
-			return GsonUtil.getGson().fromJson(streamReader, genericType);
+			return getGson().fromJson(streamReader, genericType);
 		} catch (JsonParseException e) {
 			throw new ApiException(ApiError.MALFORMED_INPUT);
 		}
@@ -99,7 +138,7 @@ public class GsonJerseyProvider implements MessageBodyWriter<Object>, MessageBod
 						OutputStream entityStream) throws IOException,
 			WebApplicationException {
 		try (OutputStreamWriter writer = new OutputStreamWriter(entityStream, UTF_8)) {
-			GsonUtil.getGson().toJson(object, genericType, writer);
+			getGson().toJson(object, genericType, writer);
 		}
 	}
 }

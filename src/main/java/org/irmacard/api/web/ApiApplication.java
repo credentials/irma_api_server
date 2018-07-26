@@ -34,6 +34,7 @@
 package org.irmacard.api.web;
 
 import org.glassfish.jersey.server.ResourceConfig;
+import org.irmacard.api.common.ProtocolVersion;
 import org.irmacard.api.web.resources.IssueResource;
 import org.irmacard.api.web.resources.SignatureResource;
 import org.irmacard.api.web.resources.VerificationResource;
@@ -55,8 +56,8 @@ import java.util.concurrent.TimeUnit;
 public class ApiApplication extends ResourceConfig {
     private static Logger logger = LoggerFactory.getLogger(ApiApplication.class);
 
-    public static ProtocolVersion minVersion = new ProtocolVersion("2.0");
-    public static ProtocolVersion maxVersion = new ProtocolVersion("2.3");
+    public static final ProtocolVersion minVersion = new ProtocolVersion("2.0");
+    public static final ProtocolVersion maxVersion = new ProtocolVersion("2.4");
 
     public ApiApplication() {
         // register Gson
