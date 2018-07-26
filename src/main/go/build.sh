@@ -26,6 +26,7 @@ git checkout go > /dev/null || die
 # Compile timestamp binaries
 cd "$SRCDIR/go"
 GOARCH=amd64
+CGO_ENABLED=0
 GOOS=darwin go build -o "$SRCDIR/resources/timestamp-macos" timestamp.go || die
 GOOS=linux go build -o "$SRCDIR/resources/timestamp-linux" timestamp.go || die
 GOOS=windows go build -o "$SRCDIR/resources/timestamp-windows.exe" timestamp.go || die
