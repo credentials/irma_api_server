@@ -123,7 +123,10 @@ public class IssueTest extends JerseyTest {
 		String sessiontoken = createSession(ipRequest);
 
 		IssuingRequest request = target("/issue/" + sessiontoken)
-				.request(MediaType.APPLICATION_JSON).get(IssuingRequest.class);
+				.request(MediaType.APPLICATION_JSON)
+				.header("X-IRMA-MinProtocolVersion", "2.4")
+				.header("X-IRMA-MaxProtocolVersion", "2.4")
+				.get(IssuingRequest.class);
 
 		ArrayList<CredentialBuilder> credentialBuilders = new ArrayList<>(request.getCredentials().size());
 		IssueCommitmentMessage msg = getIssueCommitments(request, credentialBuilders, cred);
@@ -152,7 +155,7 @@ public class IssueTest extends JerseyTest {
 
 		for (CredentialRequest cred : request.getCredentials()) {
 			CredentialBuilder cb = new CredentialBuilder(
-					cred.getPublicKey(), cred.convertToBigIntegers((byte)2), request.getContext(), nonce2);
+					cred.getPublicKey(), cred.convertToBigIntegers((byte)3), request.getContext(), nonce2);
 			proofsBuilder.addCredentialBuilder(cb);
 			credentialBuilders.add(cb);
 		}

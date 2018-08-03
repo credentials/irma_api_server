@@ -144,7 +144,10 @@ public class VerificationTest extends JerseyTest {
 	throws InfoException, KeyManagementException {
 		IdemixCredential cred = getAgeLowerCredential();
 		String session = createSession();
-		DisclosureProofRequest request = target("/verification/" + session).request(MediaType.APPLICATION_JSON)
+		DisclosureProofRequest request = target("/verification/" + session)
+				.request(MediaType.APPLICATION_JSON)
+				.header("X-IRMA-MinProtocolVersion", "2.4")
+				.header("X-IRMA-MaxProtocolVersion", "2.4")
 				.get(DisclosureProofRequest.class);
 
 		// Create the proof and post it
@@ -184,7 +187,10 @@ public class VerificationTest extends JerseyTest {
 	@SuppressWarnings("unused")
 	public void missingProofTest() throws InfoException, KeyManagementException {
 		String session = createSession();
-		DisclosureProofRequest request = target("/verification/" + session).request(MediaType.APPLICATION_JSON)
+		DisclosureProofRequest request = target("/verification/" + session)
+				.request(MediaType.APPLICATION_JSON)
+				.header("X-IRMA-MinProtocolVersion", "2.4")
+				.header("X-IRMA-MaxProtocolVersion", "2.4")
 				.get(DisclosureProofRequest.class);
 
 		// Fetch the JSON web token
@@ -201,7 +207,10 @@ public class VerificationTest extends JerseyTest {
 	@SuppressWarnings("unused")
 	public void brokenProofTest() throws InfoException, KeyManagementException {
 		String session = createSession();
-		DisclosureProofRequest request = target("/verification/" + session).request(MediaType.APPLICATION_JSON)
+		DisclosureProofRequest request = target("/verification/" + session)
+				.request(MediaType.APPLICATION_JSON)
+				.header("X-IRMA-MinProtocolVersion", "2.4")
+				.header("X-IRMA-MaxProtocolVersion", "2.4")
 				.get(DisclosureProofRequest.class);
 
 		Response response = target("/verification/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
@@ -214,7 +223,10 @@ public class VerificationTest extends JerseyTest {
 	@SuppressWarnings("unused")
 	public void brokenJsonTest() throws InfoException, KeyManagementException {
 		String session = createSession();
-		DisclosureProofRequest request = target("/verification/" + session).request(MediaType.APPLICATION_JSON)
+		DisclosureProofRequest request = target("/verification/" + session)
+				.request(MediaType.APPLICATION_JSON)
+				.header("X-IRMA-MinProtocolVersion", "2.4")
+				.header("X-IRMA-MaxProtocolVersion", "2.4")
 				.get(DisclosureProofRequest.class);
 
 		Response response = target("/verification/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
@@ -228,7 +240,10 @@ public class VerificationTest extends JerseyTest {
 	throws InfoException, KeyManagementException, NoSuchFieldException, IllegalAccessException {
 		IdemixCredential cred = getAgeLowerCredential();
 		String session = createSession();
-		DisclosureProofRequest request = target("/verification/" + session).request(MediaType.APPLICATION_JSON)
+		DisclosureProofRequest request = target("/verification/" + session)
+				.request(MediaType.APPLICATION_JSON)
+				.header("X-IRMA-MinProtocolVersion", "2.4")
+				.header("X-IRMA-MaxProtocolVersion", "2.4")
 				.get(DisclosureProofRequest.class);
 
 		// Create the proof
@@ -266,7 +281,11 @@ public class VerificationTest extends JerseyTest {
 
 		// Create the session
 		String session = createSession(request);
-		request = target("/verification/" + session).request(MediaType.APPLICATION_JSON).get(DisclosureProofRequest.class);
+		request = target("/verification/" + session)
+				.request(MediaType.APPLICATION_JSON)
+				.header("X-IRMA-MinProtocolVersion", "2.4")
+				.header("X-IRMA-MaxProtocolVersion", "2.4")
+				.get(DisclosureProofRequest.class);
 
 		IdemixCredential cred1 = getAgeLowerCredential();
 		IdemixCredential cred2 = getNameCredential();

@@ -94,6 +94,8 @@ public class GsonJerseyProvider implements MessageBodyWriter<Object>, MessageBod
 	}
 
 	private Gson getGson() {
+		if (servletRequest == null) // in case of unit tests
+			return newGson;
 		Pattern p = Pattern.compile(".*api/v2/\\w+/(\\w+).*");
 		Matcher m = p.matcher(servletRequest.getRequestURI());
 		if (!m.matches())

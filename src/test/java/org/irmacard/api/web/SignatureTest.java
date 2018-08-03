@@ -146,7 +146,10 @@ public class SignatureTest extends JerseyTest {
 	private void doSession(IdemixCredential cred, List<Integer> disclosed,
 	                      String session, Status expectedPostResult, Status expectedVerificationResult, boolean isSig)
 			throws InfoException, KeyException, KeyManagementException {
-		SignatureProofRequest request = target("/signature/" + session).request(MediaType.APPLICATION_JSON)
+		SignatureProofRequest request = target("/signature/" + session)
+				.request(MediaType.APPLICATION_JSON)
+				.header("X-IRMA-MinProtocolVersion", "2.4")
+				.header("X-IRMA-MaxProtocolVersion", "2.4")
 				.get(SignatureProofRequest.class);
 
 		// Create the proof and post it
