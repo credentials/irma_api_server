@@ -9,6 +9,7 @@ import org.irmacard.api.web.resources.SignatureResource;
 import org.irmacard.api.web.resources.VerificationResource;
 import org.irmacard.credentials.info.AttributeIdentifier;
 import org.irmacard.credentials.info.CredentialIdentifier;
+import org.irmacard.credentials.info.SchemeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -220,11 +221,8 @@ public class ApiConfiguration extends BaseConfiguration<ApiConfiguration> {
 	 */
 	public PublicKey getKssPublicKey(String schemeManager) {
 		try {
-			byte[] env = getBase64ResourceByEnv("BASE64_KSS_" + schemeManager);
-			if (env != null) {
-				return decodePublicKey(env);
-			}
-			return getPublicKey(schemeManager + "-kss.der");
+			// This should really be done by irma_api_common
+			return getPublicKey(String.format("irma_configuration/%s/kss-0.pem", schemeManager));
 		} catch (KeyManagementException e) {
 			throw new RuntimeException(e);
 		}
