@@ -153,7 +153,7 @@ public class SignatureTest extends JerseyTest {
 		ProofList proofs = new ProofListBuilder(request.getContext(), request.getNonce(), isSig)
 				.addProofD(cred, disclosed)
 				.build();
-		IrmaSignedMessage irmaSignedMessage = new IrmaSignedMessage(proofs, request.getSignatureNonce(), request.getContext(), request.getMessage());
+		IrmaSignedMessage irmaSignedMessage = new IrmaSignedMessage(proofs, request.getSignatureNonce(), request.getContext(), request.getMessage(), null);
 		Status status = target("/signature/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
 				.post(Entity.entity(irmaSignedMessage, MediaType.APPLICATION_JSON), Status.class);
 
@@ -287,7 +287,7 @@ public class SignatureTest extends JerseyTest {
 				.addProofD(issue(exp.getTime()), Arrays.asList(1, 2))
 				.build();
 
-		IrmaSignedMessage signature = new IrmaSignedMessage(proofs, nonce, context, message);
+		IrmaSignedMessage signature = new IrmaSignedMessage(proofs, nonce, context, message, null);
 
 		if (verificationDate == null) {
 			String jwt = target("/signature/checksignature")

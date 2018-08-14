@@ -184,7 +184,7 @@ public class SignatureResource extends BaseResource
 		Date time = Calendar.getInstance().getTime();
 		if (signature.getTimestamp() != null)
 			time = new Date(signature.getTimestamp().Time * 1000);
-		 return checkSignature(signature, time, true);
+		return checkSignature(signature, time, true);
 	}
 
 	@POST @Path("/checksignature/{date}")
