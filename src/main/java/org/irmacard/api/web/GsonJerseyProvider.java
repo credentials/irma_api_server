@@ -35,13 +35,11 @@ package org.irmacard.api.web;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+import org.irmacard.api.common.JwtParser;
 import org.irmacard.api.common.ProtocolVersion;
 import org.irmacard.api.common.exceptions.ApiError;
 import org.irmacard.api.common.exceptions.ApiException;
-import org.irmacard.api.common.util.GsonUtil;
-import org.irmacard.api.common.util.GsonUtilBuilder;
-import org.irmacard.api.common.util.IssuerIdentifierSerializer;
-import org.irmacard.api.common.util.PublicKeyIdentifierSerializer;
+import org.irmacard.api.common.util.*;
 import org.irmacard.api.web.sessions.IrmaSession;
 import org.irmacard.api.web.sessions.Sessions;
 import org.irmacard.credentials.info.IssuerIdentifier;
@@ -60,6 +58,7 @@ import javax.ws.rs.ext.Provider;
 import java.io.*;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.math.BigInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -84,7 +83,9 @@ public class GsonJerseyProvider implements MessageBodyWriter<Object>, MessageBod
 		GsonUtilBuilder builder = new GsonUtilBuilder();
 		builder.addTypeAdapter(IssuerIdentifier.class, new IssuerIdentifierSerializer());
 		builder.addTypeAdapter(PublicKeyIdentifier.class, new PublicKeyIdentifierSerializer());
+		builder.addTypeAdapter(BigInteger.class, new Base64BigIntegerSerializer());
 		newGson = builder.create();
+		JwtParser.setGson(newGson);
 	}
 
 	@Override
