@@ -17,12 +17,6 @@ else
   echo "Possibly using incorrect versions of dependencies!"
 fi
 
-# Switch to pure-go branch of safeprime to avoid C/dylib dependencies that break cross-compilation
-rm -r vendor/github.com/credentials/safeprime || die
-cd $GOPATH/src/github.com/credentials/safeprime || die
-git fetch origin go > /dev/null || die
-git checkout go > /dev/null || die
-
 # Compile timestamp binaries
 cd "$SRCDIR/go"
 GOARCH=amd64
