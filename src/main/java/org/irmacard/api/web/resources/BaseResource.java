@@ -28,6 +28,7 @@ public abstract class BaseResource
 		SessionClass extends IrmaSession<ClientClass, RequestClass>> {
 
 	private static Logger logger = LoggerFactory.getLogger(BaseResource.class);
+	private static final ProtocolVersion optionalAttributesProtocolBoundary = new ProtocolVersion("2.3");
 
 	/* Template boilerplate to keep the type system happy. Getting rather crazy here,
 	 * but the code deduplication is worth it, I deem. The following enum works around
@@ -166,7 +167,7 @@ public abstract class BaseResource
 	}
 
 	protected byte getMetadataVersion(ProtocolVersion version) {
-		if (version.below(new ProtocolVersion("2.3"))) {
+		if (version.below(optionalAttributesProtocolBoundary)) {
 			return 0x02; // does not support optional attributes
 		}
 		return 0x03; // current version

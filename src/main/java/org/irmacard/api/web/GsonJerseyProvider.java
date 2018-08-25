@@ -75,6 +75,7 @@ public class GsonJerseyProvider implements MessageBodyWriter<Object>, MessageBod
 	private static Gson oldGson;
 	private static Gson newGson;
 	private static final ProtocolVersion boundary = new ProtocolVersion("2.4");
+	private static final Pattern protocolVersionPattern = Pattern.compile(".*api/v2/\\w+/(\\w+).*");
 
 	static {
 		oldGson = GsonUtil.getGson();
@@ -94,11 +95,11 @@ public class GsonJerseyProvider implements MessageBodyWriter<Object>, MessageBod
 		return true;
 	}
 
+	// Find the current session according to the token in the url, and return the appropriate gson.
 	private Gson getGson() {
 		if (servletRequest == null) // in case of unit tests
 			return newGson;
-		Pattern p = Pattern.compile(".*api/v2/\\w+/(\\w+).*");
-		Matcher m = p.matcher(servletRequest.getRequestURI());
+		Matcher m = protocolVersionPattern.matcher(servletRequest.getRequestURI());
 		if (!m.matches())
 			return oldGson;
 
