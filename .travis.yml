@@ -1,5 +1,8 @@
 language: java
 sudo: required
+branches:
+  only:
+    - master
 services:
   - docker
 before_script:
