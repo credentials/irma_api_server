@@ -57,6 +57,8 @@ depending if you are running a build or not. If this variable is left empty, the
 
 The main configuration file is a json file called `config.json`. In `src/main/resources` a sample configuration file called `config.SAMPLE.json` is included, showing all options, their defaults, and what they mean.
 
+The server always looks for `config.json` and the `irma_configuration` folder (and in fact all other configuration files as well) in the same place. The `IRMA_API_CONF` environment variable can be used to instruct the server to look for (all) its configuration in a place of your choosing (such as `/etc/irma_api_server`). So if you're using IRMA_API_CONF in order to point the server to `/etc/irma_api_server`, then you should put your `irma_configuration` folder there as well.  
+
 ## irma_configuration
 
 All credential descriptions, issuer public keys and possibly private keys - that is, the *scheme manager* information - are expected in a subdirectory called `irma_configuration` within the configuration directory. There are several options:
