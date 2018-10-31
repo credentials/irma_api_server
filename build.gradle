@@ -30,7 +30,7 @@ repositories {
 }
 
 dependencies {
-    compile 'org.irmacard.api:irma_api_common:1.1.3'
+    compile 'org.irmacard.api:irma_api_common:1.1.4'
     compile 'foundation.privacybydesign.common:irma_server_common:0.3.2'
 
     compile 'org.glassfish.jersey.core:jersey-server:2.19'
