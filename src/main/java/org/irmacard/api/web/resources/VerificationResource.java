@@ -42,6 +42,7 @@ import org.irmacard.api.common.AttributeDisjunction;
 import org.irmacard.api.common.ClientQr;
 import org.irmacard.api.common.JwtSessionRequest;
 import org.irmacard.api.common.ProtocolVersion;
+import org.irmacard.api.common.IrmaDisclosure;
 import org.irmacard.api.common.disclosure.DisclosureProofRequest;
 import org.irmacard.api.common.disclosure.DisclosureProofResult;
 import org.irmacard.api.common.disclosure.ServiceProviderRequest;
@@ -144,9 +145,10 @@ public class VerificationResource extends BaseResource
     @POST @Path("/{sessiontoken}/proofs")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public DisclosureProofResult.Status proofs(ProofList proofs, @PathParam("sessiontoken") String sessiontoken)
+    public DisclosureProofResult.Status proofs(IrmaDisclosure message, @PathParam("sessiontoken") String sessiontoken)
             throws InfoException {
         VerificationSession session = sessions.getNonNullSession(sessiontoken);
+        ProofList proofs = message.getProofs();
 
         DisclosureProofResult result;
         try {

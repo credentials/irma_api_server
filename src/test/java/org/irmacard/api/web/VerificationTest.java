@@ -41,6 +41,7 @@ import org.glassfish.jersey.test.jetty.JettyTestContainerFactory;
 import org.irmacard.api.common.AttributeDisjunction;
 import org.irmacard.api.common.AttributeDisjunctionList;
 import org.irmacard.api.common.ClientQr;
+import org.irmacard.api.common.IrmaDisclosure;
 import org.irmacard.api.common.disclosure.DisclosureProofRequest;
 import org.irmacard.api.common.disclosure.DisclosureProofResult.Status;
 import org.irmacard.api.common.disclosure.ServiceProviderRequest;
@@ -154,8 +155,9 @@ public class VerificationTest extends JerseyTest {
 		ProofList proofs = new ProofListBuilder(request.getContext(), request.getNonce())
 				.addProofD(cred, disclosed)
 				.build();
+		IrmaDisclosure disclosureMessage = new IrmaDisclosure(proofs);
 		Status status = target("/verification/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
-				.post(Entity.entity(proofs, MediaType.APPLICATION_JSON), Status.class);
+				.post(Entity.entity(disclosureMessage, MediaType.APPLICATION_JSON), Status.class);
 		assert(status == expectedResult);
 
 		// Fetch the JSON web token containing the attributes
@@ -214,7 +216,7 @@ public class VerificationTest extends JerseyTest {
 				.get(DisclosureProofRequest.class);
 
 		Response response = target("/verification/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
-				.post(Entity.entity("{\"foo\": 1}", MediaType.APPLICATION_JSON));
+				.post(Entity.entity("[1,2,3]", MediaType.APPLICATION_JSON));
 
 		assert(response.getStatus() == 400);
 	}
@@ -257,8 +259,10 @@ public class VerificationTest extends JerseyTest {
 		f.setAccessible(true);
 		f.set(proofs.get(0), BigInteger.TEN);
 
+		IrmaDisclosure disclosureMessage = new IrmaDisclosure(proofs);
+
 		Status status = target("/verification/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
-				.post(Entity.entity(proofs, MediaType.APPLICATION_JSON), Status.class);
+				.post(Entity.entity(disclosureMessage, MediaType.APPLICATION_JSON), Status.class);
 		assert(status == Status.INVALID);
 
 		// Fetch the JSON web token containing the attributes
@@ -295,8 +299,9 @@ public class VerificationTest extends JerseyTest {
 				.addProofD(cred1, Arrays.asList(1, 2))
 				.addProofD(cred2, Arrays.asList(1, 3))
 				.build();
+		IrmaDisclosure disclosureMessage = new IrmaDisclosure(proofs);
 		Status status = target("/verification/" + session + "/proofs").request(MediaType.APPLICATION_JSON)
-				.post(Entity.entity(proofs, MediaType.APPLICATION_JSON), Status.class);
+				.post(Entity.entity(disclosureMessage, MediaType.APPLICATION_JSON), Status.class);
 		assert(status == Status.VALID);
 
 		// Fetch the JSON web token containing the attributes
