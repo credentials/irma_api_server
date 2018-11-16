@@ -199,7 +199,7 @@ public abstract class BaseResource
 	 * @throws ApiException The specified exception
 	 */
 	protected void fail(ApiError error, SessionClass session) throws ApiException {
-		logger.warn("Session failed: %s %d %s %s", session.getSessionToken(), error.getStatusCode(), error.toString(), error.getDescription());
+		logger.warn("Session failed: {} {} {} {}", session.getSessionToken(), error.getStatusCode(), error.toString(), error.getDescription());
 		session.setStatusCancelled();
 		throw new ApiException(error);
 	}
