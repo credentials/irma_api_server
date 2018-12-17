@@ -24,5 +24,6 @@ CGO_ENABLED=0
 GOOS=darwin go build -o "$SRCDIR/resources/timestamp-macos" timestamp.go || die
 GOOS=linux go build -o "$SRCDIR/resources/timestamp-linux" timestamp.go || die
 GOOS=windows go build -o "$SRCDIR/resources/timestamp-windows.exe" timestamp.go || die
+GOOS=freebsd go build -o "$SRCDIR/resources/timestamp-freebsd" timestamp.go || die
 
 cd "$DIR"

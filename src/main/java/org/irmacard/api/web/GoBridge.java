@@ -31,6 +31,8 @@ public class GoBridge {
 				suffix = "-macos";
 			else if (os.startsWith("Linux"))
 				suffix = "-linux";
+			else if (os.startsWith("FreeBSD"))
+				suffix = "-freebsd";
 			else // Warn, and try to use unsuffixed "timestamp" in this case
 				logger.warn("Unrecognized operating system");
 			String name = "timestamp" + suffix;
