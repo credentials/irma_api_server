@@ -1,4 +1,4 @@
-server_version: 2.0.0
+server_version: 2.1.1
 server_url: https://github.com/privacybydesign/irma_api_server/releases/download/v{{ server_version }}/irma_api_server.zip
 conf_path: /etc/irma_api_server
 base_install_path: /opt

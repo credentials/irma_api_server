@@ -2,7 +2,7 @@ apply plugin: 'war'
 apply plugin: 'org.akhikhl.gretty'
 apply plugin: 'eclipse-wtp'
 
-version = "2.1.0"
+version = "2.1.1"
 
 import org.gradle.internal.os.OperatingSystem;
 
