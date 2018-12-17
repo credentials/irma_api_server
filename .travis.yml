@@ -1,5 +1,8 @@
 language: java
 sudo: required
+branches:
+  only:
+    - push-v2.0.1
 services:
   - docker
 before_script:
@@ -26,5 +29,6 @@ script:
   - go build -o src/main/resources/timestamp-linux src/main/go/timestamp.go
   - ./gradlew build
   - docker build -t "$DOCKER_USERNAME"/irma_api_server .
+after_success:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-  - docker push "$DOCKER_USERNAME"/irma_api_server
+  - docker push "$DOCKER_USERNAME"/irma_api_server:2.0.1
