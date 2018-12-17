@@ -269,6 +269,8 @@ public class IssueResource extends BaseResource
 			e.printStackTrace();
 			fail(ApiError.JWT_INVALID, session);
 			return null;
+		} catch (ApiException e) {
+			throw e;
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(ApiError.EXCEPTION, session);
