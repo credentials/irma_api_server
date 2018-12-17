@@ -9,16 +9,16 @@ import (
 	"github.com/privacybydesign/irmago"
 )
 
-func parseCliArgs() (conf *irma.Configuration, abs *irma.IrmaSignedMessage, err error) {
+func parseCliArgs() (conf *irma.Configuration, abs *irma.SignedMessage, err error) {
 	if len(os.Args) < 3 {
-		err = errors.New("Missing IrmaSignedMessage argument")
+		err = errors.New("Missing SignedMessage argument")
 		return
 	}
 	conf, err = parseIrmaConfiguration(os.Args[1])
 	if err != nil {
 		return
 	}
-	abs = new(irma.IrmaSignedMessage)
+	abs = new(irma.SignedMessage)
 	err = json.Unmarshal([]byte(os.Args[2]), abs)
 	return
 }
@@ -47,5 +47,5 @@ func main() {
 		return
 	}
 
-	err = irma.VerifyTimestamp(irmaSignature, irmaSignature.Message, conf)
+	err = irmaSignature.VerifyTimestamp(irmaSignature.Message, conf)
 }
