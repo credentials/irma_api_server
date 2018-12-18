@@ -8,6 +8,8 @@ The API that this server offers is described [here](https://credentials.github.i
 
 See below to run or build the server yourself. Alternatively, you can use our demo API server, which is setup to be very permissive (but only in the demo domain). It is hosted at `https://demo.irmacard.org/tomcat/irma_api_server/`, you can find its signing key [here](https://demo.irmacard.org/v2/data/pk.pem).
 
+Note that this server requires Java 7 or Java 8.
+
 # Running with Docker
 
 The easiest way to get this server quickly up and running is using Docker.
