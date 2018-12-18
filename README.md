@@ -22,7 +22,7 @@ Now, run the container using the command generated from the script, for example:
 
     docker run -p 8088:8080 -e IRMA_API_CONF_BASE64_JWT_PUBLICKEY=exampleDoNotCopy -e IRMA_API_CONF_BASE64_JWT_PRIVATEKEY=exampleDoNotCopy privacybydesign/irma_api_server
 
-The Docker container will bind to port 8088 on any interface, so the IRMA API Server is reachable at http://localhost:8088.
+The Docker container will bind to port 8088 on any interface, so the IRMA API Server is reachable at http://localhost:8088/api/v2.
 
 By default, the API server in the container will allow unsigned verification and signature requests from all clients. Issue requests are blocked. This behaviour can be customized with environment variables (using '-e' flags of `docker run`). See [here](#config-via-environment-variables) for configuration of these environment variables.
 
