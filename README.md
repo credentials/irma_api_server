@@ -131,7 +131,7 @@ Alternatively, you can build the server, resulting in a standalone package that 
 
     gradle buildProduct
 
-The resulting package will then be stored in `build/output/irma_api_server` and can be started with `start.sh`. ***NOTE***: before runnung `gradle war` or `buildProduct`, be sure to run `git submodule update --init` first! This fetches the [IRMA configuration and keys](https://github.com/privacybydesign/irma_configuration) that are used for the unit tests, which are automatically performed by these two gradle commands.
+The resulting package will then be stored in `build/output/irma_api_server` and can be started with `start.sh`. ***NOTE***: before runnung `gradle war` or `buildProduct`, be sure to run `git submodule update --init` first! This fetches the [IRMA configuration and keys](https://github.com/privacybydesign/irma-demo-schememanager) that are used for the unit tests, which are automatically performed by these two gradle commands.
 
 # Testing
 
