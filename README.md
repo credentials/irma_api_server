@@ -1,7 +1,5 @@
 **Note: This project is usable in production, but is in the process of being deprecated in favour of [`irma server`](https://github.com/privacybydesign/irmago/tree/master/server/irmad), a subpackage of `irmago`. Full documentation of that package will be released soon.**
 
-[![Build Status](https://travis-ci.org/privacybydesign/irma_api_server.svg?branch=master)](https://travis-ci.org/privacybydesign/irma_api_server)
-
 # IRMA API server
 
 This is a server that sits between IRMA tokens such as the [IRMA app](https://github.com/privacybydesign/irma_mobile) on the one hand, and authorized service or identity providers on the other hand. It handles all IRMA-specific cryptographic details of issuing credentials and verifying disclosure proofs on behalf of the service or identity provider. It exposes a RESTful JSON API driven by JWTs for authentication.
