@@ -1,6 +1,8 @@
 package org.irmacard.api.web.resources;
 
+import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
 import org.irmacard.api.common.*;
 import org.irmacard.api.common.disclosure.DisclosureProofRequest;
 import org.irmacard.api.common.disclosure.DisclosureProofResult;
@@ -13,6 +15,7 @@ import org.irmacard.api.web.Historian;
 import org.irmacard.api.web.sessions.IrmaSession;
 import org.irmacard.api.web.sessions.IssueSession;
 import org.irmacard.api.web.sessions.Sessions;
+import org.irmacard.api.web.sessions.VerificationSession;
 import org.irmacard.credentials.Attributes;
 import org.irmacard.credentials.CredentialsException;
 import org.irmacard.credentials.idemix.IdemixIssuer;
@@ -30,7 +33,9 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import java.security.KeyManagementException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import javax.ws.rs.core.Context;
 import javax.servlet.http.HttpServletRequest;
@@ -77,13 +82,7 @@ public class IssueResource extends BaseResource
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
 	public IrmaSession.Status getStatus(@PathParam("sessiontoken") String sessiontoken) {
-		IrmaSession.Status status = super.getStatus(sessiontoken);
-
-		IssueSession session = sessions.getNonNullSession(sessiontoken);
-		if (status == IrmaSession.Status.DONE || status == IrmaSession.Status.CANCELLED)
-			session.close();
-
-		return status;
+		return super.getStatus(sessiontoken);
 	}
 
 	@DELETE @Path("/{sessiontoken}")
@@ -218,9 +217,10 @@ public class IssueResource extends BaseResource
 			if (request.getRequiredAttributes().size() > 0) {
 				DisclosureProofRequest disclosureRequest = new DisclosureProofRequest(
 						request.getNonce(), request.getContext(), request.getRequiredAttributes());
-				DisclosureProofResult.Status status = disclosureRequest.verify(proofs).getStatus();
+				DisclosureProofResult res = disclosureRequest.verify(proofs);
+				session.setDisclosed(res);
 
-				switch (status) {
+				switch (res.getStatus()) {
 					case EXPIRED:
 						fail(ApiError.ATTRIBUTES_EXPIRED, session);
 					case MISSING_ATTRIBUTES:
@@ -277,4 +277,20 @@ public class IssueResource extends BaseResource
 			return null;
 		}
 	}
+
+	public DisclosureProofResult getproof(String sessiontoken) {
+		IssueSession session = sessions.getNonNullSession(sessiontoken);
+		DisclosureProofResult result = session.getDisclosed();
+		if (result == null)
+			throw new ApiException(ApiError.UNEXPECTED_REQUEST, "No attributes were disclosed in this session");
+		result.setServiceProviderData(session.getClientRequest().getData());
+		return result;
+	}
+
+	@GET @Path("/{sessiontoken}/getproof")
+	@Produces(MediaType.TEXT_PLAIN)
+	public String gettoken(@PathParam("sessiontoken") String sessiontoken) throws KeyManagementException {
+		return signResultJwt(getproof(sessiontoken), 120, "issue_result");
+	}
+
 }

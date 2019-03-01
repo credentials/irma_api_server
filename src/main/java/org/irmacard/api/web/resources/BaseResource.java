@@ -1,9 +1,9 @@
 package org.irmacard.api.web.resources;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwsHeader;
-import io.jsonwebtoken.SigningKeyResolverAdapter;
+import io.jsonwebtoken.*;
 import org.irmacard.api.common.*;
+import org.irmacard.api.common.JwtParser;
+import org.irmacard.api.common.disclosure.DisclosureProofResult;
 import org.irmacard.api.common.disclosure.ServiceProviderRequest;
 import org.irmacard.api.common.exceptions.ApiError;
 import org.irmacard.api.common.exceptions.ApiException;
@@ -20,6 +20,8 @@ import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
 import java.security.Key;
+import java.security.KeyManagementException;
+import java.util.Calendar;
 import java.util.HashMap;
 
 public abstract class BaseResource
@@ -202,5 +204,26 @@ public abstract class BaseResource
 		logger.warn("Session failed: {} {} {} {}", session.getSessionToken(), error.getStatusCode(), error.toString(), error.getDescription());
 		session.setStatusCancelled();
 		throw new ApiException(error);
+	}
+
+	protected String signResultJwt(DisclosureProofResult result, int validity, String subject) throws KeyManagementException {
+		Calendar now = Calendar.getInstance();
+		Calendar expiry = Calendar.getInstance();
+		expiry.add(Calendar.SECOND, validity);
+
+		JwtBuilder builder = Jwts.builder()
+				.setClaims(result.getAsMap())
+				.setIssuedAt(now.getTime())
+				.setExpiration(expiry.getTime())
+				.setSubject(subject);
+
+		String jwt_issuer = ApiConfiguration.getInstance().getJwtIssuer();
+		if (jwt_issuer != null)
+			builder = builder.setIssuer(jwt_issuer);
+
+		return builder
+				.signWith(ApiConfiguration.getInstance().getJwtAlgorithm(),
+						ApiConfiguration.getInstance().getJwtPrivateKey())
+				.compact();
 	}
 }

@@ -196,33 +196,12 @@ public class VerificationResource extends BaseResource
         return result;
     }
 
-    // TODO: This seems to also return (signed) data even if the proof does not
-    // verify, maybe we want to refuse this method if that is the case, need to
-    // change workflow to allow this.
     @GET @Path("/{sessiontoken}/getproof")
     @Produces(MediaType.TEXT_PLAIN)
     public String gettoken(@PathParam("sessiontoken") String sessiontoken) throws KeyManagementException {
         VerificationSession session = sessions.getNonNullSession(sessiontoken);
         DisclosureProofResult result = getproof(sessiontoken);
-
-        Calendar now = Calendar.getInstance();
-        Calendar expiry = Calendar.getInstance();
-        expiry.add(Calendar.SECOND, session.getClientRequest().getValidity());
-
-        JwtBuilder builder = Jwts.builder()
-                .setClaims(result.getAsMap())
-                .setIssuedAt(now.getTime())
-                .setExpiration(expiry.getTime())
-                .setSubject("disclosure_result");
-
-        String jwt_issuer = ApiConfiguration.getInstance().getJwtIssuer();
-        if (jwt_issuer != null)
-            builder = builder.setIssuer(jwt_issuer);
-
-        return builder
-                .signWith(ApiConfiguration.getInstance().getJwtAlgorithm(),
-                        ApiConfiguration.getInstance().getJwtPrivateKey())
-                .compact();
+        return signResultJwt(result, session.getClientRequest().getValidity(), "disclosure_result");
     }
 
     // TODO: move to some kind of 'util class'?
