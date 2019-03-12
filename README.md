@@ -1,4 +1,4 @@
-**Note: This project is usable in production, but is in the process of being deprecated in favour of [`irma server`](https://github.com/privacybydesign/irmago/tree/master/server/irmad), a subpackage of `irmago`. Full documentation of that package will be released soon.**
+**Note: This project is usable in production, but is deprecated in favor of [`irma server`](https://irma.app/docs/irma-server/), a subpackage of [`irmago`](https://github.com/privacybydesign/irmago).**
 
 # IRMA API server
 
