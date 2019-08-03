@@ -1,9 +1,8 @@
 package org.irmacard.api.web.resources;
 
-import io.jsonwebtoken.JwtBuilder;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.*;
 import org.irmacard.api.common.*;
+import org.irmacard.api.common.JwtParser;
 import org.irmacard.api.common.disclosure.DisclosureProofRequest;
 import org.irmacard.api.common.disclosure.DisclosureProofResult;
 import org.irmacard.api.common.exceptions.ApiError;
@@ -33,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import java.security.Key;
 import java.security.KeyManagementException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -151,7 +151,7 @@ public class IssueResource extends BaseResource
 
 	private HashMap<String, ProofP> proofps = new HashMap<>();
 	private static final ProtocolVersion proofpProtocolVersionBoundary = new ProtocolVersion("2.4");
-	private ProofP extractProofP(IssueSession session, IssueCommitmentMessage commitments, String schemeManager) {
+	private ProofP extractProofP(IssueSession session, IssueCommitmentMessage commitments, final String schemeManager) {
 		if (proofps.containsKey(schemeManager))
 			return proofps.get(schemeManager);
 
@@ -165,7 +165,14 @@ public class IssueResource extends BaseResource
 		if (jwt == null)
 			fail(ApiError.KEYSHARE_PROOF_MISSING, session);
 		JwtParser<ProofP> jwtParser = new JwtParser<>(ProofP.class, false, 60*1000, "ProofP", "ProofP");
-		jwtParser.setSigningKey(ApiConfiguration.getInstance().getKssPublicKey(schemeManager));
+		jwtParser.setKeyResolver(new SigningKeyResolverAdapter() {
+			@Override public Key resolveSigningKey(JwsHeader header, Claims claims) {
+				String keyId = (String) header.get("kid");
+				if (keyId == null || keyId.length() == 0)
+					keyId = "0";
+				return ApiConfiguration.getInstance().getKssPublicKey(schemeManager, keyId);
+			}
+		});
 		ProofP proof = jwtParser.parseJwt(jwt).getPayload();
 
 		proofps.put(schemeManager, proof);

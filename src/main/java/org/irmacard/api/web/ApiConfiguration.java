@@ -220,9 +220,13 @@ public class ApiConfiguration extends BaseConfiguration<ApiConfiguration> {
 	 * Gets the public key of the keyshare server of the specified scheme manager
 	 */
 	public PublicKey getKssPublicKey(String schemeManager) {
+		return getKssPublicKey(schemeManager, "0");
+	}
+
+	public PublicKey getKssPublicKey(String schemeManager, String kid) {
 		try {
 			// This should really be done by irma_api_common
-			return getPublicKey(String.format("irma_configuration/%s/kss-0.pem", schemeManager));
+			return getPublicKey(String.format("irma_configuration/%s/kss-%s.pem", schemeManager, kid));
 		} catch (KeyManagementException e) {
 			throw new RuntimeException(e);
 		}
